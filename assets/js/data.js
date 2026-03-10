@@ -75,7 +75,9 @@
     M.state.windowDays = days;
     M.state.typeFilter = "All";
     document.querySelectorAll(".window-btn").forEach((button) => button.classList.remove("active"));
+    document.querySelectorAll(".window-option").forEach((option) => option.classList.remove("active"));
     el.classList.add("active");
+    if (el.parentElement) el.parentElement.classList.add("active");
     M.renderAll();
   };
 
@@ -85,30 +87,47 @@
     M.renderHeader(windowed);
     M.renderFilters(windowed);
     M.renderFeed(windowed);
-    M.renderTimeline(windowed);
     M.renderInsights(windowed);
     M.renderAiPreview();
   };
 
   M.renderContextBar = function renderContextBar(data) {
+    document.querySelectorAll(".window-context").forEach((node) => {
+      node.textContent = "";
+    });
+
+    const activeContext = document.querySelector(".window-option.active .window-context");
+    if (!activeContext) return;
+
     if (!data.length) {
-      document.getElementById("contextBar").textContent = "No activities in this window.";
+      activeContext.textContent = "No activities in this range.";
       return;
     }
+
     const newest = data[0].Date;
     const oldest = data[data.length - 1].Date;
-    const label = M.state.windowDays === 0 ? "All time" : `Last ${M.state.windowDays} day${M.state.windowDays > 1 ? "s" : ""}`;
-    document.getElementById("contextBar").innerHTML =
-      `<span class="context-period">${label}</span><span class="context-dot">·</span>${data.length} sessions<span class="context-dot">·</span>${M.fmtShort(oldest)} → ${M.fmtShort(newest)}`;
+    activeContext.textContent = M.formatContextRange(oldest, newest);
   };
 
   M.renderHeader = function renderHeader(data) {
     const km = data.reduce((sum, activity) => sum + (parseFloat(activity["Distance (km)"]) || 0), 0);
     const min = data.reduce((sum, activity) => sum + (parseFloat(activity["Duration (min)"]) || 0), 0);
     document.getElementById("headerStats").innerHTML = `
-      <div class="hstat"><div class="hstat-val">${data.length}</div><div class="hstat-lab">Sessions</div></div>
-      <div class="hstat"><div class="hstat-val">${km.toFixed(0)} km</div><div class="hstat-lab">Distance</div></div>
-      <div class="hstat"><div class="hstat-val">${Math.round(min / 60)} h</div><div class="hstat-lab">Time</div></div>
+      <article class="hstat">
+        <div class="hstat-lab">Sessions</div>
+        <div class="hstat-val">${data.length}</div>
+        <div class="hstat-meta">${data.length ? "Logged inside the current review window." : "No sessions logged in the current window."}</div>
+      </article>
+      <article class="hstat">
+        <div class="hstat-lab">Distance</div>
+        <div class="hstat-val">${km.toFixed(0)} km</div>
+        <div class="hstat-meta">${km ? "Total distance across your distance-based sessions." : "No tracked distance in this window."}</div>
+      </article>
+      <article class="hstat">
+        <div class="hstat-lab">Time</div>
+        <div class="hstat-val">${Math.round(min / 60)} h</div>
+        <div class="hstat-meta">${min ? `${M.fmt(min)} of recorded work.` : "No recorded duration in this window."}</div>
+      </article>
     `;
   };
 
@@ -121,14 +140,15 @@
 
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
     const allOn = M.state.typeFilter === "All";
-    let html = `<button class="filter-pill ${allOn ? "on" : ""}" onclick="setFilter('All')" style="${allOn ? "background:#fff;border-color:#fff;" : "border-color:var(--border2)"}">
+    let html = `<button class="filter-pill ${allOn ? "on" : ""}" onclick="setFilter('All')">
       All <span class="filter-count">${data.length}</span></button>`;
 
     sorted.forEach(([type, count]) => {
       const cfg = M.tc(type);
       const on = M.state.typeFilter === type;
-      html += `<button class="filter-pill ${on ? "on" : ""}" onclick="setFilter('${type}')" style="${on ? `background:${cfg.color};border-color:${cfg.color};` : ""}">
-        ${cfg.icon} ${cfg.label} <span class="filter-count">${count}</span></button>`;
+      html += `<button class="filter-pill ${on ? "on" : ""}" onclick="setFilter('${type}')">
+        <span class="a-card-type-icon" aria-hidden="true">${cfg.icon}</span>
+        ${cfg.label} <span class="filter-count">${count}</span></button>`;
     });
 
     document.getElementById("filterRow").innerHTML = html;
@@ -141,10 +161,26 @@
     M.renderFeed(M.applyTypeFilter(windowed));
   };
 
+  M.setFeedMode = function setFeedMode(mode, el) {
+    if (mode === "list") {
+      M.state.feedMode = "list";
+    } else {
+      M.state.feedMode = "grouped";
+      M.state.groupBy = mode;
+    }
+    document.querySelectorAll(".feed-mode-switch .tl-sw-btn").forEach((button) => button.classList.remove("active"));
+    if (el) el.classList.add("active");
+    M.renderFeed();
+  };
+
   M.showView = function showView(id, el) {
     document.querySelectorAll(".view").forEach((view) => view.classList.remove("active"));
     document.querySelectorAll(".nav-btn").forEach((button) => button.classList.remove("active"));
+    document.querySelectorAll(".ai-top-btn").forEach((button) => button.classList.remove("active"));
     document.getElementById(`view-${id}`).classList.add("active");
-    el.classList.add("active");
+    if (el) el.classList.add("active");
+    if (id === "ai") {
+      document.querySelectorAll(".ai-top-btn").forEach((button) => button.classList.add("active"));
+    }
   };
 }());

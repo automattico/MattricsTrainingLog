@@ -1,4 +1,4 @@
-// Training Mattrics — Configuration
+// Mattrics Training Log — Configuration
 // ─────────────────────────────────────────────────────────────
 // Copy this file to config.js and fill in your real values.
 // config.js is gitignored and will never be committed.

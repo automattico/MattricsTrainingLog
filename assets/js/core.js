@@ -24,6 +24,7 @@
     windowDays: 7,
     typeFilter: "All",
     groupBy: "week",
+    feedMode: "list",
     recent: [],
   };
 
@@ -63,6 +64,30 @@
 
   Mattrics.fmtShort = function fmtShort(ds) {
     return new Date(ds).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  };
+
+  Mattrics.formatContextRange = function formatContextRange(startDs, endDs) {
+    if (!startDs || !endDs) return "";
+
+    const start = new Date(startDs);
+    const end = new Date(endDs);
+
+    if (start.toDateString() === end.toDateString()) {
+      return start.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    }
+
+    const sameYear = start.getFullYear() === end.getFullYear();
+    const sameMonth = sameYear && start.getMonth() === end.getMonth();
+
+    if (sameMonth) {
+      return `${start.getDate()}-${end.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`;
+    }
+
+    if (sameYear) {
+      return `${start.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} to ${end.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`;
+    }
+
+    return `${start.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} to ${end.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`;
   };
 
   Mattrics.formatWeekRange = function formatWeekRange(startIso) {

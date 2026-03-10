@@ -1,4 +1,4 @@
-# Training Mattrics
+# Mattrics Training Log
 
 Personal training dashboard — pulls activity data from Google Sheets (via Strava export), displays it with time-windowed views, and generates AI workout suggestions.
 
@@ -48,7 +48,7 @@ Planned:
 
 ## Docs
 
-- Sync architecture and operational notes: [`docs/strava-sync-architecture.md`](/Users/mwieland/dev/TrainingMattrics/docs/strava-sync-architecture.md)
+- Sync architecture and operational notes: [`docs/strava-sync-architecture.md`](/Users/mwieland/dev/MattricsTrainingLog/docs/strava-sync-architecture.md)
 
 ## Project
 

@@ -16,6 +16,9 @@
           <span class="rp-name">${M.esc(activity.Name)}</span>
           <span class="rp-date">${M.fmtShort(activity.Date)}</span>
         </div>`).join("");
+    } else {
+      box.style.display = "none";
+      document.getElementById("recentItems").innerHTML = "";
     }
 
     document.getElementById("aiDesc").textContent = recent.length

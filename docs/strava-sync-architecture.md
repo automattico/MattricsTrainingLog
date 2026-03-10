@@ -1,6 +1,6 @@
 # Strava Sync Architecture
 
-This document describes how Training Mattrics gets Strava data into the dashboard, why the sync works the way it does, and which caveats matter in practice.
+This document describes how Mattrics Training Log gets Strava data into the dashboard, why the sync works the way it does, and which caveats matter in practice.
 
 ## Overview
 
@@ -53,7 +53,7 @@ Two sheets matter:
 
 ### 3. Google Apps Script
 
-[`apps-script/Code.gs`](/Users/mwieland/dev/TrainingMattrics/apps-script/Code.gs) reads the active sheet and returns JSON for the frontend.
+[`apps-script/Code.gs`](/Users/mwieland/dev/MattricsTrainingLog/apps-script/Code.gs) reads the active sheet and returns JSON for the frontend.
 
 Important detail:
 

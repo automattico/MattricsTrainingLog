@@ -11,7 +11,8 @@
 
     const counts = {};
     activities.forEach((activity) => {
-      counts[activity.Type] = (counts[activity.Type] || 0) + 1;
+      const type = M.canonicalType(activity.Type);
+      counts[type] = (counts[type] || 0) + 1;
     });
     const topTypes = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
     const maxC = topTypes[0][1];
@@ -109,11 +110,23 @@
     ["Rowing", activities.filter((activity) => activity.Type === "Rowing").length, "var(--row)"],
     ["Cycling", activities.filter((activity) => activity.Type === "Ride").length, "var(--ride)"],
     ["Surfing", activities.filter((activity) => activity.Type === "Surfing").length, "var(--surf)"],
-  ].filter(([, count]) => count > 0).map(([label, count, color]) => `<div class="bar-row">
-            <div class="bar-name">${label}</div>
+  ].filter(([, count]) => count > 0).map(([label, count, color]) => {
+    const emoji = {
+      "Strength & Gym": "🏋️",
+      Paddling: "🛶",
+      Running: "🏃",
+      "Mind & Body": "🧘",
+      "Hiking / Walk": "🥾",
+      Rowing: "🚣",
+      Cycling: "🚴",
+      Surfing: "🏄",
+    }[label] || "•";
+    return `<div class="bar-row">
+            <div class="bar-name">${emoji} ${label}</div>
             <div class="bar-track"><div class="bar-fill" style="width:${(count / activities.length * 100).toFixed(0)}%;background:${color}"></div></div>
             <div class="bar-num">${(count / activities.length * 100).toFixed(0)}%</div>
-          </div>`).join("")}
+          </div>`;
+  }).join("")}
         </div>
       </div>
     `;
