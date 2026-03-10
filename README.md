@@ -4,7 +4,7 @@ Personal training dashboard — pulls activity data from Google Sheets (via Stra
 
 ## Stack
 
-- Vanilla HTML/CSS/JS — single file, no build step
+- Vanilla HTML/CSS/JS — no build step
 - Google Apps Script — serves sheet data as JSON
 - Anthropic Claude API — AI workout generator
 
@@ -45,6 +45,10 @@ Currently supported:
 Planned:
 - Hevy (strength training)
 - Garmin / fitness watch
+
+## Docs
+
+- Sync architecture and operational notes: [`docs/strava-sync-architecture.md`](/Users/mwieland/dev/TrainingMattrics/docs/strava-sync-architecture.md)
 
 ## Project
 
