@@ -27,9 +27,9 @@
   };
 
   M.generateWorkout = async function generateWorkout() {
-    if (M.API_KEY === "YOUR_API_KEY_HERE") {
+    if (!M.API_KEY || M.API_KEY === "YOUR_API_KEY_HERE" || M.API_KEY === "YOUR_ANTHROPIC_API_KEY_HERE") {
       document.getElementById("aiText").textContent =
-        "⚠️ Add your API key first.\n\nOpen this HTML file in a text editor and replace YOUR_API_KEY_HERE.";
+        "⚠️ Add your API key first.\n\nCreate or edit config.js and set MATTRICS_CONFIG.API_KEY.";
       document.getElementById("aiOutput").style.display = "block";
       return;
     }

@@ -10,7 +10,7 @@
 //   6. Execute as: Me
 //   7. Who has access: Anyone
 //   8. Click Deploy → Copy the Web App URL
-//   9. Paste that URL into dashboard.html where it says PASTE_YOUR_WEB_APP_URL_HERE
+//   9. Paste that URL into config.js as MATTRICS_CONFIG.SHEET_URL
 // ─────────────────────────────────────────────────────────────
 
 function doGet(e) {
