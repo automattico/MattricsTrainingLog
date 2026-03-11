@@ -40,7 +40,7 @@ Accepted config locations are:
 
 Do not upload as public web files:
 
-- [`config.js`](/Users/mwieland/dev/MattricsTrainingLog/config.example.js)
+- [`public/config.js`](/Users/mwieland/dev/MattricsTrainingLog/public/config.example.js)
 - the repo root as a docroot
 - anything in `.git`
 - local notes, exports, or backups

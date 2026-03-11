@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/main.css">
+<script src="config.js"></script>
 <script>
 window.MATTRICS_CONFIG = window.MATTRICS_CONFIG || {};
 </script>
@@ -41,31 +42,30 @@ window.MATTRICS_CONFIG = window.MATTRICS_CONFIG || {};
 
         <div class="header-controls">
           <div class="window-controls">
+            <div class="control-label">Range</div>
             <div class="window-switcher" id="windowSwitcher">
               <div class="window-option active">
                 <button class="window-btn active" data-days="7" onclick="setWindow(7,this)">7 days</button>
-                <span class="context-period window-context" aria-live="polite"></span>
               </div>
               <div class="window-option">
                 <button class="window-btn" data-days="14" onclick="setWindow(14,this)">14 days</button>
-                <span class="context-period window-context" aria-live="polite"></span>
               </div>
               <div class="window-option">
-                <button class="window-btn" data-days="30" onclick="setWindow(30,this)">1 month</button>
-                <span class="context-period window-context" aria-live="polite"></span>
+                <button class="window-btn" data-days="30" onclick="setWindow(30,this)">30 days</button>
               </div>
               <div class="window-option">
                 <button class="window-btn" data-days="90" onclick="setWindow(90,this)">3 months</button>
-                <span class="context-period window-context" aria-live="polite"></span>
               </div>
               <div class="window-option">
                 <button class="window-btn" data-days="180" onclick="setWindow(180,this)">6 months</button>
-                <span class="context-period window-context" aria-live="polite"></span>
               </div>
               <div class="window-option">
-                <button class="window-btn" data-days="0" onclick="setWindow(0,this)">All time</button>
-                <span class="context-period window-context" aria-live="polite"></span>
+                <button class="window-btn" data-days="0" onclick="setWindow(0,this)">All</button>
               </div>
+            </div>
+            <div class="range-summary">
+              <div class="control-label">Showing</div>
+              <div class="context-period range-summary-text" id="rangeSummary" aria-live="polite"></div>
             </div>
           </div>
 

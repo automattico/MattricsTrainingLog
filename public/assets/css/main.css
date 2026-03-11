@@ -246,23 +246,6 @@ button { -webkit-tap-highlight-color: transparent; }
   line-height: 1;
 }
 
-.ai-top-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--brand-soft);
-  border-color: rgba(78, 156, 255, 0.44);
-  color: #fff;
-  box-shadow: 0 14px 28px rgba(19, 75, 151, 0.18);
-}
-
-.ai-top-btn.active {
-  background: var(--brand-soft);
-  border-color: rgba(78, 156, 255, 0.44);
-  color: #fff;
-  box-shadow: 0 14px 28px rgba(19, 75, 151, 0.18);
-}
-
 .refresh-btn {
   display: inline-flex;
   align-items: center;
@@ -281,6 +264,23 @@ button { -webkit-tap-highlight-color: transparent; }
   font-size: 25px;
   line-height: 1;
   transform: translateY(-1px);
+}
+
+.ai-top-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--brand-soft);
+  border-color: rgba(78, 156, 255, 0.44);
+  color: #fff;
+  box-shadow: 0 14px 28px rgba(19, 75, 151, 0.18);
+}
+
+.ai-top-btn.active {
+  background: var(--brand-soft);
+  border-color: rgba(78, 156, 255, 0.44);
+  color: #fff;
+  box-shadow: 0 14px 28px rgba(19, 75, 151, 0.18);
 }
 
 #app { display: none; position: relative; z-index: 1; }
@@ -350,14 +350,14 @@ button { -webkit-tap-highlight-color: transparent; }
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  gap: 6px;
+  gap: 10px;
   min-height: 62px;
   flex: 1 1 520px;
 }
 
 .header-actions {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   flex: 0 0 auto;
 }
@@ -374,9 +374,24 @@ button { -webkit-tap-highlight-color: transparent; }
 
 .window-option {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+}
+
+.control-label {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 10px;
+}
+
+.range-summary {
+  display: grid;
+  gap: 4px;
+}
+
+.range-summary-text {
+  color: var(--muted-strong);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .window-option .window-btn { width: 100%; }
@@ -636,16 +651,6 @@ button { -webkit-tap-highlight-color: transparent; }
   font-weight: 500;
   line-height: 1.4;
 }
-
-.window-context {
-  min-height: 2.3em;
-  max-width: 14ch;
-  text-align: center;
-  opacity: 0;
-  transition: opacity 0.16s ease;
-}
-
-.window-option.active .window-context { opacity: 1; }
 
 .context-dot { opacity: 0.4; }
 .context-meta { display: none; }
@@ -1311,6 +1316,8 @@ button { -webkit-tap-highlight-color: transparent; }
   .brand-block {
     min-height: 0;
     gap: 4px;
+    align-items: center;
+    text-align: center;
   }
   .site-title {
     font-size: clamp(26px, 9vw, 40px);
@@ -1320,14 +1327,12 @@ button { -webkit-tap-highlight-color: transparent; }
     letter-spacing: 0.14em;
   }
   .header-stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-areas:
-      "recent"
-      "chart"
-      "sessions"
-      "time"
-      "balance"
-      "momentum";
+      "recent recent"
+      "chart chart"
+      "sessions time"
+      "balance momentum";
   }
   .header-controls {
     flex: 0 1 auto;
@@ -1347,45 +1352,35 @@ button { -webkit-tap-highlight-color: transparent; }
     gap: 8px;
   }
   .window-switcher {
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    overflow-x: visible;
     gap: 8px;
-    padding: 2px 0 6px;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    scroll-padding-inline: 0;
+    padding: 2px 0 0;
   }
-  .window-switcher::-webkit-scrollbar { display: none; }
   .window-option {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
     align-items: flex-start;
-    min-width: max-content;
+    min-width: 0;
   }
   .window-option .window-btn {
     width: auto;
   }
-  .window-context {
-    max-width: none;
-    min-height: 0;
-    padding-left: 12px;
-    text-align: left;
-  }
   .header-actions {
     flex: 0 0 auto;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 44px;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
+    align-self: flex-start;
+    width: auto;
+    max-width: 100%;
   }
   .ai-top-btn {
     flex: 0 1 auto;
-    justify-content: center;
     min-width: 0;
-    width: 100%;
-    padding-inline: 16px;
+    padding-inline: 14px;
   }
   .refresh-btn {
-    justify-self: end;
+    flex: 0 0 44px;
   }
   .nav { gap: var(--space-1); padding: 8px; border-radius: 20px; }
   .nav-btn,
@@ -1416,9 +1411,11 @@ button { -webkit-tap-highlight-color: transparent; }
   .app-main { padding-top: 14px; }
   .overview-chart-shell { grid-template-columns: 1fr; }
   .overview-donut { margin-inline: auto; width: min(210px, 100%); }
+  .overview-card { min-width: 0; }
+  .overview-value { font-size: clamp(28px, 7vw, 42px); }
+  .overview-insight-title { font-size: clamp(18px, 4.8vw, 26px); }
   .a-card-btn { padding: 18px; }
-  .detail-metrics,
-  .detail-facts { grid-template-columns: 1fr; }
+  .detail-metrics { grid-template-columns: 1fr; }
   .a-card-metrics {
     justify-content: flex-start;
     flex-wrap: wrap;
@@ -1456,6 +1453,17 @@ button { -webkit-tap-highlight-color: transparent; }
   }
   .detail-metrics .metric .metric-lab {
     margin-top: 4px;
+  }
+  .detail-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .detail-fact,
+  .hevy-exercise {
+    padding: 12px 14px;
+  }
+  .detail-fact-val {
+    font-size: clamp(16px, 4.8vw, 20px);
   }
   .hevy-exercise { grid-template-columns: 1fr; gap: 10px; }
 }

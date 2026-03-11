@@ -18,12 +18,13 @@ Mattrics Training Log is a personal training dashboard built with plain HTML, CS
 
 ## Project structure
 
-- [`public/index.html`](/Users/mwieland/dev/MattricsTrainingLog/public/index.html) - deployable app entry point
+- [`public/index.html`](/Users/mwieland/dev/MattricsTrainingLog/public/index.html) - app entry point for both local and hosted use
 - [`public/api`](/Users/mwieland/dev/MattricsTrainingLog/public/api) - PHP data and AI proxy endpoints
 - [`private/config.example.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php) - server-only config template
 - [`apps-script/Code.gs`](/Users/mwieland/dev/MattricsTrainingLog/apps-script/Code.gs) - Google Apps Script endpoint
 - [`public/assets/js`](/Users/mwieland/dev/MattricsTrainingLog/public/assets/js) - app logic
 - [`public/assets/css/main.css`](/Users/mwieland/dev/MattricsTrainingLog/public/assets/css/main.css) - app styling
+- [`public/config.example.js`](/Users/mwieland/dev/MattricsTrainingLog/public/config.example.js) - local-only browser config template
 - [`docs/hetzner-private-deploy.md`](/Users/mwieland/dev/MattricsTrainingLog/docs/hetzner-private-deploy.md) - secure Hetzner deployment guide
 - [`docs/strava-sync-architecture.md`](/Users/mwieland/dev/MattricsTrainingLog/docs/strava-sync-architecture.md) - sync and architecture notes
 
@@ -45,7 +46,7 @@ Fill in:
 - `sheet_token` with the shared secret expected by Apps Script
 - `anthropic_api_key` only if you want AI workout generation
 
-For local `file:///` use, keep using `config.js`, but now set both:
+For local `file:///` use, create `public/config.js` from [`public/config.example.js`](/Users/mwieland/dev/MattricsTrainingLog/public/config.example.js) and set both:
 
 - `MATTRICS_CONFIG.SHEET_URL`
 - `MATTRICS_CONFIG.SHEET_TOKEN`
@@ -97,7 +98,8 @@ Rows without `Date` or `Type` are ignored by the app.
 ## Notes
 
 - The app has no build step.
-- Only the contents of [`public`](/Users/mwieland/dev/MattricsTrainingLog/public) should be web-served.
+- The frontend now lives only in [`public`](/Users/mwieland/dev/MattricsTrainingLog/public).
+- Local browser config belongs in `public/config.js`.
 - Secrets belong in a server-only config copied from [`private/config.example.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php), ideally outside `public_html`.
 - The AI workout feature is optional.
 

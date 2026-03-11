@@ -9,7 +9,7 @@ The data pipeline is:
 1. Strava activity data is pulled with a Make.com scenario
 2. Make writes activities into a Google Sheet
 3. Google Apps Script exposes that sheet as JSON
-4. The local dashboard reads the Apps Script URL from `config.js`
+4. The local dashboard reads the Apps Script URL from `public/config.js`
 
 In short:
 
@@ -62,7 +62,7 @@ Important detail:
 
 ### 4. Dashboard
 
-The dashboard loads the Apps Script endpoint from local `config.js`.
+The dashboard loads the Apps Script endpoint from local `public/config.js`.
 
 That file is intentionally ignored by Git, so the live sheet endpoint and any API keys stay local.
 
@@ -193,7 +193,7 @@ Check these first:
 3. Make route filter
    Is the cursor update route still filtered on `Activity ID exists`?
 4. Apps Script deployment
-   Does the dashboard still point at the correct Apps Script URL in local `config.js`?
+   Does the dashboard still point at the correct Apps Script URL in local `public/config.js`?
 
 ## Operational checklist
 
@@ -202,5 +202,5 @@ When editing or rebuilding the sync later, preserve these rules:
 - keep the cursor in UTC
 - base cursor updates on `Start Date in UTC`
 - keep duplicate protection on `Activity ID raw`
-- keep `config.js` local and gitignored
+- keep `public/config.js` local and gitignored
 - do not assume manual activities will always sync automatically

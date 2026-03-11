@@ -73,7 +73,7 @@
 
       M.showError(
         isCors
-          ? "Browser blocked the request.\n\nYour Apps Script endpoint is live, but some browsers block fetches from a local file. Try opening this in Chrome, or serve this folder on localhost instead of opening dashboard.html via file://.\n\nIf needed, redeploy Apps Script as a Web App with Execute as: Me and Access: Anyone."
+          ? "Browser blocked the request.\n\nYour Apps Script endpoint is live, but some browsers block fetches from a local file. Try opening this in Chrome, or serve the public folder on localhost instead of opening public/index.html via file://.\n\nIf needed, redeploy Apps Script as a Web App with Execute as: Me and Access: Anyone."
           : `Could not load data.\n\n${msg}`
       );
     }
@@ -99,15 +99,11 @@
   };
 
   M.renderContextBar = function renderContextBar(data) {
-    document.querySelectorAll(".window-context").forEach((node) => {
-      node.textContent = "";
-    });
-
-    const activeContext = document.querySelector(".window-option.active .window-context");
+    const activeContext = document.getElementById("rangeSummary");
     if (!activeContext) return;
 
     if (!data.length) {
-      activeContext.textContent = "No activities in this range.";
+      activeContext.textContent = "No activities in this range";
       return;
     }
 
