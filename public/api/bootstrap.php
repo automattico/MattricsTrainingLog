@@ -14,10 +14,25 @@ function mattrics_send_json(array $payload, int $status = 200): void
 
 function mattrics_load_config(): array
 {
-    $candidates = array_filter([
-        getenv('MATTRICS_CONFIG') ?: null,
-        dirname(__DIR__, 2) . '/private/config.php',
-    ]);
+    $candidates = [];
+    $envConfig = getenv('MATTRICS_CONFIG') ?: null;
+    if ($envConfig) {
+        $candidates[] = $envConfig;
+    }
+
+    $cursor = dirname(__DIR__, 2);
+    for ($depth = 0; $depth < 5; $depth++) {
+        $candidates[] = $cursor . '/private/config.php';
+        $candidates[] = $cursor . '/mattrics-private/config.php';
+        $candidates[] = $cursor . '/.private/mattrics-config.php';
+        $parent = dirname($cursor);
+        if ($parent === $cursor) {
+            break;
+        }
+        $cursor = $parent;
+    }
+
+    $candidates = array_values(array_unique(array_filter($candidates)));
 
     foreach ($candidates as $candidate) {
         if (is_file($candidate)) {
@@ -30,7 +45,7 @@ function mattrics_load_config(): array
     }
 
     mattrics_send_json([
-        'error' => 'Server config missing. Create private/config.php outside the public docroot.',
+        'error' => 'Server config missing. Create a private config outside the public docroot or set MATTRICS_CONFIG.',
     ], 500);
 }
 

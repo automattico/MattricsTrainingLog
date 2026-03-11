@@ -93,7 +93,7 @@ Rows without `Date` or `Type` are ignored by the app.
 
 - The app has no build step.
 - Only the contents of [`public`](/Users/mwieland/dev/MattricsTrainingLog/public) should be web-served.
-- Secrets belong in [`private/config.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php) outside the docroot.
+- Secrets belong in a server-only config copied from [`private/config.example.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php), ideally outside `public_html`.
 - The AI workout feature is optional.
 
 ## Documentation

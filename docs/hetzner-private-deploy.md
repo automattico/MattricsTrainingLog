@@ -13,17 +13,30 @@ This app is prepared for a private Hetzner Webhosting deployment with:
 
 Use a subdomain-specific folder such as:
 
-- docroot: `~/mattrics/public`
-- private config: `~/mattrics/private/config.php`
+- docroot: `~/public_html/mattrics/public`
+- private config: `~/mattrics-private/config.php`
 
-The important rule is simple: `public/` is the docroot, `private/` is not.
+If your account layout does not let you create folders above `public_html`, the fallback is:
+
+- docroot: `~/public_html/mattrics/public`
+- private config: `~/public_html/mattrics/private/config.php`
+
+The fallback still works, but it is weaker. If you must use it, add a deny-all `.htaccess` inside that private folder and never point any vhost at it.
+
+The important rule is simple: `public/` is the docroot, and the real config file should live outside any web-served path whenever possible.
 
 ## Files to upload
 
 Upload:
 
 - everything inside [`public`](/Users/mwieland/dev/MattricsTrainingLog/public)
-- [`private/config.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php) after copying it from the example and inserting real secrets
+- one real secret config file copied from [`private/config.example.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php)
+
+Accepted config locations are:
+
+- `~/mattrics-private/config.php`
+- `~/public_html/mattrics/private/config.php`
+- a path provided through the `MATTRICS_CONFIG` environment variable
 
 Do not upload as public web files:
 
