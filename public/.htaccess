@@ -5,6 +5,7 @@ RewriteCond %{HTTPS} !=on
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 <IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000"
   Header always set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex"
   Header always set Referrer-Policy "same-origin"
   Header always set X-Content-Type-Options "nosniff"
