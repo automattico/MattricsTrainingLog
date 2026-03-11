@@ -8,9 +8,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/main.css">
-<script src="config.js"></script>
 <script>
 window.MATTRICS_CONFIG = window.MATTRICS_CONFIG || {};
+if (window.location.protocol === "file:") {
+  document.write('<script src="config.js"><\\/script>');
+}
 </script>
 </head>
 <body>

@@ -36,7 +36,9 @@ set net:timeout 20
 mkdir -p "$SFTP_REMOTE_DIR"
 mkdir -p "$SFTP_REMOTE_DIR/api"
 mkdir -p "$SFTP_REMOTE_PRIVATE_DIR"
+rm -f "$SFTP_REMOTE_DIR/config.js"
 mirror --reverse --delete --verbose \
+  --exclude-glob config.js \
   --exclude-glob .htpasswd \
   --exclude-glob .well-known \
   public "$SFTP_REMOTE_DIR"
