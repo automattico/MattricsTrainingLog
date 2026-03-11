@@ -1295,7 +1295,7 @@ button { -webkit-tap-highlight-color: transparent; }
   .a-card-compact .a-card-top { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 920px) {
   .app-shell { width: min(100vw - 16px, 100%); margin: 12px auto 24px; }
   .site-header,
   .section-shell,
@@ -1330,13 +1330,18 @@ button { -webkit-tap-highlight-color: transparent; }
       "momentum";
   }
   .header-controls {
+    flex: 0 1 auto;
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
   .sessions-toolbar { flex-direction: column; }
+  .filter-row {
+    flex: 0 1 auto;
+  }
   .feed-display-tools { justify-content: flex-start; }
   .window-controls {
+    flex: 0 1 auto;
     align-items: stretch;
     min-height: 0;
     gap: 8px;
@@ -1345,10 +1350,10 @@ button { -webkit-tap-highlight-color: transparent; }
     flex-wrap: nowrap;
     overflow-x: auto;
     gap: 8px;
-    margin-inline: -2px;
-    padding: 2px 2px 6px;
+    padding: 2px 0 6px;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    scroll-padding-inline: 0;
   }
   .window-switcher::-webkit-scrollbar { display: none; }
   .window-option {
@@ -1366,12 +1371,21 @@ button { -webkit-tap-highlight-color: transparent; }
     text-align: left;
   }
   .header-actions {
-    justify-content: space-between;
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    align-items: center;
     gap: 8px;
   }
   .ai-top-btn {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     justify-content: center;
+    min-width: 0;
+    width: 100%;
+    padding-inline: 16px;
+  }
+  .refresh-btn {
+    justify-self: end;
   }
   .nav { gap: var(--space-1); padding: 8px; border-radius: 20px; }
   .nav-btn,
@@ -1387,9 +1401,9 @@ button { -webkit-tap-highlight-color: transparent; }
     align-items: stretch;
     gap: 8px;
     padding: 2px 2px 6px;
-    margin-inline: -2px;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    scroll-padding-inline: 0;
   }
   .filter-row::-webkit-scrollbar { display: none; }
   .filter-pill {
