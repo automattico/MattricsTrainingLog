@@ -33,7 +33,6 @@ if (window.location.protocol === "file:") {
     <div class="load-error-msg" id="errorMsg"></div>
     <div class="load-actions">
       <button class="retry-btn" onclick="fetchData()">Retry</button>
-      <button class="retry-btn" onclick="showSetupHelp()">Setup Instructions</button>
     </div>
   </div>
 </div>
@@ -154,19 +153,15 @@ if (window.location.protocol === "file:") {
       <button class="detail-close" onclick="closeDetail()" aria-label="Close session detail">×</button>
     </div>
     <div class="detail-body">
-      <div class="detail-metrics" id="detailMetrics"></div>
       <div class="detail-meta" id="detailMeta"></div>
-      <div class="detail-section" id="detailFactsSection">
-        <div class="detail-label">Session stats</div>
-        <div class="detail-facts" id="detailFacts"></div>
-      </div>
-      <div class="detail-section" id="detailWorkoutSection" style="display:none">
-        <div class="detail-label">Workout breakdown</div>
-        <div class="hevy-list" id="detailWorkoutList"></div>
-      </div>
       <div class="detail-section" id="detailNotesSection" style="display:none">
         <div class="detail-label">Notes</div>
         <div class="detail-note" id="detailNotes"></div>
+      </div>
+      <div class="detail-metrics" id="detailMetrics"></div>
+      <div class="detail-section" id="detailWorkoutSection" style="display:none">
+        <div class="detail-label">Workout breakdown</div>
+        <div class="hevy-list" id="detailWorkoutList"></div>
       </div>
     </div>
   </div>

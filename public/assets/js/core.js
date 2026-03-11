@@ -27,6 +27,16 @@
     Surfing: { icon: "🏄", color: "var(--surf)", label: "Surf" },
   };
 
+  Mattrics.MUSCLE_REGIONS = [
+    { key: "chest", label: "Chest", color: "var(--workout)" },
+    { key: "back", label: "Back", color: "var(--ride)" },
+    { key: "shoulders", label: "Shoulders", color: "var(--surf)" },
+    { key: "arms", label: "Arms", color: "var(--canoe)" },
+    { key: "core", label: "Core", color: "var(--yoga)" },
+    { key: "legs", label: "Legs", color: "var(--hike)" },
+    { key: "glutes", label: "Glutes", color: "var(--walk)" },
+  ];
+
   Mattrics.state = {
     allData: [],
     windowDays: 7,
@@ -198,40 +208,113 @@
     };
   };
 
-  Mattrics.getTrainingBalance = function getTrainingBalance(activities) {
-    const buckets = [
-      { label: "Endurance", color: "var(--run)", types: ["Run", "Ride", "Rowing"] },
-      { label: "Paddling", color: "var(--canoe)", types: ["Canoeing", "Canoe", "WaterSport"] },
-      { label: "Strength", color: "var(--lift)", types: ["WeightTraining", "Workout"] },
-      { label: "Recovery", color: "var(--yoga)", types: ["Yoga", "Walk"] },
-      { label: "Outdoors", color: "var(--hike)", types: ["Hike", "Surfing"] },
-    ].map((bucket) => ({
-      ...bucket,
-      count: activities.filter((activity) => bucket.types.includes(activity.Type)).length,
-    })).filter((bucket) => bucket.count > 0)
-      .sort((a, b) => b.count - a.count);
+  Mattrics.getMuscleLoadAnalysis = function getMuscleLoadAnalysis(activities) {
+    const regions = Object.fromEntries(
+      Mattrics.MUSCLE_REGIONS.map((region) => [region.key, { ...region, load: 0, hits: 0 }])
+    );
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const addLoad = (weights) => {
+      Object.entries(weights).forEach(([key, value]) => {
+        if (!regions[key] || !value) return;
+        regions[key].load += value;
+        regions[key].hits += 1;
+      });
+    };
+    const strengthFactor = (min) => clamp((min || 0) / 45, 0.85, 1.6);
+    const sportFactor = (min) => clamp((min || 0) / 60, 0.7, 1.45);
+    const normalized = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const exerciseMappings = [
+      { patterns: ["bench", "push up", "pushup", "chest fly", "pec deck", "dip"], weights: { chest: 1, shoulders: 0.45, arms: 0.35 } },
+      { patterns: ["incline press", "incline bench", "chest press"], weights: { chest: 0.95, shoulders: 0.5, arms: 0.35 } },
+      { patterns: ["row", "pulldown", "pull up", "pullup", "chin up", "chinup", "face pull"], weights: { back: 1, shoulders: 0.35, arms: 0.35 } },
+      { patterns: ["deadlift", "rdl", "romanian deadlift"], weights: { back: 0.8, legs: 0.65, glutes: 0.65, core: 0.45 } },
+      { patterns: ["shoulder press", "overhead press", "arnold press", "lateral raise", "front raise", "rear delt"], weights: { shoulders: 1, arms: 0.35, chest: 0.2 } },
+      { patterns: ["curl", "triceps", "pushdown", "skull crusher", "hammer"], weights: { arms: 1, shoulders: 0.15 } },
+      { patterns: ["plank", "crunch", "twist", "dead bug", "hollow", "sit up", "leg raise", "russian twist"], weights: { core: 1 } },
+      { patterns: ["hip thrust", "glute bridge"], weights: { glutes: 1, legs: 0.35, core: 0.2 } },
+      { patterns: ["squat", "lunge", "step up", "stepup", "calf raise", "leg press", "split squat"], weights: { legs: 0.9, glutes: 0.45, core: 0.25 } },
+    ];
+    const typeMappings = {
+      Run: { legs: 0.95, glutes: 0.4, core: 0.3 },
+      Walk: { legs: 0.55, glutes: 0.2, core: 0.15 },
+      Hike: { legs: 0.95, glutes: 0.45, core: 0.3 },
+      Ride: { legs: 0.9, glutes: 0.35, core: 0.25 },
+      Canoeing: { back: 0.8, shoulders: 0.75, arms: 0.65, core: 0.35 },
+      Canoe: { back: 0.8, shoulders: 0.75, arms: 0.65, core: 0.35 },
+      WaterSport: { back: 0.85, shoulders: 0.8, arms: 0.7, core: 0.35 },
+      Rowing: { back: 0.95, legs: 0.55, glutes: 0.3, arms: 0.45, core: 0.35 },
+      Yoga: { core: 0.65, shoulders: 0.35, legs: 0.22, glutes: 0.18, back: 0.2 },
+      Surfing: { core: 0.8, shoulders: 0.7, back: 0.45, legs: 0.18, glutes: 0.14 },
+      WeightTraining: { chest: 0.45, back: 0.45, shoulders: 0.45, arms: 0.4, core: 0.35, legs: 0.3, glutes: 0.3 },
+      Workout: { chest: 0.45, back: 0.45, shoulders: 0.45, arms: 0.4, core: 0.35, legs: 0.3, glutes: 0.3 },
+    };
 
-    if (!buckets.length) {
+    activities.forEach((activity) => {
+      const min = parseFloat(activity["Duration (min)"]) || 0;
+      const type = activity.Type;
+      const hevy = Mattrics.parseHevyDescription(activity.Description || "");
+
+      if (hevy && hevy.length) {
+        const factor = strengthFactor(min);
+        let matchedExercise = false;
+        hevy.forEach((exercise) => {
+          const name = normalized(exercise.name);
+          const match = exerciseMappings.find((mapping) => mapping.patterns.some((pattern) => name.includes(pattern)));
+          if (!match) return;
+          matchedExercise = true;
+          const scaled = Object.fromEntries(
+            Object.entries(match.weights).map(([key, value]) => [key, value * factor])
+          );
+          addLoad(scaled);
+        });
+        if (matchedExercise) return;
+      }
+
+      const base = typeMappings[type];
+      if (!base) return;
+      const factor = ["WeightTraining", "Workout"].includes(type) ? strengthFactor(min) : sportFactor(min);
+      addLoad(Object.fromEntries(Object.entries(base).map(([key, value]) => [key, value * factor])));
+    });
+
+    const ranked = Object.values(regions).sort((a, b) => b.load - a.load);
+    const maxLoad = ranked[0]?.load || 0;
+    const totalLoad = ranked.reduce((sum, region) => sum + region.load, 0);
+
+    if (!maxLoad) {
       return {
-        buckets: [],
-        dominant: null,
-        summary: "No clear training shape yet.",
-        detail: "Add a few sessions to see how this window balances out.",
+        regions: ranked.map((region) => ({ ...region, pct: 0, share: 0, hitLabel: "0 hits" })),
+        strongest: [],
+        weakest: ranked,
+        summary: "No worked-body signal yet",
+        detail: "Add more sessions to map which regions are carrying the work.",
       };
     }
 
-    const dominant = buckets[0];
-    const share = dominant.count / activities.length;
-    const summary = share >= 0.55
-      ? `${dominant.label}-heavy window`
-      : share >= 0.4
-        ? `${dominant.label} leads the mix`
-        : "Well balanced mix";
-    const detail = share >= 0.55
-      ? `${Math.round(share * 100)}% of sessions landed in ${dominant.label.toLowerCase()}.`
-      : `${buckets.length} training modes showed up in this window.`;
+    const withMetrics = ranked.map((region) => ({
+      ...region,
+      pct: Math.round((region.load / maxLoad) * 100),
+      share: totalLoad ? region.load / totalLoad : 0,
+      hitLabel: `${region.hits} hit${region.hits === 1 ? "" : "s"}`,
+    }));
+    const strongest = withMetrics.filter((region) => region.load >= maxLoad * 0.8);
+    const minNonZero = withMetrics.filter((region) => region.load > 0).slice(-1)[0]?.load || 0;
+    const weakest = minNonZero
+      ? withMetrics.filter((region) => region.load === minNonZero || region.load === 0)
+      : withMetrics;
+    const strongestLabel = strongest.slice(0, 2).map((region) => region.label).join(" + ");
+    const weakestLabel = weakest.filter((region) => region.load === 0).length
+      ? weakest.filter((region) => region.load === 0).slice(0, 2).map((region) => region.label).join(" + ")
+      : weakest.slice(0, 2).map((region) => region.label).join(" + ");
 
-    return { buckets, dominant, summary, detail };
+    return {
+      regions: withMetrics,
+      strongest,
+      weakest,
+      summary: strongest.length > 1 ? `${strongestLabel} carried the work` : `${strongest[0].label} took the load`,
+      detail: weakest.some((region) => region.load === 0)
+        ? `${weakestLabel} were barely touched.`
+        : `${weakestLabel} got the least work.`,
+    };
   };
 
   Mattrics.getOverviewMetrics = function getOverviewMetrics(activities) {
@@ -239,17 +322,25 @@
     const totalMin = activities.reduce((sum, activity) => sum + (parseFloat(activity["Duration (min)"]) || 0), 0);
     const active = Mattrics.getActiveDayStats(activities);
     const mix = Mattrics.getActivityMix(activities);
-    const balance = Mattrics.getTrainingBalance(activities);
+    const muscle = Mattrics.getMuscleLoadAnalysis(activities);
     const avgSessionMin = activities.length ? totalMin / activities.length : 0;
-    const avgActiveDayMin = active.activeDays ? totalMin / active.activeDays : 0;
+    const longestSessionMin = activities.reduce((max, activity) => Math.max(max, parseFloat(activity["Duration (min)"]) || 0), 0);
+    const byDay = {};
     const byMonth = {};
 
     activities.forEach((activity) => {
+      const day = activity.Date.slice(0, 10);
       const month = activity.Date.slice(0, 7);
+      byDay[day] = (byDay[day] || 0) + 1;
       byMonth[month] = (byMonth[month] || 0) + 1;
     });
 
+    const multiSessionDays = Object.values(byDay).filter((count) => count > 1).length;
     const bestMonth = Object.entries(byMonth).sort((a, b) => b[1] - a[1])[0] || null;
+    const windowDays = active.days.length
+      ? Math.max(1, Math.round((new Date(active.days[active.days.length - 1]) - new Date(active.days[0])) / 86400000) + 1)
+      : 0;
+    const weeklyAverageMin = windowDays ? (totalMin / windowDays) * 7 : 0;
     const distanceTypes = [];
     if (activities.some((activity) => ["Run"].includes(activity.Type) && parseFloat(activity["Distance (km)"]) > 0)) distanceTypes.push("run");
     if (activities.some((activity) => ["Canoeing", "Canoe", "WaterSport", "Rowing"].includes(activity.Type) && parseFloat(activity["Distance (km)"]) > 0)) distanceTypes.push("paddle");
@@ -260,10 +351,12 @@
       totalKm,
       totalMin,
       avgSessionMin,
-      avgActiveDayMin,
+      weeklyAverageMin,
+      longestSessionMin,
+      multiSessionDays,
       ...active,
       mix,
-      balance,
+      muscle,
       bestMonth,
       distanceSummary: totalKm > 0 ? `${totalKm.toFixed(0)} km across ${distanceTypes.slice(0, 2).join(" + ") || "distance work"}` : "",
     };

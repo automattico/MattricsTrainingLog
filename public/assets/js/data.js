@@ -23,11 +23,6 @@
     requestAnimationFrame(() => document.getElementById("app").classList.add("visible"));
   };
 
-  M.showSetupHelp = function showSetupHelp() {
-    document.getElementById("errorMsg").textContent =
-      "SETUP STEPS:\n\n1. Configure private/config.php on the server\n2. Add your Apps Script URL and shared sheet token there\n3. Point the site at api/data.php\n4. For local file mode, set MATTRICS_CONFIG.SHEET_URL and MATTRICS_CONFIG.SHEET_TOKEN\n5. Keep Anthropic only in private/config.php";
-  };
-
   M.fetchData = async function fetchData() {
     M.showLoading();
     let sourceUrl = M.DATA_URL || M.SHEET_URL;
@@ -115,7 +110,6 @@
   M.renderHeader = function renderHeader(data) {
     const summary = M.getOverviewMetrics(data);
     const recentItems = data.slice(0, 5);
-    const sessionsPerDay = summary.activeDays ? (summary.totalSessions / summary.activeDays).toFixed(1) : "0.0";
     const donutStops = [];
     let offset = 0;
     summary.mix.segments.forEach((segment) => {
@@ -136,14 +130,14 @@
       <article class="overview-card overview-kpi overview-sessions">
         <div class="overview-label">Sessions</div>
         <div class="overview-value">${summary.totalSessions}</div>
-        <div class="overview-meta">${summary.activeDays} active day${summary.activeDays === 1 ? "" : "s"} · ${sessionsPerDay}/day</div>
-        <div class="overview-foot">${summary.totalSessions ? `${summary.maxStreak} day best streak` : "No activity yet"}</div>
+        <div class="overview-meta">${summary.activeDays} active day${summary.activeDays === 1 ? "" : "s"} in this window</div>
+        <div class="overview-foot">${summary.totalSessions ? `${summary.maxStreak} day best streak${summary.multiSessionDays ? ` · ${summary.multiSessionDays} double-session day${summary.multiSessionDays === 1 ? "" : "s"}` : ""}` : "No activity yet"}</div>
       </article>
       <article class="overview-card overview-kpi overview-time">
         <div class="overview-label">Time</div>
         <div class="overview-value">${summary.totalMin ? M.fmt(summary.totalMin) : "0h"}</div>
         <div class="overview-meta">${summary.avgSessionMin ? `${M.fmt(summary.avgSessionMin)} avg session` : "No duration logged"}</div>
-        <div class="overview-foot">${summary.avgActiveDayMin ? `${M.fmt(summary.avgActiveDayMin)} per active day` : ""}</div>
+        <div class="overview-foot">${summary.weeklyAverageMin ? `${M.fmt(summary.weeklyAverageMin)} per week · ${M.fmt(summary.longestSessionMin)} longest` : ""}</div>
       </article>
       <article class="overview-card overview-chart">
         <div class="overview-label">Activity mix</div>
@@ -170,15 +164,26 @@
         ` : `<div class="overview-empty">No activities in this window yet.</div>`}
       </article>
       <article class="overview-card overview-insight overview-balance">
-        <div class="overview-label">Training balance</div>
-        <div class="overview-insight-title">${summary.balance.summary}</div>
-        <div class="overview-meta">${summary.balance.detail}</div>
-        <div class="overview-chip-row">
-          ${summary.balance.buckets.slice(0, 3).map((bucket) => `
-            <span class="overview-chip" style="--chip-color:${bucket.color}">${bucket.label} ${bucket.count}</span>
-          `).join("")}
-        </div>
-        <div class="overview-foot">${summary.distanceSummary || ""}</div>
+        <div class="overview-label">Worked body</div>
+        <div class="overview-insight-title">${summary.muscle.summary}</div>
+        <div class="overview-meta">${summary.distanceSummary || "How recent sessions distributed load across the body."}</div>
+        ${summary.totalSessions ? `
+          <div class="overview-muscle-map">
+            ${summary.muscle.regions.map((region) => `
+              <div class="overview-muscle-row">
+                <div class="overview-muscle-main">
+                  <span class="overview-muscle-dot" style="--muscle-color:${region.color}"></span>
+                  <span class="overview-muscle-name">${region.label}</span>
+                </div>
+                <div class="overview-muscle-bar">
+                  <span class="overview-muscle-fill" style="--muscle-color:${region.color}; width:${region.pct}%"></span>
+                </div>
+                <div class="overview-muscle-meta">${region.hitLabel}</div>
+              </div>
+            `).join("")}
+          </div>
+        ` : `<div class="overview-empty overview-empty-compact">No body-load map in this window yet.</div>`}
+        <div class="overview-foot">${summary.muscle.detail}</div>
       </article>
       <article class="overview-card overview-insight overview-momentum">
         <div class="overview-label">Momentum</div>

@@ -9,9 +9,10 @@
   - ❗ important warning / user should pay attention
   - 🚀 deployed
   - 🔒 security-sensitive
-- After meaningful work, include a short status summary that explicitly covers:
+- After significant work, include a short status summary that explicitly covers:
   - Git working tree state
   - commit/push state
   - deploy state
+- Do not include a status summary after every message or routine answer. Reserve it for substantial implementation, debugging, verification, deploy, or git workflow progress.
 - Keep status summaries concise and easy to scan.
 - When something is still pending, say so explicitly rather than implying it is complete.

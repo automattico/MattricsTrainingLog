@@ -8,19 +8,22 @@
     if (!activity) return;
 
     const cfg = M.tc(activity.Type);
-    const metrics = M.cardMetrics(activity);
     const facts = M.detailFacts(activity);
     const notes = (activity.Description || "").trim();
     const hevy = M.parseHevyDescription(notes);
     const exerciseCount = hevy ? hevy.length : 0;
     const setCount = hevy ? hevy.reduce((sum, exercise) => sum + exercise.sets.length, 0) : 0;
     const deviceName = (activity["Device Name"] || "").trim();
+    const metricFacts = facts.filter((fact) => fact.lab !== "Device");
     const summaryItems = [];
 
-    if (metrics[0]) summaryItems.push(metrics[0]);
     if (exerciseCount) summaryItems.push({ val: `${exerciseCount}`, lab: "Exercises", color: cfg.color });
     if (setCount) summaryItems.push({ val: `${setCount}`, lab: "Sets", color: cfg.color });
-    if (!summaryItems.length) summaryItems.push(...metrics.slice(0, 3));
+    summaryItems.push(...metricFacts.map((fact, index) => ({
+      val: fact.val,
+      lab: fact.lab,
+      color: index === 0 ? cfg.color : "var(--text)",
+    })));
 
     document.getElementById("detailKicker").innerHTML = `
       <span class="detail-kicker-icon" aria-hidden="true">${cfg.icon}</span>
@@ -32,20 +35,13 @@
     document.getElementById("detailDate").textContent = "";
     document.getElementById("detailMetrics").innerHTML = summaryItems.map((metric) => `
       <div class="metric">
-        <div class="metric-val" style="color:${metric.color}">${metric.val}</div>
+        <div class="metric-val" style="color:${metric.color}">${M.esc(metric.val)}</div>
         <div class="metric-lab">${metric.lab}</div>
       </div>`).join("");
     document.getElementById("detailMeta").textContent = deviceName ? `Tracked with ${deviceName}` : "";
     document.getElementById("detailMeta").style.display = deviceName ? "block" : "none";
-    document.getElementById("detailFacts").innerHTML = facts
-      .filter((fact) => !["Duration", "Device"].includes(fact.lab))
-      .map((fact) => `
-      <div class="detail-fact">
-        <div class="detail-fact-val">${M.esc(fact.val)}</div>
-        <div class="detail-fact-lab">${M.esc(fact.lab)}</div>
-      </div>`).join("");
-    document.getElementById("detailFactsSection").style.display =
-      facts.some((fact) => !["Duration", "Device"].includes(fact.lab)) ? "block" : "none";
+    document.getElementById("detailFacts").innerHTML = "";
+    document.getElementById("detailFactsSection").style.display = "none";
 
     if (hevy && hevy.length) {
       document.getElementById("detailWorkoutList").innerHTML = hevy.map((exercise) => `

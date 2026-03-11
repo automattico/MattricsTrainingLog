@@ -104,11 +104,9 @@ function mattrics_fetch_json(string $url, array $headers = [], string $method = 
         $responseBody = curl_exec($handle);
         if ($responseBody === false) {
             $message = curl_error($handle) ?: 'Upstream request failed.';
-            curl_close($handle);
             mattrics_send_json(['error' => $message], 502);
         }
         $status = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
-        curl_close($handle);
     } else {
         $context = stream_context_create([
             'http' => [
