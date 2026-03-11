@@ -1,6 +1,7 @@
 # Secrets — never commit these
 config.js
 private/config.php
+.env.local
 
 # OS
 .DS_Store
