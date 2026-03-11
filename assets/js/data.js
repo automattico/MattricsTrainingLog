@@ -87,7 +87,6 @@
     M.renderHeader(windowed);
     M.renderFilters(windowed);
     M.renderFeed(windowed);
-    M.renderInsights(windowed);
     M.renderAiPreview();
   };
 
@@ -110,23 +109,101 @@
   };
 
   M.renderHeader = function renderHeader(data) {
-    const km = data.reduce((sum, activity) => sum + (parseFloat(activity["Distance (km)"]) || 0), 0);
-    const min = data.reduce((sum, activity) => sum + (parseFloat(activity["Duration (min)"]) || 0), 0);
-    document.getElementById("headerStats").innerHTML = `
-      <article class="hstat">
-        <div class="hstat-lab">Sessions</div>
-        <div class="hstat-val">${data.length}</div>
-        <div class="hstat-meta">${data.length ? "Logged inside the current review window." : "No sessions logged in the current window."}</div>
+    const summary = M.getOverviewMetrics(data);
+    const recentItems = data.slice(0, 5);
+    const sessionsPerDay = summary.activeDays ? (summary.totalSessions / summary.activeDays).toFixed(1) : "0.0";
+    const donutStops = [];
+    let offset = 0;
+    summary.mix.segments.forEach((segment) => {
+      const next = offset + (segment.pct * 100);
+      donutStops.push(`${segment.color} ${offset.toFixed(1)}% ${next.toFixed(1)}%`);
+      offset = next;
+    });
+    const donutStyle = summary.mix.segments.length
+      ? `conic-gradient(${donutStops.join(", ")})`
+      : "conic-gradient(rgba(255,255,255,0.08) 0 100%)";
+    const dominant = summary.mix.dominant;
+    const bestMonth = summary.bestMonth
+      ? new Date(`${summary.bestMonth[0]}-01`).toLocaleDateString("en-GB", { month: "short", year: "numeric" })
+      : "";
+    const recentDate = summary.lastDate ? M.fmtDate(summary.lastDate) : "";
+
+    document.getElementById("dashboardOverview").innerHTML = `
+      <article class="overview-card overview-kpi overview-sessions">
+        <div class="overview-label">Sessions</div>
+        <div class="overview-value">${summary.totalSessions}</div>
+        <div class="overview-meta">${summary.activeDays} active day${summary.activeDays === 1 ? "" : "s"} · ${sessionsPerDay}/day</div>
+        <div class="overview-foot">${summary.totalSessions ? `${summary.maxStreak} day best streak` : "No activity yet"}</div>
       </article>
-      <article class="hstat">
-        <div class="hstat-lab">Distance</div>
-        <div class="hstat-val">${km.toFixed(0)} km</div>
-        <div class="hstat-meta">${km ? "Total distance across your distance-based sessions." : "No tracked distance in this window."}</div>
+      <article class="overview-card overview-kpi overview-time">
+        <div class="overview-label">Time</div>
+        <div class="overview-value">${summary.totalMin ? M.fmt(summary.totalMin) : "0h"}</div>
+        <div class="overview-meta">${summary.avgSessionMin ? `${M.fmt(summary.avgSessionMin)} avg session` : "No duration logged"}</div>
+        <div class="overview-foot">${summary.avgActiveDayMin ? `${M.fmt(summary.avgActiveDayMin)} per active day` : ""}</div>
       </article>
-      <article class="hstat">
-        <div class="hstat-lab">Time</div>
-        <div class="hstat-val">${Math.round(min / 60)} h</div>
-        <div class="hstat-meta">${min ? `${M.fmt(min)} of recorded work.` : "No recorded duration in this window."}</div>
+      <article class="overview-card overview-chart">
+        <div class="overview-label">Activity mix</div>
+        ${summary.totalSessions ? `
+          <div class="overview-chart-shell">
+            <div class="overview-donut" style="--donut-fill:${donutStyle}">
+              <div class="overview-donut-center">
+                <div class="overview-donut-kicker">${dominant ? dominant.label : "No mix"}</div>
+                <div class="overview-donut-value">${dominant ? dominant.percentLabel : "0%"}</div>
+              </div>
+            </div>
+            <div class="overview-legend">
+              ${summary.mix.segments.map((segment) => `
+                <div class="overview-legend-item">
+                  <div class="overview-legend-main">
+                    <span class="overview-legend-dot" style="--legend-color:${segment.color}"></span>
+                    <span>${segment.icon} ${segment.label}</span>
+                  </div>
+                  <div class="overview-legend-meta">${segment.count} · ${segment.percentLabel}</div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        ` : `<div class="overview-empty">No activities in this window yet.</div>`}
+      </article>
+      <article class="overview-card overview-insight overview-balance">
+        <div class="overview-label">Training balance</div>
+        <div class="overview-insight-title">${summary.balance.summary}</div>
+        <div class="overview-meta">${summary.balance.detail}</div>
+        <div class="overview-chip-row">
+          ${summary.balance.buckets.slice(0, 3).map((bucket) => `
+            <span class="overview-chip" style="--chip-color:${bucket.color}">${bucket.label} ${bucket.count}</span>
+          `).join("")}
+        </div>
+        <div class="overview-foot">${summary.distanceSummary || ""}</div>
+      </article>
+      <article class="overview-card overview-insight overview-momentum">
+        <div class="overview-label">Momentum</div>
+        <div class="overview-insight-title">${summary.maxStreak || 0} day${summary.maxStreak === 1 ? "" : "s"} in a row</div>
+        <div class="overview-meta">${summary.activeDays} active day${summary.activeDays === 1 ? "" : "s"}${recentDate ? ` · latest ${recentDate}` : ""}</div>
+        <div class="overview-chip-row">
+          ${bestMonth ? `<span class="overview-chip">${bestMonth} peak</span>` : ""}
+          ${dominant ? `<span class="overview-chip">${dominant.label} leads</span>` : ""}
+        </div>
+        <div class="overview-foot">${bestMonth ? `${summary.bestMonth[1]} sessions in peak month` : ""}</div>
+      </article>
+      <article class="overview-card overview-insight overview-recent">
+        <div class="overview-label">Recent sessions</div>
+        ${recentItems.length ? `
+          <div class="overview-recent-list">
+            ${recentItems.map((activity) => {
+              const cfg = M.tc(activity.Type);
+              const primary = (M.cardMetrics(activity)[0] || {}).val || "";
+              const activityId = M.escAttr(activity["Activity ID raw"] || activity["Activity ID"] || activity.Name || "");
+              return `<button class="overview-recent-link" onclick="openDetail('${activityId}')" aria-label="Open details for ${M.escAttr(activity.Name || cfg.label)}">
+                <span class="overview-recent-main">
+                  <span class="overview-recent-icon" aria-hidden="true">${cfg.icon}</span>
+                  <span class="overview-recent-name">${M.esc(activity.Name || cfg.label)}</span>
+                </span>
+                <span class="overview-recent-meta">${M.fmtDate(activity.Date)}${primary ? ` · ${primary}` : ""}</span>
+              </button>`;
+            }).join("")}
+          </div>
+        ` : `<div class="overview-empty overview-empty-compact">No sessions in this window yet.</div>`}
       </article>
     `;
   };
@@ -178,7 +255,7 @@
     document.querySelectorAll(".nav-btn").forEach((button) => button.classList.remove("active"));
     document.querySelectorAll(".ai-top-btn").forEach((button) => button.classList.remove("active"));
     document.getElementById(`view-${id}`).classList.add("active");
-    if (el) el.classList.add("active");
+    if (el && el.classList.contains("nav-btn")) el.classList.add("active");
     if (id === "ai") {
       document.querySelectorAll(".ai-top-btn").forEach((button) => button.classList.add("active"));
     }

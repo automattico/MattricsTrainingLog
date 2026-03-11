@@ -1,28 +1,27 @@
 (function () {
   const M = window.Mattrics;
 
-  M.renderFeed = function renderFeed(data) {
-    const activities = data || M.applyTypeFilter(M.getWindowedData());
-    if (M.state.feedMode === "grouped") {
-      M.renderTimeline(activities, "cardList");
-      return;
-    }
+  M.renderActivityCards = function renderActivityCards(targetId, activities, options = {}) {
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    const { compact = false } = options;
     if (!activities.length) {
-      document.getElementById("cardList").innerHTML =
+      target.innerHTML =
         '<div class="empty-window"><div class="empty-window-icon">🏖️</div>No activities in this window.<br>Try a wider time range.</div>';
       return;
     }
 
-    document.getElementById("cardList").innerHTML = activities.map((activity) => {
+    target.innerHTML = activities.map((activity) => {
       const cfg = M.tc(activity.Type);
       const metrics = M.cardMetrics(activity);
       const primary = metrics[0] || null;
-      const secondary = metrics.slice(1, 4);
+      const secondary = metrics.slice(1, compact ? 3 : 4);
       const desc = (activity.Description || "").trim();
-      const cleanDesc = desc.startsWith("Logged with Hevy") ? "" : (desc.length > 240 ? `${desc.slice(0, 240)}…` : desc);
+      const cleanDesc = desc.startsWith("Logged with Hevy") ? "" : (desc.length > (compact ? 120 : 240) ? `${desc.slice(0, compact ? 120 : 240)}…` : desc);
       const activityId = M.escAttr(activity["Activity ID raw"] || activity["Activity ID"] || activity.Name || "");
 
-      return `<article class="a-card" style="--card-accent:${cfg.color}">
+      return `<article class="a-card ${compact ? "a-card-compact" : ""}" style="--card-accent:${cfg.color}">
         <button class="a-card-body a-card-btn" onclick="openDetail('${activityId}')" aria-label="Open details for ${M.escAttr(activity.Name || cfg.label)}">
           <div class="a-card-top">
             <div class="a-card-main">
@@ -49,5 +48,14 @@
         </button>
       </article>`;
     }).join("");
+  };
+  M.renderFeed = function renderFeed(data) {
+    const activities = data || M.applyTypeFilter(M.getWindowedData());
+    if (M.state.feedMode === "grouped") {
+      M.renderTimeline(activities, "cardList");
+      return;
+    }
+
+    M.renderActivityCards("cardList", activities);
   };
 }());

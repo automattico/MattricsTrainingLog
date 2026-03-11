@@ -121,6 +121,146 @@
     return Mattrics.state.allData.filter((activity) => new Date(activity.Date) >= cutoff);
   };
 
+  Mattrics.getActivityMix = function getActivityMix(activities, limit = 5) {
+    const counts = {};
+    activities.forEach((activity) => {
+      const type = Mattrics.canonicalType(activity.Type);
+      counts[type] = (counts[type] || 0) + 1;
+    });
+
+    const sorted = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([type, count]) => {
+        const cfg = Mattrics.tc(type);
+        return {
+          type,
+          label: cfg.label,
+          icon: cfg.icon,
+          color: cfg.color,
+          count,
+        };
+      });
+
+    const visible = sorted.slice(0, limit);
+    const otherCount = sorted.slice(limit).reduce((sum, item) => sum + item.count, 0);
+    if (otherCount) {
+      visible.push({
+        type: "Other",
+        label: "Other",
+        icon: "•",
+        color: "var(--muted)",
+        count: otherCount,
+      });
+    }
+
+    const total = activities.length || 1;
+    const segments = visible.map((item) => ({
+      ...item,
+      pct: item.count / total,
+      percentLabel: `${Math.round(item.count / total * 100)}%`,
+    }));
+
+    return {
+      total: activities.length,
+      segments,
+      dominant: segments[0] || null,
+      counts,
+    };
+  };
+
+  Mattrics.getActiveDayStats = function getActiveDayStats(activities) {
+    const days = [...new Set(activities.map((activity) => activity.Date.slice(0, 10)))].sort();
+    if (!days.length) {
+      return { activeDays: 0, maxStreak: 0, lastDate: "", days: [] };
+    }
+
+    let maxStreak = 1;
+    let currentStreak = 1;
+    for (let i = 1; i < days.length; i += 1) {
+      const diff = (new Date(days[i]) - new Date(days[i - 1])) / 86400000;
+      currentStreak = diff === 1 ? currentStreak + 1 : 1;
+      if (currentStreak > maxStreak) maxStreak = currentStreak;
+    }
+
+    return {
+      activeDays: days.length,
+      maxStreak,
+      lastDate: days[days.length - 1],
+      days,
+    };
+  };
+
+  Mattrics.getTrainingBalance = function getTrainingBalance(activities) {
+    const buckets = [
+      { label: "Endurance", color: "var(--run)", types: ["Run", "Ride", "Rowing"] },
+      { label: "Paddling", color: "var(--canoe)", types: ["Canoeing", "Canoe", "WaterSport"] },
+      { label: "Strength", color: "var(--lift)", types: ["WeightTraining", "Workout"] },
+      { label: "Recovery", color: "var(--yoga)", types: ["Yoga", "Walk"] },
+      { label: "Outdoors", color: "var(--hike)", types: ["Hike", "Surfing"] },
+    ].map((bucket) => ({
+      ...bucket,
+      count: activities.filter((activity) => bucket.types.includes(activity.Type)).length,
+    })).filter((bucket) => bucket.count > 0)
+      .sort((a, b) => b.count - a.count);
+
+    if (!buckets.length) {
+      return {
+        buckets: [],
+        dominant: null,
+        summary: "No clear training shape yet.",
+        detail: "Add a few sessions to see how this window balances out.",
+      };
+    }
+
+    const dominant = buckets[0];
+    const share = dominant.count / activities.length;
+    const summary = share >= 0.55
+      ? `${dominant.label}-heavy window`
+      : share >= 0.4
+        ? `${dominant.label} leads the mix`
+        : "Well balanced mix";
+    const detail = share >= 0.55
+      ? `${Math.round(share * 100)}% of sessions landed in ${dominant.label.toLowerCase()}.`
+      : `${buckets.length} training modes showed up in this window.`;
+
+    return { buckets, dominant, summary, detail };
+  };
+
+  Mattrics.getOverviewMetrics = function getOverviewMetrics(activities) {
+    const totalKm = activities.reduce((sum, activity) => sum + (parseFloat(activity["Distance (km)"]) || 0), 0);
+    const totalMin = activities.reduce((sum, activity) => sum + (parseFloat(activity["Duration (min)"]) || 0), 0);
+    const active = Mattrics.getActiveDayStats(activities);
+    const mix = Mattrics.getActivityMix(activities);
+    const balance = Mattrics.getTrainingBalance(activities);
+    const avgSessionMin = activities.length ? totalMin / activities.length : 0;
+    const avgActiveDayMin = active.activeDays ? totalMin / active.activeDays : 0;
+    const byMonth = {};
+
+    activities.forEach((activity) => {
+      const month = activity.Date.slice(0, 7);
+      byMonth[month] = (byMonth[month] || 0) + 1;
+    });
+
+    const bestMonth = Object.entries(byMonth).sort((a, b) => b[1] - a[1])[0] || null;
+    const distanceTypes = [];
+    if (activities.some((activity) => ["Run"].includes(activity.Type) && parseFloat(activity["Distance (km)"]) > 0)) distanceTypes.push("run");
+    if (activities.some((activity) => ["Canoeing", "Canoe", "WaterSport", "Rowing"].includes(activity.Type) && parseFloat(activity["Distance (km)"]) > 0)) distanceTypes.push("paddle");
+    if (activities.some((activity) => ["Hike", "Walk", "Ride"].includes(activity.Type) && parseFloat(activity["Distance (km)"]) > 0)) distanceTypes.push("outdoor");
+
+    return {
+      totalSessions: activities.length,
+      totalKm,
+      totalMin,
+      avgSessionMin,
+      avgActiveDayMin,
+      ...active,
+      mix,
+      balance,
+      bestMonth,
+      distanceSummary: totalKm > 0 ? `${totalKm.toFixed(0)} km across ${distanceTypes.slice(0, 2).join(" + ") || "distance work"}` : "",
+    };
+  };
+
   Mattrics.cardMetrics = function cardMetrics(activity) {
     const km = parseFloat(activity["Distance (km)"]) || 0;
     const min = parseFloat(activity["Duration (min)"]) || 0;
