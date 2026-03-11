@@ -25,20 +25,25 @@
 
   M.showSetupHelp = function showSetupHelp() {
     document.getElementById("errorMsg").textContent =
-      "SETUP STEPS:\n\n1. Open your Google Sheet\n2. Extensions -> Apps Script\n3. Paste the contents of Code.gs\n4. Deploy -> New Deployment -> Web App\n5. Execute as: Me | Access: Anyone\n6. Copy the Web App URL\n7. Copy config.example.js to config.js\n8. Set MATTRICS_CONFIG.SHEET_URL in config.js";
+      "SETUP STEPS:\n\n1. Open your Google Sheet\n2. Extensions -> Apps Script\n3. Paste the contents of Code.gs\n4. Deploy -> New Deployment -> Web App\n5. Execute as: Me | Access: Anyone\n6. Add MATTRICS_SHARED_SECRET in Script Properties\n7. Copy config.example.js to config.js\n8. Set MATTRICS_CONFIG.SHEET_URL and MATTRICS_CONFIG.SHEET_TOKEN in config.js";
   };
 
   M.fetchData = async function fetchData() {
     M.showLoading();
     if (!M.SHEET_URL || M.SHEET_URL === "PASTE_YOUR_WEB_APP_URL_HERE" || M.SHEET_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
       M.showError(
-        "No Sheet URL configured.\n\nCreate config.js next to dashboard.html by copying config.example.js, then set MATTRICS_CONFIG.SHEET_URL to your Google Apps Script Web App URL.\n\nSee README.md and apps-script/Code.gs for setup instructions."
+        "No Sheet URL configured.\n\nCreate config.js next to dashboard.html by copying config.example.js, then set MATTRICS_CONFIG.SHEET_URL and MATTRICS_CONFIG.SHEET_TOKEN.\n\nSee README.md and apps-script/Code.gs for setup instructions."
       );
       return;
     }
 
     try {
-      const res = await fetch(M.SHEET_URL, { redirect: "follow" });
+      const url = new URL(M.SHEET_URL);
+      if (M.SHEET_TOKEN) {
+        url.searchParams.set("key", M.SHEET_TOKEN);
+      }
+
+      const res = await fetch(url.toString(), { redirect: "follow" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
       let json;

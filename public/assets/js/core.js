@@ -6,6 +6,7 @@
   Mattrics.DATA_URL = config.DATA_URL || (isHttp ? "api/data.php" : "");
   Mattrics.AI_PROXY_URL = config.AI_PROXY_URL || (isHttp ? "api/ai.php" : "");
   Mattrics.SHEET_URL = config.SHEET_URL || "";
+  Mattrics.SHEET_TOKEN = config.SHEET_TOKEN || "";
   Mattrics.API_KEY = config.API_KEY || "";
   Mattrics.AI_ENABLED = typeof config.AI_ENABLED === "boolean"
     ? config.AI_ENABLED

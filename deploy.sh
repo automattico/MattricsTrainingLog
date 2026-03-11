@@ -36,7 +36,10 @@ set net:timeout 20
 mkdir -p "$SFTP_REMOTE_DIR"
 mkdir -p "$SFTP_REMOTE_DIR/api"
 mkdir -p "$SFTP_REMOTE_PRIVATE_DIR"
-mirror --reverse --delete --verbose public "$SFTP_REMOTE_DIR"
+mirror --reverse --delete --verbose \
+  --exclude-glob .htpasswd \
+  --exclude-glob .well-known \
+  public "$SFTP_REMOTE_DIR"
 put -O "$SFTP_REMOTE_PRIVATE_DIR" private/config.php
 bye
 EOF

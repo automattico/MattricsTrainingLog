@@ -25,21 +25,27 @@
 
   M.showSetupHelp = function showSetupHelp() {
     document.getElementById("errorMsg").textContent =
-      "SETUP STEPS:\n\n1. Configure private/config.php on the server\n2. Add your Apps Script URL and shared sheet token there\n3. Point the site at api/data.php\n4. Keep Anthropic only in private/config.php\n5. Open the app through HTTP(S), not file://";
+      "SETUP STEPS:\n\n1. Configure private/config.php on the server\n2. Add your Apps Script URL and shared sheet token there\n3. Point the site at api/data.php\n4. For local file mode, set MATTRICS_CONFIG.SHEET_URL and MATTRICS_CONFIG.SHEET_TOKEN\n5. Keep Anthropic only in private/config.php";
   };
 
   M.fetchData = async function fetchData() {
     M.showLoading();
-    const sourceUrl = M.DATA_URL || M.SHEET_URL;
+    let sourceUrl = M.DATA_URL || M.SHEET_URL;
 
     if (!sourceUrl || sourceUrl === "PASTE_YOUR_WEB_APP_URL_HERE" || sourceUrl === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
       M.showError(
-        "No data source configured.\n\nFor secure hosting, use api/data.php with private/config.php on the server. For local fallback, set MATTRICS_CONFIG.SHEET_URL manually.\n\nSee README.md and the Hetzner deploy guide."
+        "No data source configured.\n\nFor secure hosting, use api/data.php with private/config.php on the server. For local fallback, set MATTRICS_CONFIG.SHEET_URL and MATTRICS_CONFIG.SHEET_TOKEN.\n\nSee README.md and the Hetzner deploy guide."
       );
       return;
     }
 
     try {
+      if (!M.DATA_URL && M.SHEET_TOKEN) {
+        const url = new URL(sourceUrl);
+        url.searchParams.set("key", M.SHEET_TOKEN);
+        sourceUrl = url.toString();
+      }
+
       const res = await fetch(sourceUrl, { redirect: "follow", credentials: "same-origin" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();

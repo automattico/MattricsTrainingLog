@@ -2,6 +2,7 @@
   const Mattrics = window.Mattrics || {};
 
   Mattrics.SHEET_URL = (window.MATTRICS_CONFIG && window.MATTRICS_CONFIG.SHEET_URL) || "";
+  Mattrics.SHEET_TOKEN = (window.MATTRICS_CONFIG && window.MATTRICS_CONFIG.SHEET_TOKEN) || "";
   Mattrics.API_KEY = (window.MATTRICS_CONFIG && window.MATTRICS_CONFIG.API_KEY) || "";
 
   Mattrics.TYPES = {

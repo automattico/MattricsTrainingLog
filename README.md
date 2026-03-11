@@ -45,6 +45,11 @@ Fill in:
 - `sheet_token` with the shared secret expected by Apps Script
 - `anthropic_api_key` only if you want AI workout generation
 
+For local `file:///` use, keep using `config.js`, but now set both:
+
+- `MATTRICS_CONFIG.SHEET_URL`
+- `MATTRICS_CONFIG.SHEET_TOKEN`
+
 ### 2. Deploy the Google Apps Script
 
 The dashboard expects a JSON endpoint that returns your sheet rows. This repo includes one in [`apps-script/Code.gs`](/Users/mwieland/dev/MattricsTrainingLog/apps-script/Code.gs).
