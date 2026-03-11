@@ -1,0 +1,19 @@
+{
+  "name": "Mattrics Training Log",
+  "short_name": "Mattrics",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#09121d",
+  "background_color": "#09121d",
+  "display": "standalone"
+}

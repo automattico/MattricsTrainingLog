@@ -10,6 +10,14 @@ private/config.php
 .LSOverride
 Icon?
 Thumbs.db
+!public/icons/
+!public/icons/apple-touch-icon.png
+!public/icons/favicon-16x16.png
+!public/icons/favicon-32x32.png
+!public/icons/favicon-48x48.png
+!public/icons/favicon.svg
+!public/icons/icon-192.png
+!public/icons/icon-512.png
 
 # Editor
 .vscode/
