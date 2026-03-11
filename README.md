@@ -1,51 +1,51 @@
 # Mattrics Training Log
 
-Mattrics Training Log is a personal training dashboard built with plain HTML, CSS, and JavaScript. It loads activity data from a Google Sheet through a Google Apps Script web endpoint, shows recent training in time-windowed views, and can generate an AI workout suggestion from your recent history.
+Mattrics Training Log is a personal training dashboard built with plain HTML, CSS, JavaScript, and a small PHP proxy layer for private hosting. It loads activity data from a Google Sheet through a token-protected Google Apps Script endpoint, shows recent training in time-windowed views, and can generate an AI workout suggestion without exposing the Anthropic key to the browser.
 
 ## What the app does
 
-- Loads training rows from a Google Sheet JSON endpoint
+- Loads training rows from a server-side JSON proxy
 - Filters the dashboard by rolling windows such as 7 days, 14 days, 1 month, or all time
 - Shows feed and insights views for your recent activity
-- Generates an AI workout suggestion when an Anthropic API key is configured
+- Generates an AI workout suggestion through a server-side Anthropic proxy
 
 ## Tech stack
 
-- Vanilla HTML/CSS/JS
-- Google Apps Script for exposing sheet data as JSON
+- Vanilla HTML/CSS/JS frontend
+- PHP endpoints for private hosting
+- Google Apps Script for exposing sheet data as JSON behind a shared secret
 - Anthropic API for the AI workout feature
 
 ## Project structure
 
-- [`dashboard.html`](/Users/mwieland/dev/MattricsTrainingLog/dashboard.html) - main app entry point
-- [`config.example.js`](/Users/mwieland/dev/MattricsTrainingLog/config.example.js) - local config template
+- [`public/index.html`](/Users/mwieland/dev/MattricsTrainingLog/public/index.html) - deployable app entry point
+- [`public/api`](/Users/mwieland/dev/MattricsTrainingLog/public/api) - PHP data and AI proxy endpoints
+- [`private/config.example.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php) - server-only config template
 - [`apps-script/Code.gs`](/Users/mwieland/dev/MattricsTrainingLog/apps-script/Code.gs) - Google Apps Script endpoint
-- [`assets/js`](/Users/mwieland/dev/MattricsTrainingLog/assets/js) - app logic
-- [`assets/css/main.css`](/Users/mwieland/dev/MattricsTrainingLog/assets/css/main.css) - app styling
+- [`public/assets/js`](/Users/mwieland/dev/MattricsTrainingLog/public/assets/js) - app logic
+- [`public/assets/css/main.css`](/Users/mwieland/dev/MattricsTrainingLog/public/assets/css/main.css) - app styling
+- [`docs/hetzner-private-deploy.md`](/Users/mwieland/dev/MattricsTrainingLog/docs/hetzner-private-deploy.md) - secure Hetzner deployment guide
 - [`docs/strava-sync-architecture.md`](/Users/mwieland/dev/MattricsTrainingLog/docs/strava-sync-architecture.md) - sync and architecture notes
 
 ## Setup
 
-### 1. Create `config.js`
+### 1. Create `private/config.php`
 
-Copy the example config:
+Copy the example server config:
 
 ```bash
-cp config.example.js config.js
+cp private/config.example.php private/config.php
 ```
 
-`config.js` is local-only and should not be committed.
+`private/config.php` is local-only and should not be committed.
 
-### 2. Configure the data source
+Fill in:
 
-Edit `config.js` and set:
+- `sheet_url` with your deployed Apps Script URL
+- `sheet_token` with the shared secret expected by Apps Script
+- `anthropic_api_key` only if you want AI workout generation
 
-- `SHEET_URL` to your deployed Google Apps Script web app URL
-- `API_KEY` to your Anthropic API key if you want to use AI workout generation
-
-If you do not want AI workout generation yet, you can leave `API_KEY` empty.
-
-### 3. Deploy the Google Apps Script
+### 2. Deploy the Google Apps Script
 
 The dashboard expects a JSON endpoint that returns your sheet rows. This repo includes one in [`apps-script/Code.gs`](/Users/mwieland/dev/MattricsTrainingLog/apps-script/Code.gs).
 
@@ -56,21 +56,19 @@ Deployment steps:
 3. Replace the script contents with [`apps-script/Code.gs`](/Users/mwieland/dev/MattricsTrainingLog/apps-script/Code.gs).
 4. Deploy it as a Web App.
 5. Set execution to your account and access to `Anyone`.
-6. Copy the deployment URL into `MATTRICS_CONFIG.SHEET_URL` in `config.js`.
+6. In `Project Settings -> Script properties`, add `MATTRICS_SHARED_SECRET` with a long random token.
+7. Copy the deployment URL into `private/config.php` as `sheet_url`.
+8. Copy the same shared secret into `private/config.php` as `sheet_token`.
 
-### 4. Open the app
+### 3. Run locally through PHP
 
-Open [`dashboard.html`](/Users/mwieland/dev/MattricsTrainingLog/dashboard.html) directly in a browser.
-
-If your browser blocks requests from `file://` to the Apps Script endpoint, serve the folder locally instead of opening the file directly.
-
-Example:
+Serve the deployable `public/` directory instead of opening a local file:
 
 ```bash
-python3 -m http.server
+php -S localhost:8000 -t public
 ```
 
-Then open `http://localhost:8000/dashboard.html`.
+Then open `http://localhost:8000`.
 
 ## Data expectations
 
@@ -94,11 +92,13 @@ Rows without `Date` or `Type` are ignored by the app.
 ## Notes
 
 - The app has no build step.
-- `config.js` is read at runtime by [`dashboard.html`](/Users/mwieland/dev/MattricsTrainingLog/dashboard.html).
-- The AI workout feature is optional, but the dashboard itself requires a working `SHEET_URL`.
+- Only the contents of [`public`](/Users/mwieland/dev/MattricsTrainingLog/public) should be web-served.
+- Secrets belong in [`private/config.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php) outside the docroot.
+- The AI workout feature is optional.
 
 ## Documentation
 
+- Secure Hetzner deployment: [`docs/hetzner-private-deploy.md`](/Users/mwieland/dev/MattricsTrainingLog/docs/hetzner-private-deploy.md)
 - Architecture and sync notes: [`docs/strava-sync-architecture.md`](/Users/mwieland/dev/MattricsTrainingLog/docs/strava-sync-architecture.md)
 
 ## Author

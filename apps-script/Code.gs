@@ -9,11 +9,24 @@
 //   5. Type: Web App
 //   6. Execute as: Me
 //   7. Who has access: Anyone
-//   8. Click Deploy → Copy the Web App URL
-//   9. Paste that URL into config.js as MATTRICS_CONFIG.SHEET_URL
+//   8. In Project Settings -> Script Properties, add:
+//        MATTRICS_SHARED_SECRET = a long random token
+//   9. Click Deploy → Copy the Web App URL
+//  10. Store that URL and token only in private/config.php on your server
 // ─────────────────────────────────────────────────────────────
 
 function doGet(e) {
+  var sharedSecret = PropertiesService.getScriptProperties().getProperty("MATTRICS_SHARED_SECRET");
+  var requestSecret = e && e.parameter ? String(e.parameter.key || "") : "";
+
+  if (!sharedSecret) {
+    return jsonResponse({ error: "Missing MATTRICS_SHARED_SECRET script property." });
+  }
+
+  if (requestSecret !== sharedSecret) {
+    return jsonResponse({ error: "Unauthorized." });
+  }
+
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const data  = sheet.getDataRange().getValues();
 
