@@ -8,7 +8,6 @@
     openDetail: M.openDetail,
     setFilter: M.setFilter,
     setFeedMode: M.setFeedMode,
-    setGroup: M.setGroup,
     setWindow: M.setWindow,
     showSetupHelp: M.showSetupHelp,
     showView: M.showView,

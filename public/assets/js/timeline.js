@@ -49,8 +49,4 @@
         </div>`;
       }).join("");
   };
-
-  M.setGroup = function setGroup(group, el) {
-    M.setFeedMode(group, el);
-  };
 }());
