@@ -24,3 +24,8 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Shell and local tooling
+*.log
+*.tmp
+*.bak

@@ -1,0 +1,27 @@
+name: Site Checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Shell syntax
+        run: bash -n deploy.sh scripts/*.sh
+
+      - name: Predeploy guard
+        run: ./scripts/predeploy-guard.sh --check
+
+      - name: Production gate
+        run: ./scripts/prod-gate.sh
