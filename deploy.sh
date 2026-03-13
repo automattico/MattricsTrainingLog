@@ -37,9 +37,11 @@ trap 'rm -f "$tmp_file"' EXIT HUP INT TERM
 {
   lftp_base_settings
   lftp_auth_settings
-  printf '%s\n' "mkdir -p \"$SFTP_REMOTE_DIR\""
-  printf '%s\n' "mkdir -p \"$SFTP_REMOTE_DIR/api\""
-  printf '%s\n' "mkdir -p \"$SFTP_REMOTE_PRIVATE_DIR\""
+  printf '%s\n' "set cmd:fail-exit no"
+  printf '%s\n' "mkdir \"$SFTP_REMOTE_DIR\""
+  printf '%s\n' "mkdir \"$SFTP_REMOTE_DIR/api\""
+  printf '%s\n' "mkdir \"$SFTP_REMOTE_PRIVATE_DIR\""
+  printf '%s\n' "set cmd:fail-exit yes"
   printf '%s\n' "rm -f \"$SFTP_REMOTE_DIR/config.js\""
   printf '%s\n' "mirror --reverse --delete --verbose --exclude-glob config.js --exclude-glob .htpasswd --exclude-glob .well-known public \"$SFTP_REMOTE_DIR\""
   printf '%s\n' "put -O \"$SFTP_REMOTE_PRIVATE_DIR\" private/config.php"
