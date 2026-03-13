@@ -1,7 +1,8 @@
 #!/bin/sh
 set -eu
 
-PROJECT_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+COMMON_SH_PATH=${COMMON_SH_PATH:-$0}
+PROJECT_ROOT=$(CDPATH= cd -- "$(dirname -- "$COMMON_SH_PATH")/.." && pwd)
 
 load_env() {
   if [ -f "$PROJECT_ROOT/.env.local" ]; then
