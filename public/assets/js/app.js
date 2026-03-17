@@ -17,5 +17,11 @@
     if (event.key === "Escape") M.closeDetail();
   });
 
+  document.addEventListener("click", (event) => {
+    const trigger = event.target.closest("[data-activity-id]");
+    if (!trigger) return;
+    M.openDetail(trigger.dataset.activityId);
+  });
+
   M.fetchData();
 }());

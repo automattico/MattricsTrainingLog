@@ -19,10 +19,10 @@
       const secondary = metrics.slice(1, compact ? 3 : 4);
       const desc = (activity.Description || "").trim();
       const cleanDesc = desc.startsWith("Logged with Hevy") ? "" : (desc.length > (compact ? 120 : 240) ? `${desc.slice(0, compact ? 120 : 240)}…` : desc);
-      const activityId = M.escAttr(activity["Activity ID raw"] || activity["Activity ID"] || activity.Name || "");
+      const activityId = M.escAttr(M.getActivityId(activity));
 
       return `<article class="a-card ${compact ? "a-card-compact" : ""}" style="--card-accent:${cfg.color}">
-        <button class="a-card-body a-card-btn" onclick="openDetail('${activityId}')" aria-label="Open details for ${M.escAttr(activity.Name || cfg.label)}">
+        <button class="a-card-body a-card-btn" type="button" data-activity-id="${activityId}" aria-label="Open details for ${M.escAttr(activity.Name || cfg.label)}">
           <div class="a-card-top">
             <div class="a-card-main">
               <div class="a-card-type">

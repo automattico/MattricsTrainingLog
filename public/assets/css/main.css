@@ -1084,7 +1084,14 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 
 .tl-mini {
+  appearance: none;
   border: 1px solid rgba(255, 255, 255, 0.045);
+  border-radius: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  width: 100%;
   padding: 18px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.008)),

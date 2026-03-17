@@ -46,6 +46,32 @@
     recent: [],
   };
 
+  Mattrics.parseDate = function parseDate(ds) {
+    const [year, month, day] = String(ds || "").split("-").map(Number);
+    return new Date(year, (month || 1) - 1, day || 1);
+  };
+
+  Mattrics.startOfDay = function startOfDay(date = new Date()) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  };
+
+  Mattrics.toIsoDate = function toIsoDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  Mattrics.shiftDate = function shiftDate(ds, deltaDays) {
+    const date = typeof ds === "string" ? Mattrics.parseDate(ds) : new Date(ds);
+    date.setDate(date.getDate() + deltaDays);
+    return Mattrics.toIsoDate(date);
+  };
+
+  Mattrics.diffDays = function diffDays(later, earlier) {
+    return Math.floor((Mattrics.startOfDay(later) - Mattrics.startOfDay(earlier)) / 86400000);
+  };
+
   Mattrics.tc = function tc(type) {
     return Mattrics.TYPES[type] || { icon: "⚡", color: "var(--muted)", label: type };
   };
@@ -72,7 +98,7 @@
   };
 
   Mattrics.fmtDate = function fmtDate(ds) {
-    return new Date(ds).toLocaleDateString("en-GB", {
+    return Mattrics.parseDate(ds).toLocaleDateString("en-GB", {
       weekday: "short",
       day: "numeric",
       month: "short",
@@ -81,14 +107,14 @@
   };
 
   Mattrics.fmtShort = function fmtShort(ds) {
-    return new Date(ds).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    return Mattrics.parseDate(ds).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
   };
 
   Mattrics.formatContextRange = function formatContextRange(startDs, endDs) {
     if (!startDs || !endDs) return "";
 
-    const start = new Date(startDs);
-    const end = new Date(endDs);
+    const start = Mattrics.parseDate(startDs);
+    const end = Mattrics.parseDate(endDs);
 
     if (start.toDateString() === end.toDateString()) {
       return start.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -109,17 +135,57 @@
   };
 
   Mattrics.formatWeekRange = function formatWeekRange(startIso) {
-    const start = new Date(startIso);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 6);
+    const start = Mattrics.parseDate(startIso);
+    const end = Mattrics.parseDate(Mattrics.shiftDate(startIso, 6));
     return `${start.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} - ${end.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
   };
 
   Mattrics.weekStart = function weekStart(ds) {
-    const date = new Date(ds);
+    const date = Mattrics.parseDate(ds);
     const day = date.getDay();
     const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(new Date(date).setDate(diff)).toISOString().slice(0, 10);
+    const start = new Date(date);
+    start.setDate(diff);
+    return Mattrics.toIsoDate(start);
+  };
+
+  Mattrics.getActivityId = function getActivityId(activity) {
+    return String(activity["Activity ID raw"] || activity["Activity ID"] || activity.Name || "");
+  };
+
+  Mattrics.getWindowRange = function getWindowRange() {
+    if (!Mattrics.state.allData.length) return { start: "", end: "" };
+
+    if (Mattrics.state.windowDays === 0) {
+      return {
+        start: Mattrics.state.allData[Mattrics.state.allData.length - 1].Date,
+        end: Mattrics.state.allData[0].Date,
+      };
+    }
+
+    const end = Mattrics.startOfDay(new Date());
+    const start = new Date(end);
+    start.setDate(start.getDate() - (Mattrics.state.windowDays - 1));
+    return {
+      start: Mattrics.toIsoDate(start),
+      end: Mattrics.toIsoDate(end),
+    };
+  };
+
+  Mattrics.getRollingPeriod = function getRollingPeriod(ds, periodDays) {
+    const today = Mattrics.startOfDay(new Date());
+    const activityDate = Mattrics.parseDate(ds);
+    const distance = Math.max(0, Mattrics.diffDays(today, activityDate));
+    const bucket = Math.floor(distance / periodDays);
+    const end = new Date(today);
+    end.setDate(end.getDate() - (bucket * periodDays));
+    const start = new Date(end);
+    start.setDate(start.getDate() - (periodDays - 1));
+    return {
+      key: Mattrics.toIsoDate(start),
+      start: Mattrics.toIsoDate(start),
+      end: Mattrics.toIsoDate(end),
+    };
   };
 
   Mattrics.esc = function esc(value) {
@@ -133,10 +199,8 @@
 
   Mattrics.getWindowedData = function getWindowedData() {
     if (Mattrics.state.windowDays === 0) return Mattrics.state.allData;
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - Mattrics.state.windowDays);
-    cutoff.setHours(0, 0, 0, 0);
-    return Mattrics.state.allData.filter((activity) => new Date(activity.Date) >= cutoff);
+    const { start } = Mattrics.getWindowRange();
+    return Mattrics.state.allData.filter((activity) => activity.Date >= start);
   };
 
   Mattrics.getActivityMix = function getActivityMix(activities, limit = 5) {

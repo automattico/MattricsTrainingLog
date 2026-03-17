@@ -102,9 +102,8 @@
       return;
     }
 
-    const newest = data[0].Date;
-    const oldest = data[data.length - 1].Date;
-    activeContext.textContent = M.formatContextRange(oldest, newest);
+    const range = M.getWindowRange();
+    activeContext.textContent = M.formatContextRange(range.start || data[data.length - 1].Date, range.end || data[0].Date);
   };
 
   M.renderHeader = function renderHeader(data) {
@@ -202,8 +201,8 @@
             ${recentItems.map((activity) => {
               const cfg = M.tc(activity.Type);
               const primary = (M.cardMetrics(activity)[0] || {}).val || "";
-              const activityId = M.escAttr(activity["Activity ID raw"] || activity["Activity ID"] || activity.Name || "");
-              return `<button class="overview-recent-link" onclick="openDetail('${activityId}')" aria-label="Open details for ${M.escAttr(activity.Name || cfg.label)}">
+              const activityId = M.escAttr(M.getActivityId(activity));
+              return `<button class="overview-recent-link" type="button" data-activity-id="${activityId}" aria-label="Open details for ${M.escAttr(activity.Name || cfg.label)}">
                 <span class="overview-recent-main">
                   <span class="overview-recent-icon" aria-hidden="true">${cfg.icon}</span>
                   <span class="overview-recent-name">${M.esc(activity.Name || cfg.label)}</span>
