@@ -3,7 +3,7 @@
 
   M.openDetail = function openDetail(activityId) {
     const activity = M.state.allData.find(
-      (row) => String(row["Activity ID raw"] || row["Activity ID"]) === String(activityId)
+      (row) => M.getActivityId(row) === String(activityId)
     );
     if (!activity) return;
 
