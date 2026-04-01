@@ -36,6 +36,11 @@
   --row: #5dbde0;
   --surf: #60e4cf;
   --workout: #ffb07a;
+  --fatigue-none: rgba(203, 214, 233, 0.16);
+  --fatigue-fresh: #8a98ad;
+  --fatigue-recovering: #f1cd72;
+  --fatigue-fatigued: #ff9a62;
+  --fatigue-high: #ff6666;
 }
 
 html { scroll-behavior: smooth; }
@@ -655,59 +660,179 @@ button { -webkit-tap-highlight-color: transparent; }
   background: var(--chip-color, rgba(255, 255, 255, 0.4));
 }
 
-.overview-muscle-map {
+.overview-heatmap-shell {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 10px;
-  margin-top: 14px;
+  gap: 14px;
+  margin-top: 16px;
 }
 
-.overview-muscle-row {
+.overview-body-grid {
   display: grid;
-  grid-template-columns: minmax(110px, 132px) minmax(0, 1fr) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.overview-body-figure {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+}
+
+.overview-body-caption {
+  color: var(--muted);
+  font-size: 10px;
+  font-family: "IBM Plex Mono", monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.overview-body-svg {
+  width: min(100%, 220px);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.16));
+}
+
+.fatigue-body-outline {
+  fill: none;
+  stroke: rgba(226, 236, 249, 0.2);
+  stroke-width: 6;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: butt;
+  stroke-linejoin: round;
+}
+
+.fatigue-body-region {
+  fill: var(--fatigue-fill);
+  opacity: 1;
+  transition: fill 180ms ease, opacity 180ms ease, filter 180ms ease;
+}
+
+.fatigue-body-region path {
+  fill: var(--fatigue-fill);
+  fill-opacity: var(--fatigue-opacity, 0.8);
+  stroke: rgba(248, 251, 255, 0.12);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.fatigue-body-region[data-fatigue-state="high"] path {
+  filter: drop-shadow(0 0 10px rgba(255, 102, 102, 0.18));
+}
+
+.overview-fatigue-scale {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px 12px;
+}
+
+.overview-fatigue-scale-item,
+.overview-fatigue-row {
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.045);
+}
+
+.overview-fatigue-scale-item {
+  display: flex;
+  align-items: center;
   gap: 10px;
-  align-items: center;
+  padding: 10px 12px;
 }
 
-.overview-muscle-main {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.overview-muscle-dot {
-  width: 8px;
-  height: 8px;
+.overview-fatigue-swatch {
+  width: 9px;
+  height: 9px;
   border-radius: 999px;
-  background: var(--muscle-color);
+  background: var(--fatigue-none);
   flex: 0 0 auto;
 }
 
-.overview-muscle-name {
-  color: var(--muted-strong);
+.overview-fatigue-scale-item[data-fatigue-state="fresh"] .overview-fatigue-swatch,
+.overview-fatigue-row[data-fatigue-state="fresh"] .overview-fatigue-swatch { background: var(--fatigue-fresh); }
+.overview-fatigue-scale-item[data-fatigue-state="recovering"] .overview-fatigue-swatch,
+.overview-fatigue-row[data-fatigue-state="recovering"] .overview-fatigue-swatch { background: var(--fatigue-recovering); }
+.overview-fatigue-scale-item[data-fatigue-state="fatigued"] .overview-fatigue-swatch,
+.overview-fatigue-row[data-fatigue-state="fatigued"] .overview-fatigue-swatch { background: var(--fatigue-fatigued); }
+.overview-fatigue-scale-item[data-fatigue-state="high"] .overview-fatigue-swatch,
+.overview-fatigue-row[data-fatigue-state="high"] .overview-fatigue-swatch { background: var(--fatigue-high); }
+
+.overview-fatigue-scale-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.overview-fatigue-scale-label,
+.overview-fatigue-row-tier {
+  color: #fff;
   font-size: 12px;
-  line-height: 1.3;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
-.overview-muscle-bar {
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  overflow: hidden;
-}
-
-.overview-muscle-fill {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--muscle-color);
-}
-
-.overview-muscle-meta {
+.overview-fatigue-scale-detail,
+.overview-fatigue-row-copy,
+.overview-fatigue-row-meta {
   color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.overview-fatigue-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.overview-fatigue-column {
+  display: grid;
+  gap: 10px;
+}
+
+.overview-fatigue-column-title {
+  color: var(--muted-strong);
   font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.overview-fatigue-rows {
+  display: grid;
+  gap: 8px;
+}
+
+.overview-fatigue-row {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+}
+
+.overview-fatigue-row-head,
+.overview-fatigue-row-name {
+  display: flex;
+  align-items: center;
+}
+
+.overview-fatigue-row-head {
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.overview-fatigue-row-name {
+  gap: 8px;
+  min-width: 0;
+  color: var(--muted-strong);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.overview-fatigue-row-tier {
+  text-align: right;
   font-size: 11px;
   white-space: nowrap;
 }
@@ -1538,8 +1663,10 @@ button { -webkit-tap-highlight-color: transparent; }
   .overview-card { min-width: 0; }
   .overview-value { font-size: clamp(28px, 7vw, 42px); }
   .overview-insight-title { font-size: clamp(18px, 4.8vw, 26px); }
-  .overview-muscle-row { grid-template-columns: 1fr; gap: 6px; }
-  .overview-muscle-meta { justify-self: start; }
+  .overview-body-grid { grid-template-columns: 1fr; gap: 14px; }
+  .overview-body-svg { width: min(220px, 100%); }
+  .overview-fatigue-scale,
+  .overview-fatigue-columns { grid-template-columns: 1fr; }
   .a-card-btn { padding: 18px; }
   .detail-metrics { grid-template-columns: 1fr; }
   .a-card-metrics {

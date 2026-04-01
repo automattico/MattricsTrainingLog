@@ -40,8 +40,6 @@
       </div>`).join("");
     document.getElementById("detailMeta").textContent = deviceName ? `Tracked with ${deviceName}` : "";
     document.getElementById("detailMeta").style.display = deviceName ? "block" : "none";
-    document.getElementById("detailFacts").innerHTML = "";
-    document.getElementById("detailFactsSection").style.display = "none";
 
     if (hevy && hevy.length) {
       document.getElementById("detailWorkoutList").innerHTML = hevy.map((exercise) => `

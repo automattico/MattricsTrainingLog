@@ -28,14 +28,64 @@
   };
 
   Mattrics.MUSCLE_REGIONS = [
-    { key: "chest", label: "Chest", color: "var(--workout)" },
-    { key: "back", label: "Back", color: "var(--ride)" },
-    { key: "shoulders", label: "Shoulders", color: "var(--surf)" },
-    { key: "arms", label: "Arms", color: "var(--canoe)" },
-    { key: "core", label: "Core", color: "var(--yoga)" },
-    { key: "legs", label: "Legs", color: "var(--hike)" },
-    { key: "glutes", label: "Glutes", color: "var(--walk)" },
+    { key: "chest", slug: "chest", label: "Chest", color: "var(--workout)", views: ["front"], order: 10 },
+    { key: "deltoids", slug: "deltoids", label: "Deltoids", color: "var(--surf)", views: ["front", "back"], order: 20 },
+    { key: "trapezius", slug: "trapezius", label: "Trapezius", color: "var(--ride)", views: ["front", "back"], order: 30 },
+    { key: "upperBack", slug: "upper-back", label: "Upper back", color: "var(--row)", views: ["back"], order: 40 },
+    { key: "triceps", slug: "triceps", label: "Triceps", color: "var(--canoe)", views: ["front", "back"], order: 50 },
+    { key: "biceps", slug: "biceps", label: "Biceps", color: "var(--canoe)", views: ["front"], order: 60 },
+    { key: "abs", slug: "abs", label: "Abs", color: "var(--yoga)", views: ["front"], order: 70 },
+    { key: "obliques", slug: "obliques", label: "Obliques", color: "var(--yoga)", views: ["front"], order: 80 },
+    { key: "lowerBack", slug: "lower-back", label: "Lower back", color: "var(--ride)", views: ["back"], order: 90 },
+    { key: "gluteal", slug: "gluteal", label: "Gluteal", color: "var(--walk)", views: ["back"], order: 100 },
+    { key: "adductors", slug: "adductors", label: "Adductors", color: "var(--hike)", views: ["front", "back"], order: 110 },
+    { key: "quadriceps", slug: "quadriceps", label: "Quadriceps", color: "var(--hike)", views: ["front"], order: 120 },
+    { key: "hamstrings", slug: "hamstring", label: "Hamstrings", color: "var(--walk)", views: ["back"], order: 130 },
+    { key: "calves", slug: "calves", label: "Calves", color: "var(--water)", views: ["front", "back"], order: 140 },
   ];
+
+  Mattrics.MUSCLE_FATIGUE_CONFIG = {
+    windowDays: 10,
+    estimatedBodyweightKg: 75,
+    bodyweightLoadFactor: 0.4,
+    defaultRpe: 7,
+    smallThresholdRatio: 0.02,
+    recoveryThresholdRatio: 0.4,
+    strengthLoadUnitDivisor: 1500,
+    halfLifeHours: {
+      chest: 72,
+      deltoids: 60,
+      trapezius: 60,
+      upperBack: 72,
+      triceps: 48,
+      biceps: 48,
+      abs: 48,
+      obliques: 48,
+      lowerBack: 72,
+      gluteal: 72,
+      adductors: 72,
+      quadriceps: 72,
+      hamstrings: 72,
+      calves: 60,
+    },
+    normalizationLoad: {
+      chest: 2.4,
+      deltoids: 2.2,
+      trapezius: 1.9,
+      upperBack: 2.45,
+      triceps: 1.65,
+      biceps: 1.55,
+      abs: 1.7,
+      obliques: 1.45,
+      lowerBack: 1.85,
+      gluteal: 1.9,
+      adductors: 1.5,
+      quadriceps: 2.25,
+      hamstrings: 2.05,
+      calves: 1.55,
+    },
+  };
+  Mattrics.MUSCLE_FATIGUE_BODY_MAP = Mattrics.MUSCLE_FATIGUE_BODY_MAP || {};
 
   Mattrics.state = {
     allData: [],
@@ -44,11 +94,39 @@
     groupBy: "week",
     feedMode: "list",
     recent: [],
+    currentFatigue: null,
+  };
+
+  Mattrics.normalizeDateValue = function normalizeDateValue(value) {
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return Mattrics.toIsoDate(value);
+    }
+
+    const text = String(value || "").trim();
+    if (!text) return "";
+
+    const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+    }
+
+    const slashMatch = text.match(/^(\d{4})\/(\d{2})\/(\d{2})/);
+    if (slashMatch) {
+      return `${slashMatch[1]}-${slashMatch[2]}-${slashMatch[3]}`;
+    }
+
+    const nativeDate = new Date(text);
+    if (!Number.isNaN(nativeDate.getTime())) {
+      return Mattrics.toIsoDate(nativeDate);
+    }
+
+    return "";
   };
 
   Mattrics.parseDate = function parseDate(ds) {
-    const [year, month, day] = String(ds || "").split("-").map(Number);
-    return new Date(year, (month || 1) - 1, day || 1);
+    const normalized = Mattrics.normalizeDateValue(ds);
+    const [year, month, day] = normalized.split("-").map(Number);
+    return new Date(year || 1970, ((month || 1) - 1), day || 1);
   };
 
   Mattrics.startOfDay = function startOfDay(date = new Date()) {
@@ -69,7 +147,11 @@
   };
 
   Mattrics.diffDays = function diffDays(later, earlier) {
-    return Math.floor((Mattrics.startOfDay(later) - Mattrics.startOfDay(earlier)) / 86400000);
+    const laterDay = Mattrics.startOfDay(later);
+    const earlierDay = Mattrics.startOfDay(earlier);
+    const laterUtc = Date.UTC(laterDay.getFullYear(), laterDay.getMonth(), laterDay.getDate());
+    const earlierUtc = Date.UTC(earlierDay.getFullYear(), earlierDay.getMonth(), earlierDay.getDate());
+    return Math.round((laterUtc - earlierUtc) / 86400000);
   };
 
   Mattrics.tc = function tc(type) {
@@ -272,72 +354,225 @@
     };
   };
 
+  Mattrics.getFixedRecentActivities = function getFixedRecentActivities(activities, days = Mattrics.MUSCLE_FATIGUE_CONFIG.windowDays) {
+    const end = Mattrics.startOfDay(new Date());
+    const start = new Date(end);
+    start.setDate(start.getDate() - (days - 1));
+    const startIso = Mattrics.toIsoDate(start);
+
+    return activities.filter((activity) => activity.Date >= startIso);
+  };
+
+  Mattrics.getExerciseMuscleMapping = function getExerciseMuscleMapping(exerciseName) {
+    const normalized = String(exerciseName || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const exerciseMappings = [
+      { patterns: ["bench", "push up", "pushup", "chest fly", "pec deck", "dip"], weights: { chest: 1, deltoids: 0.45, triceps: 0.52, abs: 0.08, trapezius: 0.06 } },
+      { patterns: ["incline press", "incline bench", "chest press"], weights: { chest: 0.95, deltoids: 0.5, triceps: 0.46, trapezius: 0.08, abs: 0.08 } },
+      { patterns: ["row", "face pull"], weights: { upperBack: 0.82, trapezius: 0.58, biceps: 0.34, deltoids: 0.22, lowerBack: 0.12 } },
+      { patterns: ["pulldown", "pull up", "pullup", "chin up", "chinup"], weights: { upperBack: 0.74, trapezius: 0.28, biceps: 0.48, deltoids: 0.14, lowerBack: 0.08 } },
+      { patterns: ["deadlift", "rdl", "romanian deadlift"], weights: { hamstrings: 0.92, gluteal: 0.72, lowerBack: 0.46, upperBack: 0.28, trapezius: 0.18, quadriceps: 0.18, abs: 0.2 } },
+      { patterns: ["shoulder press", "overhead press", "arnold press", "lateral raise", "front raise", "rear delt"], weights: { deltoids: 1, triceps: 0.42, trapezius: 0.24, chest: 0.15, upperBack: 0.12 } },
+      { patterns: ["curl", "hammer"], weights: { biceps: 1, deltoids: 0.08 } },
+      { patterns: ["triceps", "pushdown", "skull crusher"], weights: { triceps: 1, deltoids: 0.08 } },
+      { patterns: ["plank", "crunch", "twist", "dead bug", "hollow", "sit up", "leg raise", "russian twist"], weights: { abs: 0.78, obliques: 0.52, lowerBack: 0.18 } },
+      { patterns: ["hip thrust", "glute bridge"], weights: { gluteal: 1, hamstrings: 0.35, abs: 0.14, lowerBack: 0.12, adductors: 0.1 } },
+      { patterns: ["calf raise"], weights: { calves: 1, quadriceps: 0.12 } },
+      { patterns: ["squat", "lunge", "step up", "stepup", "leg press", "split squat"], weights: { quadriceps: 0.95, gluteal: 0.55, hamstrings: 0.42, adductors: 0.24, abs: 0.18, lowerBack: 0.08, calves: 0.14 } },
+    ];
+
+    return exerciseMappings.find((mapping) => mapping.patterns.some((pattern) => normalized.includes(pattern))) || null;
+  };
+
+  Mattrics.parseHevySetLine = function parseHevySetLine(setText, exerciseName) {
+    const fatigueConfig = Mattrics.MUSCLE_FATIGUE_CONFIG;
+    const estimatedBodyweightKg = fatigueConfig.estimatedBodyweightKg || 75;
+    const bodyweightLoadFactor = fatigueConfig.bodyweightLoadFactor || 0.4;
+    const defaultRpe = fatigueConfig.defaultRpe || 7;
+    const rawText = String(setText || "").trim();
+    const text = rawText.toLowerCase();
+    const exercise = String(exerciseName || "").toLowerCase();
+    const isBodyweightExercise = /(push ?up|pull ?up|chin ?up|dip|sit ?up|crunch|leg raise|bodyweight|bw|air squat|pistol squat)/i.test(exercise);
+    const isTimeBased = /\b\d+\s*(?:sec|secs|second|seconds|min|mins|minute|minutes|hr|hrs|hour|hours)\b/i.test(text)
+      || /\b\d{1,2}:\d{2}\b/.test(text)
+      || /\bfor time\b/i.test(text)
+      || /\btime\b/i.test(text);
+
+    if (!rawText) return { kind: "unknown" };
+    if (isTimeBased) return { kind: "time" };
+
+    const parseNumber = (value) => parseFloat(String(value || "").replace(",", "."));
+    const convertWeightKg = (value, unit) => {
+      const amount = parseNumber(value);
+      if (!Number.isFinite(amount)) return 0;
+      return /^lb/.test(unit || "") ? amount * 0.453592 : amount;
+    };
+    const rpeMatch = rawText.match(/(?:\brpe\b\s*[:@]?\s*|@\s*)(\d+(?:[.,]\d+)?)/i);
+    const rpe = Number.isFinite(parseNumber(rpeMatch && rpeMatch[1])) ? parseNumber(rpeMatch[1]) : defaultRpe;
+    const effortFactor = 0.5 + (rpe / 10);
+    const bodyweightTag = /\b(?:bw|body ?weight)\b/i.test(rawText);
+
+    let weightKg = 0;
+    let reps = 0;
+
+    const weightFirst = rawText.match(/(\d+(?:[.,]\d+)?)\s*(kg|kgs|lb|lbs)\s*(?:x|×)\s*(\d+)/i);
+    const repsFirst = rawText.match(/(\d+)\s*(?:reps?)?\s*(?:x|×|@)\s*(\d+(?:[.,]\d+)?)\s*(kg|kgs|lb|lbs)/i);
+    const weightOnly = rawText.match(/(\d+(?:[.,]\d+)?)\s*(kg|kgs|lb|lbs)/i);
+    const repsOnly = rawText.match(/(?:^|[^\d])(\d+)\s*(?:reps?|x)?(?:$|[^\d])/i);
+
+    if (weightFirst) {
+      weightKg = convertWeightKg(weightFirst[1], weightFirst[2]);
+      reps = parseInt(weightFirst[3], 10) || 0;
+    } else if (repsFirst) {
+      reps = parseInt(repsFirst[1], 10) || 0;
+      weightKg = convertWeightKg(repsFirst[2], repsFirst[3]);
+    } else if ((bodyweightTag || isBodyweightExercise) && repsOnly) {
+      reps = parseInt(repsOnly[1], 10) || 0;
+      weightKg = estimatedBodyweightKg * bodyweightLoadFactor;
+    } else if (weightOnly && /\bx\b|×|\breps?\b/i.test(rawText) && repsOnly) {
+      reps = parseInt(repsOnly[1], 10) || 0;
+      weightKg = convertWeightKg(weightOnly[1], weightOnly[2]);
+    }
+
+    if (!Number.isFinite(weightKg) || !Number.isFinite(reps) || weightKg <= 0 || reps <= 0) {
+      return { kind: "unknown" };
+    }
+
+    return {
+      kind: "parsed",
+      reps,
+      weightKg,
+      rpe,
+      effortFactor,
+      load: weightKg * reps * effortFactor,
+    };
+  };
+
+  Mattrics.getFatigueTierMeaning = function getFatigueTierMeaning(region) {
+    const tier = typeof region === "string" ? region : Mattrics.getFatigueDisplayTier(region);
+    switch (tier) {
+      case "Highly fatigued":
+        return "high fatigue load right now";
+      case "Fatigued":
+        return "fatigue is still clearly present";
+      case "Recovering":
+        return "recovering but not fully fresh yet";
+      case "Fresh":
+        return "light fatigue only";
+      default:
+        return "no recent load recorded";
+    }
+  };
+
+  Mattrics.getRecoveryLabel = function getRecoveryLabel(recoveryHours) {
+    const hours = Math.max(0, Math.ceil(recoveryHours || 0));
+    if (!hours) return "can likely be trained today";
+    if (hours < 24) return `can likely be trained in ${hours} hour${hours === 1 ? "" : "s"}`;
+    if (hours < 48) return "can likely be trained tomorrow";
+    const days = Math.ceil(hours / 24);
+    return `can likely be trained in ${days} day${days === 1 ? "" : "s"}`;
+  };
+
+  Mattrics.getActivityMuscleStimulus = function getActivityMuscleStimulus(activity) {
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const strengthFactor = (min) => clamp((min || 0) / 45, 0.85, 1.6);
+    const sportFactor = (min) => clamp((min || 0) / 60, 0.7, 1.45);
+    const scaleWeights = (weights, factor) => Object.fromEntries(
+      Object.entries(weights).map(([key, value]) => [key, value * factor])
+    );
+    const typeMappings = {
+      Run: { quadriceps: 0.58, hamstrings: 0.55, calves: 0.78, gluteal: 0.42, abs: 0.18, obliques: 0.08 },
+      Walk: { quadriceps: 0.32, hamstrings: 0.24, calves: 0.36, gluteal: 0.15, abs: 0.08 },
+      Hike: { quadriceps: 0.76, hamstrings: 0.66, calves: 0.7, gluteal: 0.48, adductors: 0.18, abs: 0.2 },
+      Ride: { quadriceps: 0.96, hamstrings: 0.34, calves: 0.22, gluteal: 0.36, abs: 0.14 },
+      Canoeing: { upperBack: 0.56, trapezius: 0.42, deltoids: 0.72, biceps: 0.46, triceps: 0.1, abs: 0.22, obliques: 0.1, lowerBack: 0.1 },
+      Canoe: { upperBack: 0.56, trapezius: 0.42, deltoids: 0.72, biceps: 0.46, triceps: 0.1, abs: 0.22, obliques: 0.1, lowerBack: 0.1 },
+      WaterSport: { upperBack: 0.6, trapezius: 0.46, deltoids: 0.8, biceps: 0.58, triceps: 0.12, abs: 0.22, obliques: 0.13, lowerBack: 0.12 },
+      Rowing: { upperBack: 0.58, trapezius: 0.34, deltoids: 0.22, biceps: 0.34, abs: 0.2, obliques: 0.1, lowerBack: 0.16, quadriceps: 0.34, hamstrings: 0.26, gluteal: 0.22, calves: 0.16 },
+      Yoga: { abs: 0.38, obliques: 0.26, deltoids: 0.18, upperBack: 0.14, lowerBack: 0.14, quadriceps: 0.15, hamstrings: 0.12, gluteal: 0.14, calves: 0.08 },
+      Surfing: { abs: 0.52, obliques: 0.26, deltoids: 0.68, upperBack: 0.28, trapezius: 0.18, biceps: 0.16, triceps: 0.14, lowerBack: 0.12, quadriceps: 0.12, hamstrings: 0.1, gluteal: 0.1 },
+      WeightTraining: { chest: 0.28, deltoids: 0.24, trapezius: 0.16, upperBack: 0.22, triceps: 0.16, biceps: 0.16, abs: 0.16, obliques: 0.08, lowerBack: 0.12, gluteal: 0.14, adductors: 0.08, quadriceps: 0.16, hamstrings: 0.12, calves: 0.08 },
+      Workout: { chest: 0.28, deltoids: 0.24, trapezius: 0.16, upperBack: 0.22, triceps: 0.16, biceps: 0.16, abs: 0.16, obliques: 0.08, lowerBack: 0.12, gluteal: 0.14, adductors: 0.08, quadriceps: 0.16, hamstrings: 0.12, calves: 0.08 },
+    };
+    const min = parseFloat(activity["Duration (min)"]) || 0;
+    const type = activity.Type;
+    const hevy = Mattrics.parseHevyDescription(activity.Description || "");
+    const stimulus = Object.fromEntries(
+      Mattrics.MUSCLE_REGIONS.map((region) => [region.key, 0])
+    );
+    const configFatigue = Mattrics.MUSCLE_FATIGUE_CONFIG;
+    const setLoadDivisor = configFatigue.strengthLoadUnitDivisor || 1500;
+    const addStimulus = (weights) => {
+      Object.entries(weights).forEach(([key, value]) => {
+        if (!(key in stimulus) || !value) return;
+        stimulus[key] += value;
+      });
+    };
+
+    if (hevy && hevy.length) {
+      let matchedExercise = false;
+      hevy.forEach((exercise) => {
+        const match = Mattrics.getExerciseMuscleMapping(exercise.name);
+        if (!match) return;
+        matchedExercise = true;
+        const mappedNormalizations = Object.keys(match.weights)
+          .map((key) => configFatigue.normalizationLoad[key] || 0)
+          .filter(Boolean);
+        const smallThreshold = (Math.max(...mappedNormalizations, 0) || 0) * (configFatigue.smallThresholdRatio || 0.02);
+        let parsedExerciseLoad = 0;
+        let parsedSetCount = 0;
+        let ambiguousSetFound = false;
+        let nonTimeSetFound = false;
+
+        exercise.sets.forEach((setText) => {
+          const parsed = Mattrics.parseHevySetLine(setText, exercise.name);
+          if (parsed.kind === "time") return;
+          nonTimeSetFound = true;
+          if (parsed.kind !== "parsed") {
+            ambiguousSetFound = true;
+            return;
+          }
+
+          const scaledSetLoad = parsed.load / setLoadDivisor;
+          if (scaledSetLoad < smallThreshold) return;
+          parsedExerciseLoad += scaledSetLoad;
+          parsedSetCount += 1;
+        });
+
+        if (parsedSetCount && !ambiguousSetFound) {
+          addStimulus(scaleWeights(match.weights, parsedExerciseLoad));
+          return;
+        }
+
+        if (!parsedSetCount && !nonTimeSetFound) {
+          return;
+        }
+
+        const setCount = exercise.sets.length || 0;
+        const setFactor = clamp(setCount / 3, 0.8, 1.6);
+        addStimulus(scaleWeights(match.weights, strengthFactor(min) * setFactor));
+      });
+      if (matchedExercise) return stimulus;
+    }
+
+    const base = typeMappings[type];
+    if (!base) return stimulus;
+    const factor = ["WeightTraining", "Workout"].includes(type) ? strengthFactor(min) : sportFactor(min);
+    addStimulus(scaleWeights(base, factor));
+    return stimulus;
+  };
+
   Mattrics.getMuscleLoadAnalysis = function getMuscleLoadAnalysis(activities) {
     const regions = Object.fromEntries(
       Mattrics.MUSCLE_REGIONS.map((region) => [region.key, { ...region, load: 0, hits: 0 }])
     );
-    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-    const addLoad = (weights) => {
-      Object.entries(weights).forEach(([key, value]) => {
+
+    activities.forEach((activity) => {
+      const stimulus = Mattrics.getActivityMuscleStimulus(activity);
+      Object.entries(stimulus).forEach(([key, value]) => {
         if (!regions[key] || !value) return;
         regions[key].load += value;
         regions[key].hits += 1;
       });
-    };
-    const strengthFactor = (min) => clamp((min || 0) / 45, 0.85, 1.6);
-    const sportFactor = (min) => clamp((min || 0) / 60, 0.7, 1.45);
-    const normalized = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-    const exerciseMappings = [
-      { patterns: ["bench", "push up", "pushup", "chest fly", "pec deck", "dip"], weights: { chest: 1, shoulders: 0.45, arms: 0.35 } },
-      { patterns: ["incline press", "incline bench", "chest press"], weights: { chest: 0.95, shoulders: 0.5, arms: 0.35 } },
-      { patterns: ["row", "pulldown", "pull up", "pullup", "chin up", "chinup", "face pull"], weights: { back: 1, shoulders: 0.35, arms: 0.35 } },
-      { patterns: ["deadlift", "rdl", "romanian deadlift"], weights: { back: 0.8, legs: 0.65, glutes: 0.65, core: 0.45 } },
-      { patterns: ["shoulder press", "overhead press", "arnold press", "lateral raise", "front raise", "rear delt"], weights: { shoulders: 1, arms: 0.35, chest: 0.2 } },
-      { patterns: ["curl", "triceps", "pushdown", "skull crusher", "hammer"], weights: { arms: 1, shoulders: 0.15 } },
-      { patterns: ["plank", "crunch", "twist", "dead bug", "hollow", "sit up", "leg raise", "russian twist"], weights: { core: 1 } },
-      { patterns: ["hip thrust", "glute bridge"], weights: { glutes: 1, legs: 0.35, core: 0.2 } },
-      { patterns: ["squat", "lunge", "step up", "stepup", "calf raise", "leg press", "split squat"], weights: { legs: 0.9, glutes: 0.45, core: 0.25 } },
-    ];
-    const typeMappings = {
-      Run: { legs: 0.95, glutes: 0.4, core: 0.3 },
-      Walk: { legs: 0.55, glutes: 0.2, core: 0.15 },
-      Hike: { legs: 0.95, glutes: 0.45, core: 0.3 },
-      Ride: { legs: 0.9, glutes: 0.35, core: 0.25 },
-      Canoeing: { back: 0.8, shoulders: 0.75, arms: 0.65, core: 0.35 },
-      Canoe: { back: 0.8, shoulders: 0.75, arms: 0.65, core: 0.35 },
-      WaterSport: { back: 0.85, shoulders: 0.8, arms: 0.7, core: 0.35 },
-      Rowing: { back: 0.95, legs: 0.55, glutes: 0.3, arms: 0.45, core: 0.35 },
-      Yoga: { core: 0.65, shoulders: 0.35, legs: 0.22, glutes: 0.18, back: 0.2 },
-      Surfing: { core: 0.8, shoulders: 0.7, back: 0.45, legs: 0.18, glutes: 0.14 },
-      WeightTraining: { chest: 0.45, back: 0.45, shoulders: 0.45, arms: 0.4, core: 0.35, legs: 0.3, glutes: 0.3 },
-      Workout: { chest: 0.45, back: 0.45, shoulders: 0.45, arms: 0.4, core: 0.35, legs: 0.3, glutes: 0.3 },
-    };
-
-    activities.forEach((activity) => {
-      const min = parseFloat(activity["Duration (min)"]) || 0;
-      const type = activity.Type;
-      const hevy = Mattrics.parseHevyDescription(activity.Description || "");
-
-      if (hevy && hevy.length) {
-        const factor = strengthFactor(min);
-        let matchedExercise = false;
-        hevy.forEach((exercise) => {
-          const name = normalized(exercise.name);
-          const match = exerciseMappings.find((mapping) => mapping.patterns.some((pattern) => name.includes(pattern)));
-          if (!match) return;
-          matchedExercise = true;
-          const scaled = Object.fromEntries(
-            Object.entries(match.weights).map(([key, value]) => [key, value * factor])
-          );
-          addLoad(scaled);
-        });
-        if (matchedExercise) return;
-      }
-
-      const base = typeMappings[type];
-      if (!base) return;
-      const factor = ["WeightTraining", "Workout"].includes(type) ? strengthFactor(min) : sportFactor(min);
-      addLoad(Object.fromEntries(Object.entries(base).map(([key, value]) => [key, value * factor])));
     });
 
     const ranked = Object.values(regions).sort((a, b) => b.load - a.load);
@@ -381,12 +616,129 @@
     };
   };
 
+  Mattrics.getMuscleFatigueTier = function getMuscleFatigueTier(score) {
+    if (score >= 75) return "Highly fatigued";
+    if (score >= 50) return "Fatigued";
+    if (score >= 25) return "Recovering";
+    return "Fresh";
+  };
+
+  Mattrics.getFatigueVisualState = function getFatigueVisualState(region) {
+    if (!region || !region.rawLoad) return "none";
+    if (region.fatigueScore >= 75) return "high";
+    if (region.fatigueScore >= 50) return "fatigued";
+    if (region.fatigueScore >= 25) return "recovering";
+    return "fresh";
+  };
+
+  Mattrics.getFatigueDisplayTier = function getFatigueDisplayTier(region) {
+    return region && region.rawLoad ? region.tier : "No recent load";
+  };
+
+  Mattrics.getRelativeDayLabel = function getRelativeDayLabel(ds) {
+    if (!ds) return "no recent hit";
+    const daysAgo = Math.max(0, Mattrics.diffDays(new Date(), Mattrics.parseDate(ds)));
+    if (daysAgo === 0) return "hit today";
+    if (daysAgo === 1) return "1 day ago";
+    return `${daysAgo} days ago`;
+  };
+
+  Mattrics.getMuscleFatigueAnalysis = function getMuscleFatigueAnalysis(activities) {
+    const configFatigue = Mattrics.MUSCLE_FATIGUE_CONFIG;
+    const recent = Mattrics.getFixedRecentActivities(activities, configFatigue.windowDays);
+    const now = new Date();
+    const regions = Object.fromEntries(
+      Mattrics.MUSCLE_REGIONS.map((region) => [region.key, {
+        ...region,
+        rawLoad: 0,
+        fatigueScore: 0,
+        tier: "Fresh",
+        lastWorkedDate: "",
+        lastWorkedLabel: "no recent hit",
+        recoveryHours: 0,
+        recoveryDate: "",
+        recoveryLabel: "can likely be trained today",
+      }])
+    );
+
+    recent.forEach((activity) => {
+      const activityDate = Mattrics.parseDate(activity.Date);
+      activityDate.setHours(12, 0, 0, 0);
+      const hoursAgo = Math.max(0, (now - activityDate) / 3600000);
+      const stimulus = Mattrics.getActivityMuscleStimulus(activity);
+
+      Object.entries(stimulus).forEach(([key, value]) => {
+        if (!regions[key] || !value) return;
+        const halfLifeHours = configFatigue.halfLifeHours[key] || 60;
+        const remaining = value * Math.pow(0.5, hoursAgo / halfLifeHours);
+        regions[key].rawLoad += remaining;
+        if (!regions[key].lastWorkedDate || activity.Date > regions[key].lastWorkedDate) {
+          regions[key].lastWorkedDate = activity.Date;
+        }
+      });
+    });
+
+    const withMetrics = Object.values(regions)
+      .map((region) => {
+        const normalizationLoad = configFatigue.normalizationLoad[region.key] || 5;
+        const threshold = normalizationLoad * (configFatigue.recoveryThresholdRatio || 0.4);
+        const halfLifeHours = configFatigue.halfLifeHours[region.key] || 60;
+        const recoveryHours = region.rawLoad > threshold && threshold > 0
+          ? Math.max(0, Math.ceil(halfLifeHours * Math.log2(region.rawLoad / threshold)))
+          : 0;
+        const recoveryDate = recoveryHours
+          ? new Date(now.getTime() + (recoveryHours * 3600000)).toISOString()
+          : now.toISOString();
+        const fatigueScore = Math.max(0, Math.min(100, Math.round((region.rawLoad / normalizationLoad) * 100)));
+        return {
+          ...region,
+          rawLoad: Number(region.rawLoad.toFixed(2)),
+          fatigueScore,
+          tier: Mattrics.getMuscleFatigueTier(fatigueScore),
+          lastWorkedLabel: Mattrics.getRelativeDayLabel(region.lastWorkedDate),
+          recoveryHours,
+          recoveryDate,
+          recoveryLabel: Mattrics.getRecoveryLabel(recoveryHours),
+        };
+      })
+      .sort((a, b) => b.fatigueScore - a.fatigueScore || b.rawLoad - a.rawLoad);
+
+    const highestScore = withMetrics[0]?.fatigueScore || 0;
+    const lowestScore = withMetrics[withMetrics.length - 1]?.fatigueScore || 0;
+    const highestFatigue = highestScore
+      ? withMetrics.filter((region) => region.fatigueScore >= Math.max(25, highestScore - 10))
+      : [];
+    const lowestFatigue = withMetrics.filter((region) => region.fatigueScore === lowestScore);
+
+    if (!recent.length || !highestScore) {
+      return {
+        regions: withMetrics,
+        highestFatigue: [],
+        lowestFatigue: withMetrics,
+        summary: "Fresh across the board",
+        detail: `No meaningful muscle load in the last ${configFatigue.windowDays} days yet.`,
+      };
+    }
+
+    const highestLabel = highestFatigue.slice(0, 2).map((region) => region.label).join(" + ");
+    const lowestLabel = lowestFatigue.slice(0, 2).map((region) => region.label).join(" + ");
+    const topTier = withMetrics[0].tier;
+
+    return {
+      regions: withMetrics,
+      highestFatigue,
+      lowestFatigue,
+      summary: `${highestLabel} ${topTier === "Highly fatigued" ? "are carrying the most fatigue" : "need the most recovery"}`,
+      detail: `${lowestLabel} look freshest right now.`,
+    };
+  };
+
   Mattrics.getOverviewMetrics = function getOverviewMetrics(activities) {
     const totalKm = activities.reduce((sum, activity) => sum + (parseFloat(activity["Distance (km)"]) || 0), 0);
     const totalMin = activities.reduce((sum, activity) => sum + (parseFloat(activity["Duration (min)"]) || 0), 0);
     const active = Mattrics.getActiveDayStats(activities);
     const mix = Mattrics.getActivityMix(activities);
-    const muscle = Mattrics.getMuscleLoadAnalysis(activities);
+    const fatigue = Mattrics.getMuscleFatigueAnalysis(Mattrics.state.allData);
     const avgSessionMin = activities.length ? totalMin / activities.length : 0;
     const longestSessionMin = activities.reduce((max, activity) => Math.max(max, parseFloat(activity["Duration (min)"]) || 0), 0);
     const byDay = {};
@@ -420,7 +772,7 @@
       multiSessionDays,
       ...active,
       mix,
-      muscle,
+      fatigue,
       bestMonth,
       distanceSummary: totalKm > 0 ? `${totalKm.toFixed(0)} km across ${distanceTypes.slice(0, 2).join(" + ") || "distance work"}` : "",
     };

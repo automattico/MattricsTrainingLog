@@ -54,6 +54,11 @@
 
       M.state.allData = json.rows
         .filter((row) => row.Date && row.Type)
+        .map((row) => ({
+          ...row,
+          Date: M.normalizeDateValue(row.Date),
+        }))
+        .filter((row) => row.Date)
         .sort((a, b) => new Date(b.Date) - new Date(a.Date));
       M.state.typeFilter = "All";
       M.showApp();
@@ -104,6 +109,106 @@
 
     const range = M.getWindowRange();
     activeContext.textContent = M.formatContextRange(range.start || data[data.length - 1].Date, range.end || data[0].Date);
+  };
+
+  M.renderFatigueBodyFigure = function renderFatigueBodyFigure(fatigue, view) {
+    const bodyMap = M.MUSCLE_FATIGUE_BODY_MAP || {};
+    const config = bodyMap[view];
+    if (!config) return "";
+
+    const palette = {
+      none: "var(--fatigue-none)",
+      fresh: "var(--fatigue-fresh)",
+      recovering: "var(--fatigue-recovering)",
+      fatigued: "var(--fatigue-fatigued)",
+      high: "var(--fatigue-high)",
+    };
+    const slugToKey = bodyMap.slugToKey || {};
+    const regionsByKey = Object.fromEntries(fatigue.regions.map((region) => [region.key, region]));
+    const partMarkup = config.parts.map((part) => {
+      const key = slugToKey[part.slug];
+      const region = regionsByKey[key];
+      const state = M.getFatigueVisualState(region);
+      const label = region
+        ? `${region.label}: ${region.fatigueScore}/100, ${M.getFatigueDisplayTier(region)}, ${region.lastWorkedLabel}, ${region.recoveryLabel}`
+        : part.slug;
+      const opacity = region && region.rawLoad
+        ? (0.56 + (region.fatigueScore / 100) * 0.36).toFixed(2)
+        : "0.42";
+
+      return `<g class="fatigue-body-region" data-fatigue-state="${state}" data-region="${M.escAttr(key || part.slug)}" data-slug="${M.escAttr(part.slug)}" style="--fatigue-fill:${palette[state]}; --fatigue-opacity:${opacity}">
+        <title>${M.esc(label)}</title>
+        ${part.pathArray.map((path) => `<path d="${M.escAttr(path)}"></path>`).join("")}
+      </g>`;
+    }).join("");
+
+    return `<div class="overview-body-figure">
+      <div class="overview-body-caption">${config.label}</div>
+      <svg class="overview-body-svg" viewBox="${config.viewBox}" role="img" aria-label="${config.label} muscle fatigue map" preserveAspectRatio="xMidYMin meet">
+        <path class="fatigue-body-outline" d="${M.escAttr(config.outlinePath || "")}"></path>
+        ${partMarkup}
+      </svg>
+    </div>`;
+  };
+
+  M.renderFatigueStateLegend = function renderFatigueStateLegend() {
+    const items = [
+      { state: "high", label: "Highly fatigued", detail: M.getFatigueTierMeaning("Highly fatigued") },
+      { state: "fatigued", label: "Fatigued", detail: M.getFatigueTierMeaning("Fatigued") },
+      { state: "recovering", label: "Recovering", detail: M.getFatigueTierMeaning("Recovering") },
+      { state: "fresh", label: "Fresh", detail: M.getFatigueTierMeaning("Fresh") },
+      { state: "none", label: "No recent load", detail: M.getFatigueTierMeaning("No recent load") },
+    ];
+
+    return `<div class="overview-fatigue-scale">
+      ${items.map((item) => `<div class="overview-fatigue-scale-item" data-fatigue-state="${item.state}">
+        <span class="overview-fatigue-swatch"></span>
+        <div class="overview-fatigue-scale-copy">
+          <div class="overview-fatigue-scale-label">${item.label}</div>
+          <div class="overview-fatigue-scale-detail">${item.detail}</div>
+        </div>
+      </div>`).join("")}
+    </div>`;
+  };
+
+  M.renderFatigueTable = function renderFatigueTable(fatigue) {
+    const regionsByKey = Object.fromEntries(fatigue.regions.map((region) => [region.key, region]));
+    const columns = [
+      {
+        label: "Front",
+        keys: ["deltoids", "chest", "biceps", "abs", "obliques", "adductors", "quadriceps", "calves"],
+      },
+      {
+        label: "Back",
+        keys: ["trapezius", "upperBack", "deltoids", "triceps", "lowerBack", "gluteal", "hamstrings", "calves"],
+      },
+    ];
+
+    return `<div class="overview-fatigue-columns">
+      ${columns.map((column) => `<section class="overview-fatigue-column">
+        <div class="overview-fatigue-column-title">${column.label}</div>
+        <div class="overview-fatigue-rows">
+          ${column.keys.map((key) => {
+            const region = regionsByKey[key];
+            if (!region) return "";
+            const state = M.getFatigueVisualState(region);
+            const tier = M.getFatigueDisplayTier(region);
+            return `<div class="overview-fatigue-row" data-fatigue-state="${state}">
+              <div class="overview-fatigue-row-head">
+                <div class="overview-fatigue-row-name">
+                  <span class="overview-fatigue-swatch"></span>
+                  <span>${region.label}</span>
+                </div>
+                <div class="overview-fatigue-row-tier">${tier}</div>
+              </div>
+              <div class="overview-fatigue-row-copy">${M.getFatigueTierMeaning(region)}</div>
+              <div class="overview-fatigue-row-meta">${region.recoveryLabel}</div>
+              <div class="overview-fatigue-row-meta">${region.lastWorkedLabel}</div>
+            </div>`;
+          }).join("")}
+        </div>
+      </section>`).join("")}
+    </div>`;
   };
 
   M.renderHeader = function renderHeader(data) {
@@ -163,26 +268,18 @@
         ` : `<div class="overview-empty">No activities in this window yet.</div>`}
       </article>
       <article class="overview-card overview-insight overview-balance">
-        <div class="overview-label">Worked body</div>
-        <div class="overview-insight-title">${summary.muscle.summary}</div>
-        <div class="overview-meta">${summary.distanceSummary || "How recent sessions distributed load across the body."}</div>
-        ${summary.totalSessions ? `
-          <div class="overview-muscle-map">
-            ${summary.muscle.regions.map((region) => `
-              <div class="overview-muscle-row">
-                <div class="overview-muscle-main">
-                  <span class="overview-muscle-dot" style="--muscle-color:${region.color}"></span>
-                  <span class="overview-muscle-name">${region.label}</span>
-                </div>
-                <div class="overview-muscle-bar">
-                  <span class="overview-muscle-fill" style="--muscle-color:${region.color}; width:${region.pct}%"></span>
-                </div>
-                <div class="overview-muscle-meta">${region.hitLabel}</div>
-              </div>
-            `).join("")}
+        <div class="overview-label">Muscle fatigue map</div>
+        <div class="overview-insight-title">Muscle Fatigue Map</div>
+        <div class="overview-meta">Current recovery state based on recent training</div>
+        <div class="overview-heatmap-shell">
+          <div class="overview-body-grid">
+            ${M.renderFatigueBodyFigure(summary.fatigue, "front")}
+            ${M.renderFatigueBodyFigure(summary.fatigue, "back")}
           </div>
-        ` : `<div class="overview-empty overview-empty-compact">No body-load map in this window yet.</div>`}
-        <div class="overview-foot">${summary.muscle.detail}</div>
+          ${M.renderFatigueStateLegend()}
+          ${M.renderFatigueTable(summary.fatigue)}
+        </div>
+        <div class="overview-foot">${summary.fatigue.summary}. ${summary.fatigue.detail}</div>
       </article>
       <article class="overview-card overview-insight overview-momentum">
         <div class="overview-label">Momentum</div>

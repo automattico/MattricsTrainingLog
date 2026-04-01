@@ -2,10 +2,10 @@
   const M = window.Mattrics;
 
   M.renderAiPreview = function renderAiPreview() {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 10);
-    const recent = M.state.allData.filter((activity) => new Date(activity.Date) >= cutoff);
+    const recent = M.getFixedRecentActivities(M.state.allData);
+    const fatigue = M.getMuscleFatigueAnalysis(M.state.allData);
     M.state.recent = recent;
+    M.state.currentFatigue = fatigue;
 
     const box = document.getElementById("recentPreview");
     if (recent.length) {
@@ -24,7 +24,7 @@
     document.getElementById("aiDesc").textContent = !M.AI_ENABLED
       ? "AI suggestions are currently disabled for this deployment."
       : recent.length
-        ? `Analyzing your last ${recent.length} sessions to suggest what your body needs today.`
+        ? `Analyzing your last ${recent.length} sessions and current muscle fatigue to suggest what your body needs today.`
         : "No recent data — will suggest a session based on your training history.";
   };
 
@@ -45,6 +45,7 @@
     document.getElementById("aiOutput").style.display = "none";
 
     const recent = M.state.recent || [];
+    const fatigue = M.state.currentFatigue || M.getMuscleFatigueAnalysis(M.state.allData);
     const summary = recent.map((activity) => {
       const km = parseFloat(activity["Distance (km)"]) || 0;
       const min = parseFloat(activity["Duration (min)"]) || 0;
@@ -52,6 +53,21 @@
       const desc = (activity.Description || "").replace(/Logged with Hevy/g, "").slice(0, 200).trim();
       return `• ${M.fmtShort(activity.Date)}: [${activity.Type}] ${activity.Name}${km ? ` — ${km.toFixed(1)}km` : ""}${min ? ` — ${M.fmt(min)}` : ""}${elev ? ` — ${elev}m elev` : ""}${desc ? `\n  ${desc}` : ""}`;
     }).join("\n");
+    const fatigueSummary = fatigue ? `${fatigue.summary} ${fatigue.detail}` : "";
+    const fatigueRegions = fatigue
+      ? fatigue.regions.map((region) => ({
+        key: region.key,
+        slug: region.slug || region.key,
+        label: region.label,
+        fatigueScore: region.fatigueScore,
+        tier: region.tier,
+        lastWorkedDate: region.lastWorkedDate,
+        lastWorkedLabel: region.lastWorkedLabel,
+        recoveryHours: region.recoveryHours,
+        recoveryDate: region.recoveryDate,
+        recoveryLabel: region.recoveryLabel,
+      }))
+      : [];
 
     try {
       let output = "";
@@ -66,6 +82,8 @@
           body: JSON.stringify({
             recent,
             summary,
+            fatigueSummary,
+            fatigueRegions,
           }),
         });
         const data = await res.json();
@@ -77,7 +95,11 @@
 Recent activity (last 10 days):
 ${summary || "(no recent data — suggest a good general session)"}
 
-Suggest ONE specific workout for today. Be concrete — if strength, give exercises with sets/reps/weights. If cardio, give distance/duration/intensity. Keep it brief.
+Current muscle fatigue estimate (fixed last 10 days):
+${fatigueSummary || "No meaningful recent muscle fatigue signal."}
+${fatigueRegions.length ? `\n${fatigueRegions.map((region) => `- ${region.label}: ${region.fatigueScore}/100 (${region.tier}, ${region.lastWorkedLabel}, ${region.recoveryLabel})`).join("\n")}` : ""}
+
+Suggest ONE specific workout for today. Avoid heavily loading muscle groups that are currently highly fatigued. Prefer fresher muscle groups, cardio, mobility, rehab, or recovery work when that fits better. Be concrete — if strength, give exercises with sets/reps/weights. If cardio, give distance/duration/intensity. Keep it brief.
 
 Format:
 **Why this:** (1 sentence based on what they've been doing)
