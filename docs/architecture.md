@@ -9,7 +9,7 @@ Mattrics Training Log is a static frontend with a small PHP API layer and an ext
 - [`public/api/ai.php`](/Users/mwieland/dev/MattricsTrainingLog/public/api/ai.php) proxies AI workout suggestions server-side so the API key is not exposed in deployed frontend assets.
 - [`public/api/bootstrap.php`](/Users/mwieland/dev/MattricsTrainingLog/public/api/bootstrap.php) loads config, validates methods, and handles upstream requests.
 - [`private/config.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php) stores runtime-only secrets and upstream endpoints. It is never deployed as part of the public web root.
-- `private/cache/training-data.json` stores the last successful sanitized snapshot so the dashboard can open without hitting Google on every visit.
+- `private/cache/training-data.json` stores the last successful sanitized snapshot so the dashboard can open without hitting Google on every visit. The `private/cache/` directory is generated runtime state and stays gitignored.
 - [`apps-script/Code.gs`](/Users/mwieland/dev/MattricsTrainingLog/apps-script/Code.gs) runs in Google Apps Script and exposes the Google Sheet as JSON behind a shared secret.
 
 ## Data flow
