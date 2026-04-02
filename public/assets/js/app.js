@@ -23,5 +23,5 @@
     M.openDetail(trigger.dataset.activityId);
   });
 
-  M.fetchData();
+  M.fetchData({ forceRefresh: false });
 }());

@@ -23,8 +23,31 @@
     requestAnimationFrame(() => document.getElementById("app").classList.add("visible"));
   };
 
-  M.fetchData = async function fetchData() {
+  M.renderDataStatus = function renderDataStatus() {
+    const meta = M.state.dataMeta || {};
+    const stamp = document.getElementById("dataSyncStamp");
+    const banner = document.getElementById("dataStatusBanner");
+
+    if (stamp) {
+      const formatted = M.fmtDateTime(meta.lastSuccessfulSyncAt);
+      stamp.textContent = formatted ? `Last updated ${formatted}` : "Last updated unavailable";
+    }
+
+    if (!banner) return;
+
+    if (meta.stale && meta.warning) {
+      banner.textContent = `${meta.warning}${meta.lastSuccessfulSyncAt ? ` Last good sync: ${M.fmtDateTime(meta.lastSuccessfulSyncAt)}.` : ""}`;
+      banner.hidden = false;
+      return;
+    }
+
+    banner.hidden = true;
+    banner.textContent = "";
+  };
+
+  M.fetchData = async function fetchData(options = {}) {
     M.showLoading();
+    const forceRefresh = Boolean(options.forceRefresh);
     let sourceUrl = M.DATA_URL || M.SHEET_URL;
 
     if (!sourceUrl || sourceUrl === "PASTE_YOUR_WEB_APP_URL_HERE" || sourceUrl === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
@@ -35,7 +58,13 @@
     }
 
     try {
-      if (!M.DATA_URL && M.SHEET_TOKEN) {
+      if (M.DATA_URL) {
+        const url = new URL(sourceUrl, window.location.href);
+        if (forceRefresh) {
+          url.searchParams.set("refresh", "1");
+        }
+        sourceUrl = url.toString();
+      } else if (M.SHEET_TOKEN) {
         const url = new URL(sourceUrl);
         url.searchParams.set("key", M.SHEET_TOKEN);
         sourceUrl = url.toString();
@@ -52,6 +81,13 @@
       }
       if (json.error) throw new Error(json.error);
 
+      M.state.dataMeta = {
+        source: json.meta && json.meta.source ? json.meta.source : "live",
+        stale: Boolean(json.meta && json.meta.stale),
+        warning: json.meta && json.meta.warning ? json.meta.warning : "",
+        lastSuccessfulSyncAt: json.meta && json.meta.lastSuccessfulSyncAt ? json.meta.lastSuccessfulSyncAt : "",
+        lastLiveAttemptAt: json.meta && json.meta.lastLiveAttemptAt ? json.meta.lastLiveAttemptAt : "",
+      };
       M.state.allData = json.rows
         .filter((row) => row.Date && row.Type)
         .map((row) => ({
@@ -62,6 +98,7 @@
         .sort((a, b) => new Date(b.Date) - new Date(a.Date));
       M.state.typeFilter = "All";
       M.showApp();
+      M.renderDataStatus();
       M.renderAll();
     } catch (error) {
       const msg = String(error && error.message ? error.message : error);

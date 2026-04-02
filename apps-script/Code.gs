@@ -11,6 +11,7 @@
 //   7. Who has access: Anyone
 //   8. In Project Settings -> Script Properties, add:
 //        MATTRICS_SHARED_SECRET = a long random token
+//        MATTRICS_SHEET_NAME = StravaActivities
 //   9. Click Deploy → Copy the Web App URL
 //  10. Store that URL and token only in private/config.php on your server
 // ─────────────────────────────────────────────────────────────
@@ -27,7 +28,11 @@ function doGet(e) {
     return jsonResponse({ error: "Unauthorized." });
   }
 
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var sheetName = PropertiesService.getScriptProperties().getProperty("MATTRICS_SHEET_NAME") || "StravaActivities";
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (!sheet) {
+    return jsonResponse({ error: 'Sheet not found: ' + sheetName });
+  }
   const data  = sheet.getDataRange().getValues();
 
   if (data.length < 2) {

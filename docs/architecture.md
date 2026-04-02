@@ -5,15 +5,16 @@ Mattrics Training Log is a static frontend with a small PHP API layer and an ext
 ## Components
 
 - [`public/index.html`](/Users/mwieland/dev/MattricsTrainingLog/public/index.html) and assets under [`public/assets/`](/Users/mwieland/dev/MattricsTrainingLog/public/assets) provide the dashboard UI.
-- [`public/api/data.php`](/Users/mwieland/dev/MattricsTrainingLog/public/api/data.php) proxies training data from Google Apps Script to the browser.
+- [`public/api/data.php`](/Users/mwieland/dev/MattricsTrainingLog/public/api/data.php) serves training data from a private cached snapshot and refreshes it from Google Apps Script on demand.
 - [`public/api/ai.php`](/Users/mwieland/dev/MattricsTrainingLog/public/api/ai.php) proxies AI workout suggestions server-side so the API key is not exposed in deployed frontend assets.
 - [`public/api/bootstrap.php`](/Users/mwieland/dev/MattricsTrainingLog/public/api/bootstrap.php) loads config, validates methods, and handles upstream requests.
 - [`private/config.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php) stores runtime-only secrets and upstream endpoints. It is never deployed as part of the public web root.
+- `private/cache/training-data.json` stores the last successful sanitized snapshot so the dashboard can open without hitting Google on every visit.
 - [`apps-script/Code.gs`](/Users/mwieland/dev/MattricsTrainingLog/apps-script/Code.gs) runs in Google Apps Script and exposes the Google Sheet as JSON behind a shared secret.
 
 ## Data flow
 
-`Strava -> Make.com -> Google Sheets -> Apps Script -> public/api/data.php -> frontend`
+`Strava -> Make.com -> Google Sheets -> Apps Script -> private snapshot -> public/api/data.php -> frontend`
 
 Optional AI flow:
 
