@@ -201,9 +201,7 @@
                 </div>
                 <div class="overview-fatigue-row-tier">${tier}</div>
               </div>
-              <div class="overview-fatigue-row-copy">${M.getFatigueTierMeaning(region)}</div>
-              <div class="overview-fatigue-row-meta">${region.recoveryLabel}</div>
-              <div class="overview-fatigue-row-meta">${region.lastWorkedLabel}</div>
+              <div class="overview-fatigue-row-recovery">${region.recoveryLabel}</div>
             </div>`;
           }).join("")}
         </div>
@@ -225,10 +223,6 @@
       ? `conic-gradient(${donutStops.join(", ")})`
       : "conic-gradient(rgba(255,255,255,0.08) 0 100%)";
     const dominant = summary.mix.dominant;
-    const bestMonth = summary.bestMonth
-      ? new Date(`${summary.bestMonth[0]}-01`).toLocaleDateString("en-GB", { month: "short", year: "numeric" })
-      : "";
-    const recentDate = summary.lastDate ? M.fmtDate(summary.lastDate) : "";
 
     document.getElementById("dashboardOverview").innerHTML = `
       <article class="overview-card overview-kpi overview-sessions">
@@ -280,16 +274,6 @@
           ${M.renderFatigueTable(summary.fatigue)}
         </div>
         <div class="overview-foot">${summary.fatigue.summary}. ${summary.fatigue.detail}</div>
-      </article>
-      <article class="overview-card overview-insight overview-momentum">
-        <div class="overview-label">Momentum</div>
-        <div class="overview-insight-title">${summary.maxStreak || 0} day${summary.maxStreak === 1 ? "" : "s"} in a row</div>
-        <div class="overview-meta">${summary.activeDays} active day${summary.activeDays === 1 ? "" : "s"}${recentDate ? ` · latest ${recentDate}` : ""}</div>
-        <div class="overview-chip-row">
-          ${bestMonth ? `<span class="overview-chip">${bestMonth} peak</span>` : ""}
-          ${dominant ? `<span class="overview-chip">${dominant.label} leads</span>` : ""}
-        </div>
-        <div class="overview-foot">${bestMonth ? `${summary.bestMonth[1]} sessions in peak month` : ""}</div>
       </article>
       <article class="overview-card overview-insight overview-recent">
         <div class="overview-label">Recent sessions</div>

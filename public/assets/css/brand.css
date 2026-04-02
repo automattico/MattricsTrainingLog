@@ -1,0 +1,41 @@
+/**
+ * Brand Hub — local copy for Mattrics.
+ * Source: /Users/mwieland/dev/brandhub/brand.css
+ */
+
+:root {
+  --brand: #0082c9;
+
+  --text: #1a1a1a;
+  --text-subtle: #888;
+  --surface-page: #f7f7f5;
+  --surface-subtle: #f0f0ee;
+  --surface-card: #fff;
+  --border: #e8e8e4;
+  --border-subtle: #ddd;
+
+  --bg: #0f0f0f;
+  --bg-subtle: #111519;
+  --bg-raised: #162030;
+  --text-light: #edf2fa;
+  --text-light-subtle: #8a9ab5;
+
+  --teal: #00c9aa;
+  --teal-medium: #00a88f;
+  --teal-light: #7de8d6;
+  --coral: #ff6540;
+  --coral-medium: #ff8f70;
+  --coral-light: #ffd4c7;
+
+  --font-display: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+  --font-sans: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-mono: "DM Mono", "Fira Code", "Courier New", monospace;
+
+  /* Stable aliases so Mattrics can use the brand system without token conflicts. */
+  --brand-dark-bg: #0f0f0f;
+  --brand-dark-subtle: #111519;
+  --brand-dark-raised: #162030;
+  --brand-text-on-dark: #edf2fa;
+  --brand-text-on-dark-subtle: #8a9ab5;
+}
