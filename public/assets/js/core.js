@@ -89,6 +89,13 @@
 
   Mattrics.state = {
     allData: [],
+    dataMeta: {
+      source: "",
+      stale: false,
+      warning: "",
+      lastSuccessfulSyncAt: "",
+      lastLiveAttemptAt: "",
+    },
     windowDays: 7,
     typeFilter: "All",
     groupBy: "week",
@@ -190,6 +197,18 @@
 
   Mattrics.fmtShort = function fmtShort(ds) {
     return Mattrics.parseDate(ds).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  };
+
+  Mattrics.fmtDateTime = function fmtDateTime(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   Mattrics.formatContextRange = function formatContextRange(startDs, endDs) {

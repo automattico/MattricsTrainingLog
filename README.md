@@ -2,7 +2,7 @@
 
 Mattrics Training Log is a private training dashboard for reviewing recent workouts, spotting trends, and generating AI-assisted workout suggestions from your activity history.
 
-It combines a lightweight frontend with a small PHP proxy, a Google Apps Script data endpoint, and Anthropic-backed coaching prompts.
+It combines a lightweight frontend with a small PHP proxy, a Google Apps Script data endpoint, a private cached snapshot for resilient loading, and Anthropic-backed coaching prompts.
 
 ## Live Site
 
@@ -11,7 +11,7 @@ It combines a lightweight frontend with a small PHP proxy, a Google Apps Script 
 ## Features
 
 - Recent training feed with rolling time ranges such as 7 days, 14 days, 1 month, and all time
-- Activity insights pulled from a Google Sheet through a token-protected endpoint
+- Activity insights pulled from a Google Sheet through a token-protected endpoint with private server-side snapshot caching
 - Optional AI workout suggestions without exposing the API key in the browser
 
 ## Screenshots

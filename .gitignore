@@ -1,6 +1,7 @@
 # Secrets — never commit these
 public/config.js
 private/config.php
+private/cache/
 .env.local
 
 # OS
