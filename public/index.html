@@ -112,6 +112,7 @@ if (window.location.protocol === "file:") {
 
     <nav class="nav" aria-label="Views">
       <button class="nav-btn active" onclick="showView('dashboard',this)">Dashboard</button>
+      <button class="nav-btn" onclick="showView('fatigue',this)">Muscle Fatigue Map</button>
       <button class="nav-btn" onclick="showView('sessions',this)">Sessions</button>
     </nav>
 
@@ -119,6 +120,12 @@ if (window.location.protocol === "file:") {
       <div class="view active" id="view-dashboard">
         <section class="section-shell dashboard-shell">
           <div class="header-stats" id="dashboardOverview"></div>
+        </section>
+      </div>
+
+      <div class="view" id="view-fatigue">
+        <section class="section-shell fatigue-shell">
+          <div id="fatigueOverview"></div>
         </section>
       </div>
 
