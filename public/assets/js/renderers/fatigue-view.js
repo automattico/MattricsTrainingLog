@@ -208,7 +208,17 @@
           <div class="overview-fatigue-tooltip-summary" id="fatigueTooltipSummary"></div>
         </div>
       </div>
+    `;
 
+    M.bindFatigueHoverCard();
+    M.renderFatigueDocumentation();
+  };
+
+  M.renderFatigueDocumentation = function renderFatigueDocumentation() {
+    const mount = document.getElementById("fatigueDocumentation");
+    if (!mount) return;
+
+    mount.innerHTML = `
       <details class="fatigue-doc">
         <summary>
           <span class="fatigue-doc-summary-kicker">Developer docs</span>
@@ -352,8 +362,6 @@ recoveryHours = halfLife × log₂(rawLoad / threshold)
         </div>
       </details>
     `;
-
-    M.bindFatigueHoverCard();
   };
 
   M.bindFatigueHoverCard = function bindFatigueHoverCard() {
