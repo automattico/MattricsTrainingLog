@@ -17,8 +17,10 @@ set_defaults
 PUBLIC_REQUIRED_FILES="
 public/index.html
 public/assets/css/main.css
-public/assets/js/core.js
-public/assets/js/data.js
+public/assets/js/core/constants.js
+public/assets/js/core/fatigue-engine.js
+public/assets/js/renderers/orchestrator.js
+public/assets/js/renderers/fatigue-view.js
 public/api/data.php
 "
 SENSITIVE_PATHS="
