@@ -1,0 +1,109 @@
+.retry-btn,
+.window-btn,
+.nav-btn,
+.filter-pill,
+.tl-sw-btn,
+.gen-btn,
+.icon-btn {
+  min-height: 38px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-chip);
+  color: var(--muted-strong);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  white-space: nowrap;
+}
+
+.retry-btn:hover,
+.retry-btn:focus-visible,
+.window-btn:hover,
+.window-btn:focus-visible,
+.nav-btn:hover,
+.nav-btn:focus-visible,
+.filter-pill:hover,
+.filter-pill:focus-visible,
+.tl-sw-btn:hover,
+.tl-sw-btn:focus-visible,
+.gen-btn:hover,
+.gen-btn:focus-visible,
+.icon-btn:hover,
+.icon-btn:focus-visible,
+.a-card-btn:hover,
+.a-card-btn:focus-visible,
+.detail-close:hover,
+.detail-close:focus-visible,
+.tl-mini:hover,
+.overview-recent-link:hover,
+.overview-recent-link:focus-visible {
+  border-color: var(--line-brand);
+  background: var(--surface-chip-hover);
+  color: var(--text);
+}
+
+.retry-btn:focus-visible,
+.window-btn:focus-visible,
+.nav-btn:focus-visible,
+.filter-pill:focus-visible,
+.tl-sw-btn:focus-visible,
+.gen-btn:focus-visible,
+.icon-btn:focus-visible,
+.a-card-btn:focus-visible,
+.detail-close:focus-visible,
+.tl-mini:focus-visible,
+.overview-recent-link:focus-visible {
+  outline: 2px solid rgba(0, 130, 201, 0.55);
+  outline-offset: 2px;
+}
+
+.window-btn.active,
+.nav-btn.active,
+.tl-sw-btn.active,
+.filter-pill.on {
+  background: rgba(0, 130, 201, 0.14);
+  border-color: rgba(0, 130, 201, 0.34);
+  color: var(--text);
+}
+
+.gen-btn,
+.ai-top-btn {
+  background: rgba(0, 130, 201, 0.18);
+  border-color: rgba(0, 130, 201, 0.4);
+  color: var(--text);
+}
+
+.gen-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.refresh-btn {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.015);
+  color: var(--muted);
+}
+
+.refresh-icon {
+  display: block;
+  font-size: 21px;
+  line-height: 1;
+  transform: translateY(-1px);
+}

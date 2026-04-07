@@ -1,154 +1,6 @@
 (function () {
   const M = window.Mattrics;
 
-  M.showLoading = function showLoading() {
-    document.getElementById("loadScreen").classList.remove("hidden");
-    document.getElementById("app").classList.remove("visible");
-    document.getElementById("app").style.display = "none";
-    document.getElementById("loadSpinner").style.display = "block";
-    document.getElementById("loadMsg").style.display = "block";
-    document.getElementById("errorBox").style.display = "none";
-  };
-
-  M.showError = function showError(msg) {
-    document.getElementById("loadSpinner").style.display = "none";
-    document.getElementById("loadMsg").style.display = "none";
-    document.getElementById("errorMsg").textContent = msg;
-    document.getElementById("errorBox").style.display = "flex";
-  };
-
-  M.showApp = function showApp() {
-    document.getElementById("loadScreen").classList.add("hidden");
-    document.getElementById("app").style.display = "block";
-    requestAnimationFrame(() => document.getElementById("app").classList.add("visible"));
-  };
-
-  M.renderDataStatus = function renderDataStatus() {
-    const meta = M.state.dataMeta || {};
-    const stamp = document.getElementById("dataSyncStamp");
-    const banner = document.getElementById("dataStatusBanner");
-
-    if (stamp) {
-      const formatted = M.fmtDateTime(meta.lastSuccessfulSyncAt);
-      stamp.textContent = formatted ? `Last updated ${formatted}` : "Last updated unavailable";
-    }
-
-    if (!banner) return;
-
-    if (meta.stale && meta.warning) {
-      banner.textContent = `${meta.warning}${meta.lastSuccessfulSyncAt ? ` Last good sync: ${M.fmtDateTime(meta.lastSuccessfulSyncAt)}.` : ""}`;
-      banner.hidden = false;
-      return;
-    }
-
-    banner.hidden = true;
-    banner.textContent = "";
-  };
-
-  M.fetchData = async function fetchData(options = {}) {
-    M.showLoading();
-    const forceRefresh = Boolean(options.forceRefresh);
-    let sourceUrl = M.DATA_URL || M.SHEET_URL;
-
-    if (!sourceUrl || sourceUrl === "PASTE_YOUR_WEB_APP_URL_HERE" || sourceUrl === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
-      M.showError(
-        "No data source configured.\n\nFor secure hosting, use api/data.php with private/config.php on the server. For local fallback, set MATTRICS_CONFIG.SHEET_URL and MATTRICS_CONFIG.SHEET_TOKEN.\n\nSee README.md and the Hetzner deploy guide."
-      );
-      return;
-    }
-
-    try {
-      if (M.DATA_URL) {
-        const url = new URL(sourceUrl, window.location.href);
-        if (forceRefresh) {
-          url.searchParams.set("refresh", "1");
-        }
-        sourceUrl = url.toString();
-      } else if (M.SHEET_TOKEN) {
-        const url = new URL(sourceUrl);
-        url.searchParams.set("key", M.SHEET_TOKEN);
-        sourceUrl = url.toString();
-      }
-
-      const res = await fetch(sourceUrl, { redirect: "follow", credentials: "same-origin" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const text = await res.text();
-      let json;
-      try {
-        json = JSON.parse(text);
-      } catch {
-        throw new Error("Response was not valid JSON. Check your Apps Script doGet().");
-      }
-      if (json.error) throw new Error(json.error);
-
-      M.state.dataMeta = {
-        source: json.meta && json.meta.source ? json.meta.source : "live",
-        stale: Boolean(json.meta && json.meta.stale),
-        warning: json.meta && json.meta.warning ? json.meta.warning : "",
-        lastSuccessfulSyncAt: json.meta && json.meta.lastSuccessfulSyncAt ? json.meta.lastSuccessfulSyncAt : "",
-        lastLiveAttemptAt: json.meta && json.meta.lastLiveAttemptAt ? json.meta.lastLiveAttemptAt : "",
-      };
-      M.state.allData = json.rows
-        .filter((row) => row.Date && row.Type)
-        .map((row) => ({
-          ...row,
-          Date: M.normalizeDateValue(row.Date),
-        }))
-        .filter((row) => row.Date)
-        .sort((a, b) => new Date(b.Date) - new Date(a.Date));
-      M.state.typeFilter = "All";
-      M.showApp();
-      M.renderDataStatus();
-      M.renderAll();
-    } catch (error) {
-      const msg = String(error && error.message ? error.message : error);
-      const isCors = msg === "Failed to fetch" ||
-        msg === "Load failed" ||
-        msg.includes("NetworkError") ||
-        msg.includes("CORS") ||
-        msg.includes("fetch");
-
-      M.showError(
-        isCors
-          ? "Browser blocked the request.\n\nYour Apps Script endpoint is live, but some browsers block fetches from a local file. Try opening this in Chrome, or serve the public folder on localhost instead of opening public/index.html via file://.\n\nIf needed, redeploy Apps Script as a Web App with Execute as: Me and Access: Anyone."
-          : `Could not load data.\n\n${msg}`
-      );
-    }
-  };
-
-  M.setWindow = function setWindow(days, el) {
-    M.state.windowDays = days;
-    M.state.typeFilter = "All";
-    document.querySelectorAll(".window-btn").forEach((button) => button.classList.remove("active"));
-    document.querySelectorAll(".window-option").forEach((option) => option.classList.remove("active"));
-    el.classList.add("active");
-    if (el.parentElement) el.parentElement.classList.add("active");
-    M.renderAll();
-  };
-
-  M.renderAll = function renderAll() {
-    const windowed = M.getWindowedData();
-    M.renderContextBar(windowed);
-    M.renderDashboard(windowed);
-    M.renderFatigueView(windowed);
-    M.renderFilters(windowed);
-    M.renderFeed(windowed);
-    M.renderAiPreview();
-  };
-
-  M.renderContextBar = function renderContextBar(data) {
-    const activeContext = document.getElementById("rangeSummary");
-    if (!activeContext) return;
-
-    if (!data.length) {
-      activeContext.textContent = "No activities in this range";
-      return;
-    }
-
-    const range = M.getWindowRange();
-    activeContext.textContent = M.formatContextRange(range.start || data[data.length - 1].Date, range.end || data[0].Date);
-  };
-
   M.renderFatigueBodyFigure = function renderFatigueBodyFigure(fatigue, view) {
     const bodyMap = M.MUSCLE_FATIGUE_BODY_MAP || {};
     const config = bodyMap[view];
@@ -331,80 +183,6 @@
     </div>`;
   };
 
-  M.renderDashboard = function renderDashboard(data) {
-    const summary = M.getOverviewMetrics(data);
-    const recentItems = data.slice(0, 5);
-    const donutStops = [];
-    let offset = 0;
-    summary.mix.segments.forEach((segment) => {
-      const next = offset + (segment.pct * 100);
-      donutStops.push(`${segment.color} ${offset.toFixed(1)}% ${next.toFixed(1)}%`);
-      offset = next;
-    });
-    const donutStyle = summary.mix.segments.length
-      ? `conic-gradient(${donutStops.join(", ")})`
-      : "conic-gradient(rgba(255,255,255,0.08) 0 100%)";
-    const dominant = summary.mix.dominant;
-
-    document.getElementById("dashboardOverview").innerHTML = `
-      <article class="overview-card overview-kpi overview-sessions">
-        <div class="overview-label">Sessions</div>
-        <div class="overview-value">${summary.totalSessions}</div>
-        <div class="overview-meta">${summary.activeDays} active day${summary.activeDays === 1 ? "" : "s"} in this window</div>
-        <div class="overview-foot">${summary.totalSessions ? `${summary.maxStreak} day best streak${summary.multiSessionDays ? ` · ${summary.multiSessionDays} double-session day${summary.multiSessionDays === 1 ? "" : "s"}` : ""}` : "No activity yet"}</div>
-      </article>
-      <article class="overview-card overview-kpi overview-time">
-        <div class="overview-label">Time</div>
-        <div class="overview-value">${summary.totalMin ? M.fmt(summary.totalMin) : "0h"}</div>
-        <div class="overview-meta">${summary.avgSessionMin ? `${M.fmt(summary.avgSessionMin)} avg session` : "No duration logged"}</div>
-        <div class="overview-foot">${summary.weeklyAverageMin ? `${M.fmt(summary.weeklyAverageMin)} per week · ${M.fmt(summary.longestSessionMin)} longest` : ""}</div>
-      </article>
-      <article class="overview-card overview-chart">
-        <div class="overview-label">Activity mix</div>
-        ${summary.totalSessions ? `
-          <div class="overview-chart-shell">
-            <div class="overview-donut" style="--donut-fill:${donutStyle}">
-              <div class="overview-donut-center">
-                <div class="overview-donut-kicker">${dominant ? dominant.label : "No mix"}</div>
-                <div class="overview-donut-value">${dominant ? dominant.percentLabel : "0%"}</div>
-              </div>
-            </div>
-            <div class="overview-legend">
-              ${summary.mix.segments.map((segment) => `
-                <div class="overview-legend-item">
-                  <div class="overview-legend-main">
-                    <span class="overview-legend-dot" style="--legend-color:${segment.color}"></span>
-                    <span>${segment.icon} ${segment.label}</span>
-                  </div>
-                  <div class="overview-legend-meta">${segment.count} · ${segment.percentLabel}</div>
-                </div>
-              `).join("")}
-            </div>
-          </div>
-        ` : `<div class="overview-empty">No activities in this window yet.</div>`}
-      </article>
-      <article class="overview-card overview-insight overview-recent">
-        <div class="overview-label">Recent sessions</div>
-        ${recentItems.length ? `
-          <div class="overview-recent-list">
-            ${recentItems.map((activity) => {
-              const cfg = M.tc(activity.Type);
-              const primary = (M.cardMetrics(activity)[0] || {}).val || "";
-              const activityId = M.escAttr(M.getActivityId(activity));
-              return `<button class="overview-recent-link" type="button" data-activity-id="${activityId}" aria-label="Open details for ${M.escAttr(activity.Name || cfg.label)}">
-                <span class="overview-recent-main">
-                  <span class="overview-recent-icon" aria-hidden="true">${cfg.icon}</span>
-                  <span class="overview-recent-name">${M.esc(activity.Name || cfg.label)}</span>
-                </span>
-                <span class="overview-recent-meta">${M.fmtDate(activity.Date)}${primary ? ` · ${primary}` : ""}</span>
-              </button>`;
-            }).join("")}
-          </div>
-        ` : `<div class="overview-empty overview-empty-compact">No sessions in this window yet.</div>`}
-      </article>
-    `;
-  };
-
   M.renderFatigueView = function renderFatigueView(data) {
     const summary = M.getOverviewMetrics(data);
     const mount = document.getElementById("fatigueOverview");
@@ -430,6 +208,149 @@
           <div class="overview-fatigue-tooltip-summary" id="fatigueTooltipSummary"></div>
         </div>
       </div>
+
+      <details class="fatigue-doc">
+        <summary>
+          <span class="fatigue-doc-summary-kicker">Developer docs</span>
+          <span class="fatigue-doc-summary-title">How the fatigue model works</span>
+          <span class="fatigue-doc-summary-chevron">▾</span>
+        </summary>
+        <div class="fatigue-doc-body">
+          <p class="fatigue-doc-intro">
+            A decay-based load accumulation model. Every activity adds a per-muscle stimulus. That stimulus fades
+            exponentially over time based on each muscle&rsquo;s half-life. The fatigue score is how much accumulated
+            load remains relative to a calibrated &ldquo;fully loaded&rdquo; reference — the normalization load.
+          </p>
+          <div class="fatigue-doc-grid">
+
+            <div class="fatigue-doc-section">
+              <div class="fatigue-doc-heading">Fatigue score (0–100)</div>
+              <div class="fatigue-doc-text">Looks back <strong>10 days</strong>. Each activity contributes a stimulus per muscle (0–1+ scale). Remaining load after decay is summed, then divided by a per-muscle normalization load to give a 0–100 score.</div>
+              <pre class="fatigue-doc-formula">score    = rawLoad / normalizationLoad × 100
+rawLoad  = Σ ( stimulus × 0.5^(hoursAgo / halfLife) )</pre>
+              <table class="fatigue-doc-table">
+                <tr><td>Normalization load</td><td>Per-muscle &ldquo;fully loaded&rdquo; reference — e.g. upper back 2.45, quads 2.25, biceps 1.55, obliques 1.45</td></tr>
+                <tr><td>Score cap</td><td>100 — cannot exceed regardless of load volume</td></tr>
+                <tr><td>Lookback window</td><td>10 days rolling from now</td></tr>
+              </table>
+            </div>
+
+            <div class="fatigue-doc-section">
+              <div class="fatigue-doc-heading">Decay &amp; half-lives</div>
+              <div class="fatigue-doc-text">Each muscle has its own half-life. After one half-life, 50% of the stimulus remains; after two, 25%. All activity timestamps are normalised to <strong>noon on their date</strong>, so sub-day precision is not available.</div>
+              <pre class="fatigue-doc-formula">remaining = stimulus × 0.5^(hoursElapsed / halfLife)</pre>
+              <table class="fatigue-doc-table">
+                <tr><td>72 h</td><td>Chest, upper back, lower back, quads, hamstrings, glutes, adductors</td></tr>
+                <tr><td>60 h</td><td>Deltoids, trapezius, calves</td></tr>
+                <tr><td>48 h</td><td>Triceps, biceps, abs, obliques</td></tr>
+              </table>
+            </div>
+
+            <div class="fatigue-doc-section">
+              <div class="fatigue-doc-heading">Hevy workouts — set load</div>
+              <div class="fatigue-doc-text">Triggered when the description starts with <code class="fatigue-doc-code">Logged with Hevy</code>. Each exercise block is name-matched against 12 pattern groups. Load is calculated from actual sets.</div>
+              <pre class="fatigue-doc-formula">load         = weight(kg) × reps × effortFactor
+effortFactor = 0.5 + RPE/10
+               default RPE = 7  →  effortFactor = 1.20
+bodyweight   = 75 kg × 0.4 when no weight is logged
+scaledLoad   = load / 1500  (unit divisor)</pre>
+              <div class="fatigue-doc-text" style="margin-top:4px">RPE range: 6 → 1.10 &nbsp;|&nbsp; 7 → 1.20 &nbsp;|&nbsp; 8 → 1.30 &nbsp;|&nbsp; 9 → 1.40 &nbsp;|&nbsp; 10 → 1.50. Time-based sets (e.g. &ldquo;3 min&rdquo;) are skipped — no load calculated.</div>
+            </div>
+
+            <div class="fatigue-doc-section">
+              <div class="fatigue-doc-heading">Hevy workouts — exercise patterns</div>
+              <div class="fatigue-doc-text">Name is lowercased and matched by substring. First match wins. 12 groups:</div>
+              <table class="fatigue-doc-table">
+                <tr><td>bench / push-up / chest fly / dip / pec deck</td><td>Chest primary</td></tr>
+                <tr><td>incline press / chest press</td><td>Chest (incline)</td></tr>
+                <tr><td>row / face pull</td><td>Upper back primary</td></tr>
+                <tr><td>pulldown / pull-up / chin-up</td><td>Upper back (width)</td></tr>
+                <tr><td>deadlift / RDL / romanian deadlift</td><td>Hamstrings + glutes</td></tr>
+                <tr><td>shoulder press / OHP / lateral raise / rear delt</td><td>Deltoids primary</td></tr>
+                <tr><td>curl / hammer</td><td>Biceps primary</td></tr>
+                <tr><td>triceps / pushdown / skull crusher</td><td>Triceps primary</td></tr>
+                <tr><td>plank / crunch / twist / dead bug / sit-up / leg raise</td><td>Abs primary</td></tr>
+                <tr><td>hip thrust / glute bridge</td><td>Gluteal primary</td></tr>
+                <tr><td>calf raise</td><td>Calves primary</td></tr>
+                <tr><td>squat / lunge / step-up / leg press / split squat</td><td>Quadriceps primary</td></tr>
+              </table>
+            </div>
+
+            <div class="fatigue-doc-section">
+              <div class="fatigue-doc-heading">Unknown exercises</div>
+              <div class="fatigue-doc-text">If an exercise name doesn&rsquo;t match any of the 12 patterns, it contributes <strong>zero</strong> muscle-specific stimulus for that exercise. If <em>no</em> exercise in the session matches, the whole session falls back to the generic <code class="fatigue-doc-code">WeightTraining</code> type mapping — a light, even spread across all muscles.</div>
+              <div class="fatigue-doc-text" style="margin-top:6px">To model a new exercise: add its name as a substring pattern to the relevant group in <code class="fatigue-doc-code">getExerciseMuscleMapping()</code> in <code class="fatigue-doc-code">core/hevy-parser.js</code>.</div>
+            </div>
+
+            <div class="fatigue-doc-section">
+              <div class="fatigue-doc-heading">Activity types (non-Hevy)</div>
+              <div class="fatigue-doc-text">If not a Hevy workout, the activity <strong>Type</strong> field maps to hardcoded per-muscle weights. Duration scales the stimulus.</div>
+              <pre class="fatigue-doc-formula">sportFactor    = clamp(min/60,  0.70, 1.45)  caps at 87 min+
+strengthFactor = clamp(min/45,  0.85, 1.60)  caps at 72 min+
+stimulus = baseWeights × factor</pre>
+              <table class="fatigue-doc-table">
+                <tr><td>Run</td><td>Quads, hamstrings, calves, glutes</td></tr>
+                <tr><td>Hike</td><td>Quads, hamstrings, calves, glutes (heavier than run)</td></tr>
+                <tr><td>Ride</td><td>Quads dominant, glutes, hamstrings</td></tr>
+                <tr><td>Canoeing / Canoe</td><td>Upper back, deltoids, trapezius, biceps, abs</td></tr>
+                <tr><td>WaterSport</td><td>Same as canoeing, slightly less intense</td></tr>
+                <tr><td>Rowing</td><td>Full body — upper/lower back, quads, hamstrings, biceps</td></tr>
+                <tr><td>Surfing</td><td>Upper back + deltoids (paddle), abs + obliques (pop-up)</td></tr>
+                <tr><td>Yoga</td><td>Abs, obliques, light stabilisers</td></tr>
+                <tr><td>Walk</td><td>Light quads, hamstrings, calves</td></tr>
+                <tr><td>WeightTraining / Workout</td><td>Generic full-body fallback (all muscles, light)</td></tr>
+                <tr><td>Unrecognised type</td><td>Zero stimulus — not modelled at all</td></tr>
+              </table>
+            </div>
+
+            <div class="fatigue-doc-section">
+              <div class="fatigue-doc-heading">When to train again</div>
+              <div class="fatigue-doc-text">Recovery is considered complete when <code class="fatigue-doc-code">rawLoad &le; threshold</code>. Below that, the muscle is <strong>Fresh</strong> and shows &ldquo;Train now.&rdquo; Above it, recovery hours are calculated and the muscle is placed in &ldquo;Train tomorrow&rdquo; or &ldquo;Needs more recovery.&rdquo;</div>
+              <pre class="fatigue-doc-formula">threshold     = normalizationLoad × 0.25
+recoveryHours = halfLife × log₂(rawLoad / threshold)
+                (only when rawLoad &gt; threshold)</pre>
+              <table class="fatigue-doc-table">
+                <tr><td>Threshold ratio</td><td>0.25 — aligns with the Fresh tier boundary (&lt;25%)</td></tr>
+                <tr><td>&ldquo;Train now&rdquo;</td><td>fatigueScore &lt; 25% (Fresh) only</td></tr>
+                <tr><td>&ldquo;Train tomorrow&rdquo;</td><td>Recovering — recovery completes within ~24 h</td></tr>
+                <tr><td>&ldquo;Needs more recovery&rdquo;</td><td>Fatigued or Highly fatigued — days away</td></tr>
+              </table>
+            </div>
+
+            <div class="fatigue-doc-section">
+              <div class="fatigue-doc-heading">Fatigue tiers</div>
+              <div class="fatigue-doc-tiers">
+                <div class="fatigue-doc-tier">
+                  <span class="fatigue-doc-tier-dot" style="background:var(--fatigue-color-none)"></span>
+                  <span class="fatigue-doc-tier-label">None (untrained)</span>
+                  <span class="fatigue-doc-tier-desc">No load recorded in window</span>
+                </div>
+                <div class="fatigue-doc-tier">
+                  <span class="fatigue-doc-tier-dot" style="background:var(--fatigue-color-fresh)"></span>
+                  <span class="fatigue-doc-tier-label">Fresh (0–24%)</span>
+                  <span class="fatigue-doc-tier-desc">Ready — train freely</span>
+                </div>
+                <div class="fatigue-doc-tier">
+                  <span class="fatigue-doc-tier-dot" style="background:var(--fatigue-color-recovering)"></span>
+                  <span class="fatigue-doc-tier-label">Recovering (25–49%)</span>
+                  <span class="fatigue-doc-tier-desc">Fatigue present — needs hours to a day</span>
+                </div>
+                <div class="fatigue-doc-tier">
+                  <span class="fatigue-doc-tier-dot" style="background:var(--fatigue-color-fatigued)"></span>
+                  <span class="fatigue-doc-tier-label">Fatigued (50–74%)</span>
+                  <span class="fatigue-doc-tier-desc">Significant load — wait 1–3 days</span>
+                </div>
+                <div class="fatigue-doc-tier">
+                  <span class="fatigue-doc-tier-dot" style="background:var(--fatigue-color-high)"></span>
+                  <span class="fatigue-doc-tier-label">Highly fatigued (75–100%)</span>
+                  <span class="fatigue-doc-tier-desc">Heavy load — rest 3–5 days</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </details>
     `;
 
     M.bindFatigueHoverCard();
@@ -525,58 +446,5 @@
         if (tooltip) tooltip.dataset.activeRegion = "";
       }
     });
-  };
-
-  M.renderFilters = function renderFilters(data) {
-    const counts = {};
-    data.forEach((activity) => {
-      const type = M.canonicalType(activity.Type);
-      counts[type] = (counts[type] || 0) + 1;
-    });
-
-    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-    const allOn = M.state.typeFilter === "All";
-    let html = `<button class="filter-pill ${allOn ? "on" : ""}" onclick="setFilter('All')">
-      All <span class="filter-count">${data.length}</span></button>`;
-
-    sorted.forEach(([type, count]) => {
-      const cfg = M.tc(type);
-      const on = M.state.typeFilter === type;
-      html += `<button class="filter-pill ${on ? "on" : ""}" onclick="setFilter('${type}')">
-        <span class="a-card-type-icon" aria-hidden="true">${cfg.icon}</span>
-        ${cfg.label} <span class="filter-count">${count}</span></button>`;
-    });
-
-    document.getElementById("filterRow").innerHTML = html;
-  };
-
-  M.setFilter = function setFilter(filter) {
-    M.state.typeFilter = filter;
-    const windowed = M.getWindowedData();
-    M.renderFilters(windowed);
-    M.renderFeed(M.applyTypeFilter(windowed));
-  };
-
-  M.setFeedMode = function setFeedMode(mode, el) {
-    if (mode === "list") {
-      M.state.feedMode = "list";
-    } else {
-      M.state.feedMode = "grouped";
-      M.state.groupBy = mode;
-    }
-    document.querySelectorAll(".feed-mode-switch .tl-sw-btn").forEach((button) => button.classList.remove("active"));
-    if (el) el.classList.add("active");
-    M.renderFeed();
-  };
-
-  M.showView = function showView(id, el) {
-    document.querySelectorAll(".view").forEach((view) => view.classList.remove("active"));
-    document.querySelectorAll(".nav-btn").forEach((button) => button.classList.remove("active"));
-    document.querySelectorAll(".ai-top-btn").forEach((button) => button.classList.remove("active"));
-    document.getElementById(`view-${id}`).classList.add("active");
-    if (el && el.classList.contains("nav-btn")) el.classList.add("active");
-    if (id === "ai") {
-      document.querySelectorAll(".ai-top-btn").forEach((button) => button.classList.add("active"));
-    }
   };
 }());
