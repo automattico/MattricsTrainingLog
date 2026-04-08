@@ -114,6 +114,7 @@ if (window.location.protocol === "file:") {
       <button class="nav-btn active" onclick="showView('dashboard',this)">Dashboard</button>
       <button class="nav-btn" onclick="showView('fatigue',this)">Muscle Fatigue Map</button>
       <button class="nav-btn" onclick="showView('sessions',this)">Sessions</button>
+      <button class="nav-btn" onclick="showView('settings',this)">Settings</button>
     </nav>
 
     <main class="app-main">
@@ -143,6 +144,12 @@ if (window.location.protocol === "file:") {
             </div>
           </div>
           <div class="cards" id="cardList"></div>
+        </section>
+      </div>
+
+      <div class="view" id="view-settings">
+        <section class="section-shell settings-outer">
+          <div id="settingsContent"></div>
         </section>
       </div>
 
@@ -216,6 +223,7 @@ if (window.location.protocol === "file:") {
 <script src="assets/js/timeline.js"></script>
 <script src="assets/js/ai.js"></script>
 <script src="assets/js/detail.js"></script>
+<script src="assets/js/settings.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>

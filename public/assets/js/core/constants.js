@@ -48,7 +48,7 @@
     windowDays: 10,
     estimatedBodyweightKg: 75,
     bodyweightLoadFactor: 0.4,
-    defaultRpe: 7,
+    defaultRpe: 7.5,
     smallThresholdRatio: 0.02,
     recoveryThresholdRatio: 0.25,
     strengthLoadUnitDivisor: 1500,

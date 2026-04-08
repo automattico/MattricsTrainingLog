@@ -6,6 +6,7 @@
     fetchData: M.fetchData,
     generateWorkout: M.generateWorkout,
     openDetail: M.openDetail,
+    saveSettings: M.saveSettings,
     setFilter: M.setFilter,
     setFeedMode: M.setFeedMode,
     setWindow: M.setWindow,

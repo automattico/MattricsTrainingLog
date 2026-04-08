@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mattrics — Settings Tests</title>
+<style>
+  body {
+    font-family: "DM Sans", system-ui, sans-serif;
+    background: #09121d;
+    color: #edf2fa;
+    padding: 2rem;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.5rem; margin: 0 0 1.5rem; }
+  .summary {
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+  .summary.pass { background: rgba(0,201,128,0.12); border: 1px solid rgba(0,201,128,0.3); color: #64e0b5; }
+  .summary.fail { background: rgba(255,101,64,0.12); border: 1px solid rgba(255,101,64,0.3); color: #ff9166; }
+  .result-list { list-style: none; padding: 0; margin: 0; }
+  .result-list li {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(237,242,250,0.06);
+    font-size: 0.88rem;
+  }
+  .ok { color: #64e0b5; font-weight: 700; min-width: 40px; }
+  .fail-mark { color: #ff9166; font-weight: 700; min-width: 40px; }
+  .msg-ok { color: rgba(237,242,250,0.7); }
+  .msg-fail { color: #ffc4ad; }
+</style>
+</head>
+<body>
+<h1>Settings Tests</h1>
+<div id="summary"></div>
+<ul class="result-list" id="results"></ul>
+
+<script src="settings-tests.js"></script>
+<script>
+  const { passed, failed, total, results } = window.__settingsTestResults;
+  const summaryEl = document.getElementById("summary");
+  summaryEl.className = "summary " + (failed === 0 ? "pass" : "fail");
+  summaryEl.textContent = failed === 0
+    ? `All ${total} tests passed`
+    : `${passed}/${total} passed — ${failed} failed`;
+
+  const list = document.getElementById("results");
+  results.forEach(({ ok, message }) => {
+    const li = document.createElement("li");
+    const mark = document.createElement("span");
+    mark.className = ok ? "ok" : "fail-mark";
+    mark.textContent = ok ? "PASS" : "FAIL";
+    const msg = document.createElement("span");
+    msg.className = ok ? "msg-ok" : "msg-fail";
+    msg.textContent = message;
+    li.appendChild(mark);
+    li.appendChild(msg);
+    list.appendChild(li);
+  });
+</script>
+</body>
+</html>

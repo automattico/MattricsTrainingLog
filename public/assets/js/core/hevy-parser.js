@@ -23,9 +23,10 @@
 
   M.parseHevySetLine = function parseHevySetLine(setText, exerciseName) {
     const fatigueConfig = M.MUSCLE_FATIGUE_CONFIG;
-    const estimatedBodyweightKg = fatigueConfig.estimatedBodyweightKg || 75;
+    const us = (M.state && M.state.userSettings) || {};
+    const estimatedBodyweightKg = (us.bodyWeightKg != null ? us.bodyWeightKg : null) || fatigueConfig.estimatedBodyweightKg || 75;
     const bodyweightLoadFactor = fatigueConfig.bodyweightLoadFactor || 0.4;
-    const defaultRpe = fatigueConfig.defaultRpe || 7;
+    const defaultRpe = (us.defaultRpe != null ? us.defaultRpe : null) || fatigueConfig.defaultRpe || 7.5;
     const rawText = String(setText || "").trim();
     const text = rawText.toLowerCase();
     const exercise = String(exerciseName || "").toLowerCase();

@@ -16,5 +16,6 @@
     feedMode: "list",
     recent: [],
     currentFatigue: null,
+    userSettings: null,
   };
 }());

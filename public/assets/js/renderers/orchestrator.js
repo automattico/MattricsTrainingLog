@@ -55,6 +55,7 @@
       M.state.typeFilter = "All";
       M.showApp();
       M.renderDataStatus();
+      await M.loadUserSettings();
       M.renderAll();
     } catch (error) {
       const msg = String(error && error.message ? error.message : error);
@@ -155,6 +156,9 @@
     if (el && el.classList.contains("nav-btn")) el.classList.add("active");
     if (id === "ai") {
       document.querySelectorAll(".ai-top-btn").forEach((button) => button.classList.add("active"));
+    }
+    if (id === "settings") {
+      M.renderSettingsView();
     }
   };
 }());
