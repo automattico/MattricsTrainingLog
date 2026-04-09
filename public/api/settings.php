@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
+mattrics_require_auth();
+
 const VALID_RPE_VALUES = [6.0, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0];
 const VALID_SEX_VALUES = ['Male', 'Female', 'Prefer not to say'];
 const VALID_EXPERIENCE_VALUES = ['Beginner', 'Intermediate', 'Advanced'];

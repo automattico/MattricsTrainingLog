@@ -26,7 +26,11 @@
         sourceUrl = url.toString();
       }
 
-      const res = await fetch(sourceUrl, { redirect: "follow", credentials: "same-origin" });
+      const res = await fetch(sourceUrl, {
+        redirect: "follow",
+        credentials: "same-origin",
+        headers: M.DATA_URL ? { "X-Mattrics-Token": window.MATTRICS_TOKEN || "" } : {},
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
       let json;

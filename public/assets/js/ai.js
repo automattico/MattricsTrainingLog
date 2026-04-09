@@ -78,6 +78,7 @@
           credentials: "same-origin",
           headers: {
             "Content-Type": "application/json",
+            "X-Mattrics-Token": window.MATTRICS_TOKEN || "",
           },
           body: JSON.stringify({
             recent,

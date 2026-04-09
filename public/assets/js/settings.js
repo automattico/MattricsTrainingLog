@@ -306,7 +306,10 @@
   M.loadUserSettings = async function loadUserSettings() {
     if (!M.DATA_URL) return; // file:// mode — skip, use hardcoded defaults
     try {
-      const res = await fetch("api/settings.php", { credentials: "same-origin" });
+      const res = await fetch("api/settings.php", {
+        credentials: "same-origin",
+        headers: { "X-Mattrics-Token": window.MATTRICS_TOKEN || "" },
+      });
       if (res.ok) {
         const json = await res.json();
         M.state.userSettings = json.settings || null;
@@ -356,7 +359,10 @@
     try {
       const res = await fetch("api/settings.php", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Mattrics-Token": window.MATTRICS_TOKEN || "",
+        },
         credentials: "same-origin",
         body: JSON.stringify(data),
       });

@@ -269,6 +269,18 @@ function mattrics_with_refresh_lock(callable $callback)
     }
 }
 
+function mattrics_require_auth(): void
+{
+    $config = mattrics_load_config();
+    $incoming = $_SERVER['HTTP_X_MATTRICS_TOKEN'] ?? '';
+    if (!hash_equals((string) ($config['app_token'] ?? ''), $incoming)) {
+        http_response_code(401);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['error' => 'Unauthorized.']);
+        exit;
+    }
+}
+
 function mattrics_read_json_body(): array
 {
     $raw = file_get_contents('php://input');

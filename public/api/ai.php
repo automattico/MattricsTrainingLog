@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
+mattrics_require_auth();
 mattrics_require_method('POST');
 
 $config = mattrics_load_config();

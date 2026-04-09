@@ -1,0 +1,232 @@
+<?php
+$config = require __DIR__ . '/../private/config.php';
+?><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mattrics Training Log</title>
+<link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#09121d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300;1,8..60,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/brand.css">
+<link rel="stylesheet" href="assets/css/main.css">
+<style>
+  .data-sync-stamp {
+    color: rgba(255, 255, 255, 0.74);
+    font: 500 0.8rem/1.2 "DM Mono", monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .data-status-banner {
+    margin: 1rem 0 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(255, 145, 102, 0.35);
+    border-radius: 16px;
+    background: rgba(255, 145, 102, 0.12);
+    color: #ffc4ad;
+    font-size: 0.95rem;
+  }
+</style>
+<script>
+window.MATTRICS_CONFIG = window.MATTRICS_CONFIG || {};
+if (window.location.protocol === "file:") {
+  document.write('<script src="config.js"><\\/script>');
+}
+</script>
+<script>window.MATTRICS_TOKEN = '<?= htmlspecialchars($config['app_token'], ENT_QUOTES, 'UTF-8') ?>';</script>
+</head>
+<body>
+
+<div id="loadScreen">
+  <div class="load-logo">
+    <div class="load-logo-brand">Mattrics</div>
+    <div class="load-logo-sub">Training Log</div>
+  </div>
+  <div id="loadSpinner" class="load-spinner"></div>
+  <div id="loadMsg" class="load-msg">Fetching your training data</div>
+  <div class="load-error-box" id="errorBox">
+    <div class="load-error-msg" id="errorMsg"></div>
+    <div class="load-actions">
+      <button class="retry-btn" onclick="fetchData()">Retry</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="app-shell">
+    <header class="site-header">
+      <div class="header-row">
+        <div class="brand-block">
+          <div class="site-title">Mattrics</div>
+          <div class="site-subtitle">Training Log</div>
+        </div>
+
+        <div class="header-controls">
+          <div class="window-controls">
+            <div class="control-label">Range</div>
+            <div class="window-switcher" id="windowSwitcher">
+              <div class="window-option active">
+                <button class="window-btn active" data-days="7" onclick="setWindow(7,this)">7 days</button>
+              </div>
+              <div class="window-option">
+                <button class="window-btn" data-days="14" onclick="setWindow(14,this)">14 days</button>
+              </div>
+              <div class="window-option">
+                <button class="window-btn" data-days="30" onclick="setWindow(30,this)">30 days</button>
+              </div>
+              <div class="window-option">
+                <button class="window-btn" data-days="90" onclick="setWindow(90,this)">3 months</button>
+              </div>
+              <div class="window-option">
+                <button class="window-btn" data-days="180" onclick="setWindow(180,this)">6 months</button>
+              </div>
+              <div class="window-option">
+                <button class="window-btn" data-days="0" onclick="setWindow(0,this)">All</button>
+              </div>
+            </div>
+            <div class="range-summary">
+              <div class="control-label">Showing</div>
+              <div class="context-period range-summary-text" id="rangeSummary" aria-live="polite"></div>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            <button class="icon-btn ai-top-btn" onclick="showView('ai', this)" title="Open AI workout" aria-label="Open AI workout">
+              <span class="btn-icon" aria-hidden="true">✦</span>
+              <span>AI Workout</span>
+            </button>
+            <button class="icon-btn refresh-btn" onclick="fetchData({ forceRefresh: true })" title="Refresh from sheet" aria-label="Refresh data">
+              <span class="refresh-icon" aria-hidden="true">↻</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="data-sync-stamp" id="dataSyncStamp">Last updated unavailable</div>
+      <div class="data-status-banner" id="dataStatusBanner" hidden></div>
+    </header>
+
+    <nav class="nav" aria-label="Views">
+      <button class="nav-btn active" onclick="showView('dashboard',this)">Dashboard</button>
+      <button class="nav-btn" onclick="showView('fatigue',this)">Muscle Fatigue Map</button>
+      <button class="nav-btn" onclick="showView('sessions',this)">Sessions</button>
+      <button class="nav-btn" onclick="showView('settings',this)">Settings</button>
+    </nav>
+
+    <main class="app-main">
+      <div class="view active" id="view-dashboard">
+        <section class="section-shell dashboard-shell">
+          <div class="header-stats" id="dashboardOverview"></div>
+        </section>
+      </div>
+
+      <div class="view" id="view-fatigue">
+        <section class="section-shell fatigue-shell">
+          <div id="fatigueOverview"></div>
+          <div id="fatigueDocumentation"></div>
+        </section>
+      </div>
+
+      <div class="view" id="view-sessions">
+        <section class="section-shell">
+          <div class="sessions-toolbar">
+            <div class="filter-row" id="filterRow"></div>
+            <div class="feed-display-tools">
+              <div class="feed-mode-switch" aria-label="Session display mode">
+                <button class="tl-sw-btn active" id="feedModeListBtn" onclick="setFeedMode('list',this)">List</button>
+                <button class="tl-sw-btn" id="feedModeWeekBtn" onclick="setFeedMode('week',this)">Week</button>
+                <button class="tl-sw-btn" id="feedModeMonthBtn" onclick="setFeedMode('month',this)">Month</button>
+              </div>
+            </div>
+          </div>
+          <div class="cards" id="cardList"></div>
+        </section>
+      </div>
+
+      <div class="view" id="view-settings">
+        <section class="section-shell settings-outer">
+          <div id="settingsContent"></div>
+        </section>
+      </div>
+
+      <div class="view" id="view-ai">
+        <section class="section-shell">
+          <div class="ai-pane">
+            <div class="section-kicker">Coach mode</div>
+            <div class="ai-head">Today's <em>Workout</em></div>
+            <div class="ai-desc" id="aiDesc"></div>
+            <div class="api-note">
+              For secure hosting, keep the Anthropic key on the server and call it through <code>api/ai.php</code>.
+            </div>
+            <div class="recent-preview" id="recentPreview">
+              <div class="rp-label">Last 10 days</div>
+              <div id="recentItems"></div>
+            </div>
+            <button class="gen-btn" onclick="generateWorkout()">Generate Workout</button>
+            <div class="ai-thinking" id="aiThinking">Thinking...</div>
+            <div class="ai-output" id="aiOutput">
+              <div class="ai-output-label">Recommended session</div>
+              <div class="ai-output-text" id="aiText"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail(event)">
+  <div class="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle" onclick="event.stopPropagation()">
+    <div class="detail-head">
+      <div>
+        <div class="detail-kicker" id="detailKicker"></div>
+        <div class="detail-title" id="detailTitle"></div>
+        <div class="detail-date" id="detailDate"></div>
+      </div>
+      <button class="detail-close" onclick="closeDetail()" aria-label="Close session detail">×</button>
+    </div>
+    <div class="detail-body">
+      <div class="detail-meta" id="detailMeta"></div>
+      <div class="detail-section" id="detailNotesSection" style="display:none">
+        <div class="detail-label">Notes</div>
+        <div class="detail-note" id="detailNotes"></div>
+      </div>
+      <div class="detail-metrics" id="detailMetrics"></div>
+      <div class="detail-section" id="detailWorkoutSection" style="display:none">
+        <div class="detail-label">Workout breakdown</div>
+        <div class="hevy-list" id="detailWorkoutList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/core/constants.js"></script>
+<script src="assets/js/core/state.js"></script>
+<script src="assets/js/core/date-utils.js"></script>
+<script src="assets/js/core/formatters.js"></script>
+<script src="assets/js/core/filters.js"></script>
+<script src="assets/js/core/hevy-parser.js"></script>
+<script src="assets/js/core/fatigue-engine.js"></script>
+<script src="assets/js/core/fatigue-tiers.js"></script>
+<script src="assets/js/core/activity-analysis.js"></script>
+<script src="assets/js/core/metrics.js"></script>
+<script src="assets/js/body-map-team-buildr.js"></script>
+<script src="assets/js/renderers/loader.js"></script>
+<script src="assets/js/renderers/orchestrator.js"></script>
+<script src="assets/js/renderers/dashboard.js"></script>
+<script src="assets/js/renderers/fatigue-view.js"></script>
+<script src="assets/js/feed.js"></script>
+<script src="assets/js/timeline.js"></script>
+<script src="assets/js/ai.js"></script>
+<script src="assets/js/detail.js"></script>
+<script src="assets/js/settings.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

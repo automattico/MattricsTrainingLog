@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
+mattrics_require_auth();
 mattrics_require_method('GET');
 
 $allowedFields = array_flip([
