@@ -13,7 +13,7 @@ cd "$PROJECT_ROOT"
 
 require_command lftp
 require_command php
-require_vars SFTP_HOST SFTP_PORT SFTP_USER SFTP_REMOTE_DIR
+require_vars SFTP_HOST SFTP_PORT SFTP_USER SFTP_REMOTE_DIR SFTP_REMOTE_LIB_DIR
 require_any_auth
 
 log_info "Git status before deploy:"
@@ -45,6 +45,10 @@ trap 'rm -f "$tmp_file"' EXIT HUP INT TERM
   printf '%s\n' "rm -f \"$SFTP_REMOTE_DIR/config.js\""
   printf '%s\n' "mirror --reverse --delete --verbose --exclude-glob config.js --exclude-glob .htpasswd --exclude-glob .well-known public \"$SFTP_REMOTE_DIR\""
   printf '%s\n' "put -O \"$SFTP_REMOTE_PRIVATE_DIR\" private/config.php"
+  printf '%s\n' "set cmd:fail-exit no"
+  printf '%s\n' "mkdir \"$SFTP_REMOTE_LIB_DIR\""
+  printf '%s\n' "set cmd:fail-exit yes"
+  printf '%s\n' "mirror --reverse --delete --verbose lib \"$SFTP_REMOTE_LIB_DIR\""
   printf '%s\n' "bye"
 } >"$tmp_file"
 

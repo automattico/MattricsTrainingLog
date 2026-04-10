@@ -1,5 +1,15 @@
 <?php
-$config = require __DIR__ . '/../private/config.php';
+declare(strict_types=1);
+require_once __DIR__ . '/api/bootstrap-auth.php';
+mattrics_auth_session_start();
+if (empty($_SESSION['mattrics_authed'])) {
+    header('Location: /login.php');
+    exit;
+}
+$_initialView = '';
+if (isset($_GET['view']) && preg_match('/^[a-z]+$/', $_GET['view'])) {
+    $_initialView = $_GET['view'];
+}
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -41,7 +51,6 @@ if (window.location.protocol === "file:") {
   document.write('<script src="config.js"><\\/script>');
 }
 </script>
-<script>window.MATTRICS_TOKEN = '<?= htmlspecialchars($config['app_token'], ENT_QUOTES, 'UTF-8') ?>';</script>
 </head>
 <body>
 
@@ -105,6 +114,9 @@ if (window.location.protocol === "file:") {
             </button>
             <button class="icon-btn refresh-btn" onclick="fetchData({ forceRefresh: true })" title="Refresh from sheet" aria-label="Refresh data">
               <span class="refresh-icon" aria-hidden="true">↻</span>
+            </button>
+            <button class="icon-btn logout-btn" onclick="fetch('/api/auth/logout.php',{method:'POST',credentials:'same-origin'}).then(()=>window.location.href='/login.php')" title="Sign out" aria-label="Sign out">
+              <span class="btn-icon" aria-hidden="true">⏻</span>
             </button>
           </div>
         </div>
@@ -227,6 +239,8 @@ if (window.location.protocol === "file:") {
 <script src="assets/js/ai.js"></script>
 <script src="assets/js/detail.js"></script>
 <script src="assets/js/settings.js"></script>
+<script src="assets/js/passkeys.js"></script>
+<script>window.__MATTRICS_INITIAL_VIEW__ = <?= json_encode($_initialView) ?>;</script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>

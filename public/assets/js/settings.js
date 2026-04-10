@@ -298,7 +298,8 @@
   M.renderSettingsView = function renderSettingsView(errors) {
     const el = document.getElementById("settingsContent");
     if (!el) return;
-    el.innerHTML = renderForm(M.state.userSettings, errors || {});
+    el.innerHTML = renderForm(M.state.userSettings, errors || {}) + '<div id="passkeysSection"></div>';
+    if (M.loadAndRenderPasskeys) M.loadAndRenderPasskeys();
   };
 
   // ── Public: loadUserSettings ──────────────────────────────────────────────────
@@ -308,7 +309,7 @@
     try {
       const res = await fetch("api/settings.php", {
         credentials: "same-origin",
-        headers: { "X-Mattrics-Token": window.MATTRICS_TOKEN || "" },
+        headers: {},
       });
       if (res.ok) {
         const json = await res.json();
@@ -346,7 +347,8 @@
       const el = document.getElementById("settingsContent");
       if (el) {
         // Preserve current saved values but show new errors
-        el.innerHTML = renderForm(Object.assign({}, M.state.userSettings || {}, data), errors);
+        el.innerHTML = renderForm(Object.assign({}, M.state.userSettings || {}, data), errors) + '<div id="passkeysSection"></div>';
+        if (M.loadAndRenderPasskeys) M.loadAndRenderPasskeys();
       }
       return;
     }
@@ -361,7 +363,6 @@
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Mattrics-Token": window.MATTRICS_TOKEN || "",
         },
         credentials: "same-origin",
         body: JSON.stringify(data),
@@ -373,7 +374,10 @@
         // Server-side validation errors
         const serverErrors = json.errors || { _: "Save failed. Please try again." };
         const el = document.getElementById("settingsContent");
-        if (el) el.innerHTML = renderForm(Object.assign({}, M.state.userSettings || {}, data), serverErrors);
+        if (el) {
+          el.innerHTML = renderForm(Object.assign({}, M.state.userSettings || {}, data), serverErrors) + '<div id="passkeysSection"></div>';
+          if (M.loadAndRenderPasskeys) M.loadAndRenderPasskeys();
+        }
         return;
       }
 

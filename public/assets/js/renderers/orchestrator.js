@@ -29,7 +29,7 @@
       const res = await fetch(sourceUrl, {
         redirect: "follow",
         credentials: "same-origin",
-        headers: M.DATA_URL ? { "X-Mattrics-Token": window.MATTRICS_TOKEN || "" } : {},
+        headers: {},
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
@@ -61,6 +61,10 @@
       M.renderDataStatus();
       await M.loadUserSettings();
       M.renderAll();
+      if (window.__MATTRICS_INITIAL_VIEW__) {
+        M.showView(window.__MATTRICS_INITIAL_VIEW__);
+        window.__MATTRICS_INITIAL_VIEW__ = '';
+      }
     } catch (error) {
       const msg = String(error && error.message ? error.message : error);
       const isCors = msg === "Failed to fetch" ||

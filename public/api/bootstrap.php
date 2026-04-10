@@ -269,15 +269,29 @@ function mattrics_with_refresh_lock(callable $callback)
     }
 }
 
+function mattrics_session_start(): void
+{
+    if (session_status() !== PHP_SESSION_NONE) {
+        return;
+    }
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['SERVER_PORT'] ?? 80) == 443);
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/',
+        'secure'   => $isHttps,
+        'httponly' => true,
+        'samesite' => $isHttps ? 'Strict' : 'Lax',
+    ]);
+    session_name('mattrics_sess');
+    session_start();
+}
+
 function mattrics_require_auth(): void
 {
-    $config = mattrics_load_config();
-    $incoming = $_SERVER['HTTP_X_MATTRICS_TOKEN'] ?? '';
-    if (!hash_equals((string) ($config['app_token'] ?? ''), $incoming)) {
-        http_response_code(401);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(['error' => 'Unauthorized.']);
-        exit;
+    mattrics_session_start();
+    if (empty($_SESSION['mattrics_authed'])) {
+        mattrics_send_json(['error' => 'Unauthorized.'], 401);
     }
 }
 
