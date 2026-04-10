@@ -54,7 +54,9 @@ if (!function_exists('mattrics_private_root')) {
 
         $cursor = dirname(__DIR__, 2);
         for ($depth = 0; $depth < 5; $depth++) {
+            $parent = dirname($cursor);
             foreach ([
+                $parent . '/mattrics-private/config.php',
                 $cursor . '/private/config.php',
                 $cursor . '/mattrics-private/config.php',
                 $cursor . '/.private/mattrics-config.php',
@@ -63,7 +65,6 @@ if (!function_exists('mattrics_private_root')) {
                     return dirname($candidate);
                 }
             }
-            $parent = dirname($cursor);
             if ($parent === $cursor) break;
             $cursor = $parent;
         }
@@ -81,6 +82,7 @@ function mattrics_lib_root(): string
     foreach ([
         $base . '/lib',
         $base . '/mattrics-lib',
+        dirname($base) . '/mattrics-lib',
         dirname(__DIR__, 2) . '/lib',
     ] as $candidate) {
         if (is_dir($candidate . '/WebAuthn')) {

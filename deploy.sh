@@ -31,6 +31,10 @@ log_info "  Host: $SFTP_HOST:$SFTP_PORT"
 log_info "  Public dir: $SFTP_REMOTE_DIR"
 log_info "  Private dir: $SFTP_REMOTE_PRIVATE_DIR"
 
+SFTP_REMOTE_APP_DIR=$(dirname "$SFTP_REMOTE_DIR")
+SFTP_REMOTE_APP_PRIVATE_DIR="$SFTP_REMOTE_APP_DIR/private"
+SFTP_REMOTE_APP_LIB_DIR="$SFTP_REMOTE_APP_DIR/lib"
+
 tmp_file=$(mktemp)
 trap 'rm -f "$tmp_file"' EXIT HUP INT TERM
 
@@ -41,14 +45,18 @@ trap 'rm -f "$tmp_file"' EXIT HUP INT TERM
   printf '%s\n' "mkdir \"$SFTP_REMOTE_DIR\""
   printf '%s\n' "mkdir \"$SFTP_REMOTE_DIR/api\""
   printf '%s\n' "mkdir \"$SFTP_REMOTE_PRIVATE_DIR\""
+  printf '%s\n' "mkdir \"$SFTP_REMOTE_APP_PRIVATE_DIR\""
   printf '%s\n' "set cmd:fail-exit yes"
   printf '%s\n' "rm -f \"$SFTP_REMOTE_DIR/config.js\""
   printf '%s\n' "mirror --reverse --delete --verbose --exclude-glob config.js --exclude-glob .htpasswd --exclude-glob .well-known public \"$SFTP_REMOTE_DIR\""
   printf '%s\n' "put -O \"$SFTP_REMOTE_PRIVATE_DIR\" private/config.php"
+  printf '%s\n' "put -O \"$SFTP_REMOTE_APP_PRIVATE_DIR\" private/config.php"
   printf '%s\n' "set cmd:fail-exit no"
   printf '%s\n' "mkdir \"$SFTP_REMOTE_LIB_DIR\""
+  printf '%s\n' "mkdir \"$SFTP_REMOTE_APP_LIB_DIR\""
   printf '%s\n' "set cmd:fail-exit yes"
   printf '%s\n' "mirror --reverse --delete --verbose lib \"$SFTP_REMOTE_LIB_DIR\""
+  printf '%s\n' "mirror --reverse --delete --verbose lib \"$SFTP_REMOTE_APP_LIB_DIR\""
   printf '%s\n' "bye"
 } >"$tmp_file"
 

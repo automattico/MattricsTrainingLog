@@ -25,7 +25,9 @@ function mattrics_private_root(): string
 
     $cursor = dirname(__DIR__, 2);
     for ($depth = 0; $depth < 5; $depth++) {
+        $parent = dirname($cursor);
         foreach ([
+            $parent . '/mattrics-private/config.php',
             $cursor . '/private/config.php',
             $cursor . '/mattrics-private/config.php',
             $cursor . '/.private/mattrics-config.php',
@@ -35,7 +37,6 @@ function mattrics_private_root(): string
             }
         }
 
-        $parent = dirname($cursor);
         if ($parent === $cursor) {
             break;
         }
@@ -57,10 +58,11 @@ function mattrics_load_config(): array
 
     $cursor = dirname(__DIR__, 2);
     for ($depth = 0; $depth < 5; $depth++) {
+        $parent = dirname($cursor);
+        $candidates[] = $parent . '/mattrics-private/config.php';
         $candidates[] = $cursor . '/private/config.php';
         $candidates[] = $cursor . '/mattrics-private/config.php';
         $candidates[] = $cursor . '/.private/mattrics-config.php';
-        $parent = dirname($cursor);
         if ($parent === $cursor) {
             break;
         }
