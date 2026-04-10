@@ -116,7 +116,8 @@ if (window.location.protocol === "file:") {
           </div>
 
           <div class="header-actions">
-            <button class="icon-btn logout-btn" onclick="fetch('/api/auth/logout.php',{method:'POST',credentials:'same-origin',headers:{'X-CSRF-Token':window.MATTRICS_AUTH&&window.MATTRICS_AUTH.csrfToken||''}}).then(()=>window.location.href='/login.php')" title="Sign out" aria-label="Sign out">
+            <button class="icon-btn logout-btn" onclick="fetch('/api/auth/logout.php',{method:'POST',credentials:'same-origin',headers:{'X-CSRF-Token':window.MATTRICS_AUTH&&window.MATTRICS_AUTH.csrfToken||''}}).then(()=>window.location.href='/login.php')" title="Log out" aria-label="Log out">
+              <span>Log out</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7"/><polyline points="17 8 21 12 17 16"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </button>
             <div class="header-actions-row">

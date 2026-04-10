@@ -1,10 +1,21 @@
 (function () {
   const M = window.Mattrics;
 
+  M.logout = function logout() {
+    fetch('api/auth/logout.php', { method: 'POST' })
+      .then(() => {
+        window.location.href = 'login.php';
+      })
+      .catch(() => {
+        window.location.href = 'login.php';
+      });
+  };
+
   Object.assign(window, {
     closeDetail: M.closeDetail,
     fetchData: M.fetchData,
     generateWorkout: M.generateWorkout,
+    logout: M.logout,
     openDetail: M.openDetail,
     saveSettings: M.saveSettings,
     setFilter: M.setFilter,

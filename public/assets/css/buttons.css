@@ -114,18 +114,13 @@
 }
 
 .logout-btn {
-  width: 32px;
-  min-width: 32px;
-  height: 32px;
-  min-height: 32px;
-  padding: 0;
-  background: transparent;
-  border-color: transparent;
-  color: rgba(255, 120, 90, 0.6);
+  background: rgba(255, 120, 90, 0.06);
+  border-color: rgba(255, 120, 90, 0.2);
+  color: rgba(255, 120, 90, 0.8);
 }
 
 .logout-btn:hover {
-  color: rgba(255, 120, 90, 0.9);
-  background: rgba(255, 120, 90, 0.08);
-  border-color: rgba(255, 120, 90, 0.2);
+  color: rgba(255, 120, 90, 1);
+  background: rgba(255, 120, 90, 0.14);
+  border-color: rgba(255, 120, 90, 0.4);
 }
