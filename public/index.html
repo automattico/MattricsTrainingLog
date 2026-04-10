@@ -103,6 +103,10 @@ if (window.location.protocol === "file:") {
             <button class="icon-btn refresh-btn" onclick="fetchData({ forceRefresh: true })" title="Refresh from sheet" aria-label="Refresh data">
               <span class="refresh-icon" aria-hidden="true">↻</span>
             </button>
+            <button class="icon-btn logout-btn" onclick="logout()" title="Log out" aria-label="Log out">
+              <span class="btn-icon" aria-hidden="true">→</span>
+              <span>Log out</span>
+            </button>
           </div>
         </div>
       </div>
@@ -225,6 +229,19 @@ if (window.location.protocol === "file:") {
 <script src="assets/js/renderers/orchestrator.js"></script>
 <script src="assets/js/renderers/dashboard.js"></script>
 <script src="assets/js/renderers/fatigue-view.js"></script>
+<script src="assets/js/renderers/docs-helpers.js"></script>
+<script src="assets/js/renderers/docs/section-overview.js"></script>
+<script src="assets/js/renderers/docs/section-tech-stack.js"></script>
+<script src="assets/js/renderers/docs/section-feature-map.js"></script>
+<script src="assets/js/renderers/docs/section-data-import.js"></script>
+<script src="assets/js/renderers/docs/section-domain-model.js"></script>
+<script src="assets/js/renderers/docs/section-auth-passkeys.js"></script>
+<script src="assets/js/renderers/docs/section-ai-model.js"></script>
+<script src="assets/js/renderers/docs/section-fatigue-model.js"></script>
+<script src="assets/js/renderers/docs/section-module-map.js"></script>
+<script src="assets/js/renderers/docs/section-body-map.js"></script>
+<script src="assets/js/renderers/docs/section-css-guide.js"></script>
+<script src="assets/js/renderers/docs/section-deployment.js"></script>
 <script src="assets/js/renderers/docs.js"></script>
 <script src="assets/js/feed.js"></script>
 <script src="assets/js/timeline.js"></script>

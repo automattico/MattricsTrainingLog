@@ -503,6 +503,16 @@ details.dev-doc[open] .dev-doc-summary-chevron {
   font-weight: 700;
 }
 
+.docs-flow--vertical {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.docs-flow--vertical .docs-flow-arrow {
+  padding-left: 16px;
+}
+
 .docs-callout {
   display: flex;
   align-items: center;
@@ -563,4 +573,88 @@ details.dev-doc[open] .dev-doc-summary-chevron {
 .docs-callout-btn:focus-visible {
   outline: 2px solid rgba(0, 130, 201, 0.55);
   outline-offset: 2px;
+}
+
+/* ── Mermaid diagrams ──────────────────────────────────────────────────────── */
+
+.docs-mermaid {
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.docs-mermaid svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* ── Fatigue tier list ─────────────────────────────────────────────────────── */
+
+.docs-tier-list {
+  display: grid;
+  gap: 6px;
+}
+
+.docs-tier-item {
+  display: grid;
+  grid-template-columns: 10px 130px 58px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.docs-tier-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.docs-tier-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.docs-tier-range {
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+}
+
+.docs-tier-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.docs-tier-action {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted-strong);
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* ── File tree ─────────────────────────────────────────────────────────────── */
+
+.docs-tree {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 0;
 }

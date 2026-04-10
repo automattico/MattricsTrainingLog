@@ -125,18 +125,20 @@
 }
 
 .data-sync-stamp {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 11px;
+  color: rgba(255, 255, 255, 0.74);
+  font: 500 0.8rem/1.2 "DM Mono", monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .data-status-banner {
-  margin-top: 12px;
-  padding: 0.8rem 0.95rem;
-  border: 1px solid rgba(255, 145, 102, 0.28);
-  border-radius: var(--radius-sm);
-  background: rgba(255, 145, 102, 0.1);
+  margin: 1rem 0 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(255, 145, 102, 0.35);
+  border-radius: 16px;
+  background: rgba(255, 145, 102, 0.12);
   color: #ffc4ad;
-  font-size: 0.93rem;
+  font-size: 0.95rem;
 }
 
 .nav {
