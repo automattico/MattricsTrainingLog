@@ -1,5 +1,5 @@
-/* ── Fatigue model developer documentation ───────────────── */
-.fatigue-doc {
+/* docs.css — shared developer documentation accordions */
+.dev-doc {
   background: var(--surface-card-soft);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -7,7 +7,7 @@
   margin-top: 24px;
 }
 
-.fatigue-doc > summary {
+.dev-doc > summary {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -18,9 +18,9 @@
   outline: none;
 }
 
-.fatigue-doc > summary::-webkit-details-marker { display: none; }
+.dev-doc > summary::-webkit-details-marker { display: none; }
 
-.fatigue-doc-summary-kicker {
+.dev-doc-summary-kicker {
   color: var(--muted);
   font-size: 10px;
   font-weight: 600;
@@ -29,29 +29,29 @@
   flex: 1;
 }
 
-.fatigue-doc-summary-title {
+.dev-doc-summary-title {
   color: var(--muted-strong);
   font-size: 13px;
   font-weight: 500;
 }
 
-.fatigue-doc-summary-chevron {
+.dev-doc-summary-chevron {
   color: var(--muted);
   font-size: 11px;
   transition: transform 0.18s ease;
   margin-left: 4px;
 }
 
-details.fatigue-doc[open] .fatigue-doc-summary-chevron {
+details.dev-doc[open] .dev-doc-summary-chevron {
   transform: rotate(180deg);
 }
 
-.fatigue-doc-body {
+.dev-doc-body {
   padding: 0 20px 28px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.fatigue-doc-intro {
+.dev-doc-intro {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.65;
@@ -61,19 +61,32 @@ details.fatigue-doc[open] .fatigue-doc-summary-chevron {
   margin-bottom: 24px;
 }
 
-.fatigue-doc-grid {
+.dev-doc-feature-summary {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+  max-width: 90ch;
+  margin: -10px 0 24px;
+}
+
+.dev-doc-feature-summary strong {
+  color: var(--muted-strong);
+  font-weight: 600;
+}
+
+.dev-doc-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 28px 32px;
 }
 
-.fatigue-doc-section {
+.dev-doc-section {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.fatigue-doc-heading {
+.dev-doc-heading {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.09em;
@@ -82,42 +95,42 @@ details.fatigue-doc[open] .fatigue-doc-summary-chevron {
   margin-bottom: 2px;
 }
 
-.fatigue-doc-text {
+.dev-doc-text {
   color: var(--muted);
   font-size: 12.5px;
   line-height: 1.6;
 }
 
-.fatigue-doc-text strong {
+.dev-doc-text strong {
   color: var(--muted-strong);
   font-weight: 600;
 }
 
-.fatigue-doc-table {
+.dev-doc-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
   margin-top: 2px;
 }
 
-.fatigue-doc-table td {
+.dev-doc-table td {
   padding: 3px 0;
   vertical-align: top;
   line-height: 1.5;
 }
 
-.fatigue-doc-table td:first-child {
+.dev-doc-table td:first-child {
   color: var(--muted);
   padding-right: 14px;
   white-space: nowrap;
   width: 44%;
 }
 
-.fatigue-doc-table td:last-child {
+.dev-doc-table td:last-child {
   color: var(--muted-strong);
 }
 
-.fatigue-doc-code {
+.dev-doc-code {
   font-family: var(--font-mono);
   font-size: 11px;
   background: rgba(255, 255, 255, 0.06);
@@ -126,7 +139,7 @@ details.fatigue-doc[open] .fatigue-doc-summary-chevron {
   color: var(--text);
 }
 
-.fatigue-doc-formula {
+.dev-doc-formula {
   font-family: var(--font-mono);
   font-size: 11.5px;
   color: var(--muted-strong);
@@ -140,33 +153,33 @@ details.fatigue-doc[open] .fatigue-doc-summary-chevron {
   margin: 2px 0;
 }
 
-.fatigue-doc-tiers {
+.dev-doc-tiers {
   display: flex;
   flex-direction: column;
   gap: 7px;
   margin-top: 2px;
 }
 
-.fatigue-doc-tier {
+.dev-doc-tier {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 12.5px;
 }
 
-.fatigue-doc-tier-dot {
+.dev-doc-tier-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.fatigue-doc-tier-label {
+.dev-doc-tier-label {
   color: var(--muted-strong);
   font-weight: 500;
   min-width: 150px;
 }
 
-.fatigue-doc-tier-desc {
+.dev-doc-tier-desc {
   color: var(--muted);
 }

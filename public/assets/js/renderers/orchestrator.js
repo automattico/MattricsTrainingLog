@@ -1,5 +1,40 @@
 (function () {
   const M = window.Mattrics;
+  const VIEW_IDS = ["dashboard", "fatigue", "sessions", "ai", "settings"];
+
+  function isValidView(id) {
+    return VIEW_IDS.includes(id) && Boolean(document.getElementById(`view-${id}`));
+  }
+
+  function getUrlView() {
+    try {
+      const id = new URL(window.location.href).searchParams.get("view");
+      return isValidView(id) ? id : "";
+    } catch {
+      return "";
+    }
+  }
+
+  function updateViewUrl(id) {
+    if (!window.history || !window.history.replaceState) return;
+    try {
+      const url = new URL(window.location.href);
+      if (id === "dashboard") {
+        url.searchParams.delete("view");
+      } else {
+        url.searchParams.set("view", id);
+      }
+      window.history.replaceState({}, "", url.toString());
+    } catch {
+      // Ignore URL persistence when the browser does not allow it.
+    }
+  }
+
+  function getInitialView() {
+    const serverView = window.__MATTRICS_INITIAL_VIEW__;
+    if (isValidView(serverView)) return serverView;
+    return getUrlView();
+  }
 
   M.fetchData = async function fetchData(options = {}) {
     M.showLoading();
@@ -61,9 +96,10 @@
       M.renderDataStatus();
       await M.loadUserSettings();
       M.renderAll();
-      if (window.__MATTRICS_INITIAL_VIEW__) {
-        M.showView(window.__MATTRICS_INITIAL_VIEW__);
-        window.__MATTRICS_INITIAL_VIEW__ = '';
+      const initialView = getInitialView();
+      if (initialView) {
+        M.showView(initialView, null, { persist: false });
+        window.__MATTRICS_INITIAL_VIEW__ = "";
       }
     } catch (error) {
       const msg = String(error && error.message ? error.message : error);
@@ -107,11 +143,22 @@
 
     if (!data.length) {
       activeContext.textContent = "No activities in this range";
-      return;
+    } else {
+      const range = M.getWindowRange();
+      activeContext.textContent = M.formatContextRange(range.start || data[data.length - 1].Date, range.end || data[0].Date);
     }
 
-    const range = M.getWindowRange();
-    activeContext.textContent = M.formatContextRange(range.start || data[data.length - 1].Date, range.end || data[0].Date);
+    M.positionRangeSummary();
+  };
+
+  M.positionRangeSummary = function positionRangeSummary() {
+    const el = document.getElementById("rangeSummary");
+    const activeBtn = document.querySelector(".window-btn.active");
+    const controls = document.querySelector(".window-controls");
+    if (!el || !activeBtn || !controls) return;
+    const btnRect = activeBtn.getBoundingClientRect();
+    const controlsRect = controls.getBoundingClientRect();
+    el.style.left = (btnRect.left + btnRect.width / 2 - controlsRect.left) + "px";
   };
 
   M.renderFilters = function renderFilters(data) {
@@ -156,15 +203,17 @@
     M.renderFeed();
   };
 
-  M.showView = function showView(id, el) {
+  M.showView = function showView(id, el, options = {}) {
+    if (!isValidView(id)) return;
     document.querySelectorAll(".view").forEach((view) => view.classList.remove("active"));
     document.querySelectorAll(".nav-btn").forEach((button) => button.classList.remove("active"));
-    document.querySelectorAll(".ai-top-btn").forEach((button) => button.classList.remove("active"));
     document.getElementById(`view-${id}`).classList.add("active");
     if (el && el.classList.contains("nav-btn")) el.classList.add("active");
-    if (id === "ai") {
-      document.querySelectorAll(".ai-top-btn").forEach((button) => button.classList.add("active"));
+    if (!el) {
+      const navBtn = document.querySelector(`.nav-btn[onclick*="showView('${id}'"]`);
+      if (navBtn) navBtn.classList.add("active");
     }
+    if (options.persist !== false) updateViewUrl(id);
     if (id === "settings") {
       M.renderSettingsView();
     }

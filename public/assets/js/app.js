@@ -18,6 +18,8 @@
     if (event.key === "Escape") M.closeDetail();
   });
 
+  window.addEventListener("resize", () => M.positionRangeSummary());
+
   document.addEventListener("click", (event) => {
     const trigger = event.target.closest("[data-activity-id]");
     if (!trigger) return;

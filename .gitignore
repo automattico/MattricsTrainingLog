@@ -2,6 +2,7 @@
 public/config.js
 private/config.php
 private/cache/
+private/*.json
 .env.local
 
 # OS

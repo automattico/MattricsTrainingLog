@@ -219,58 +219,58 @@
     if (!mount) return;
 
     mount.innerHTML = `
-      <details class="fatigue-doc">
+      <details class="dev-doc">
         <summary>
-          <span class="fatigue-doc-summary-kicker">Developer docs</span>
-          <span class="fatigue-doc-summary-title">How the fatigue model works</span>
-          <span class="fatigue-doc-summary-chevron">▾</span>
+          <span class="dev-doc-summary-kicker">Developer docs</span>
+          <span class="dev-doc-summary-title">How the fatigue model works</span>
+          <span class="dev-doc-summary-chevron">▾</span>
         </summary>
-        <div class="fatigue-doc-body">
-          <p class="fatigue-doc-intro">
+        <div class="dev-doc-body">
+          <p class="dev-doc-intro">
             A decay-based load accumulation model. Every activity adds a per-muscle stimulus. That stimulus fades
             exponentially over time based on each muscle&rsquo;s half-life. The fatigue score is how much accumulated
             load remains relative to a calibrated &ldquo;fully loaded&rdquo; reference — the normalization load.
           </p>
-          <div class="fatigue-doc-grid">
+          <div class="dev-doc-grid">
 
-            <div class="fatigue-doc-section">
-              <div class="fatigue-doc-heading">Fatigue score (0–100)</div>
-              <div class="fatigue-doc-text">Looks back <strong>10 days</strong>. Each activity contributes a stimulus per muscle (0–1+ scale). Remaining load after decay is summed, then divided by a per-muscle normalization load to give a 0–100 score.</div>
-              <pre class="fatigue-doc-formula">score    = rawLoad / normalizationLoad × 100
+            <div class="dev-doc-section">
+              <div class="dev-doc-heading">Fatigue score (0–100)</div>
+              <div class="dev-doc-text">Looks back <strong>10 days</strong>. Each activity contributes a stimulus per muscle (0–1+ scale). Remaining load after decay is summed, then divided by a per-muscle normalization load to give a 0–100 score.</div>
+              <pre class="dev-doc-formula">score    = rawLoad / normalizationLoad × 100
 rawLoad  = Σ ( stimulus × 0.5^(hoursAgo / halfLife) )</pre>
-              <table class="fatigue-doc-table">
+              <table class="dev-doc-table">
                 <tr><td>Normalization load</td><td>Per-muscle &ldquo;fully loaded&rdquo; reference — e.g. upper back 2.45, quads 2.25, biceps 1.55, obliques 1.45</td></tr>
                 <tr><td>Score cap</td><td>100 — cannot exceed regardless of load volume</td></tr>
                 <tr><td>Lookback window</td><td>10 days rolling from now</td></tr>
               </table>
             </div>
 
-            <div class="fatigue-doc-section">
-              <div class="fatigue-doc-heading">Decay &amp; half-lives</div>
-              <div class="fatigue-doc-text">Each muscle has its own half-life. After one half-life, 50% of the stimulus remains; after two, 25%. All activity timestamps are normalised to <strong>noon on their date</strong>, so sub-day precision is not available.</div>
-              <pre class="fatigue-doc-formula">remaining = stimulus × 0.5^(hoursElapsed / halfLife)</pre>
-              <table class="fatigue-doc-table">
+            <div class="dev-doc-section">
+              <div class="dev-doc-heading">Decay &amp; half-lives</div>
+              <div class="dev-doc-text">Each muscle has its own half-life. After one half-life, 50% of the stimulus remains; after two, 25%. All activity timestamps are normalised to <strong>noon on their date</strong>, so sub-day precision is not available.</div>
+              <pre class="dev-doc-formula">remaining = stimulus × 0.5^(hoursElapsed / halfLife)</pre>
+              <table class="dev-doc-table">
                 <tr><td>72 h</td><td>Chest, upper back, lower back, quads, hamstrings, glutes, adductors</td></tr>
                 <tr><td>60 h</td><td>Deltoids, trapezius, calves</td></tr>
                 <tr><td>48 h</td><td>Triceps, biceps, abs, obliques</td></tr>
               </table>
             </div>
 
-            <div class="fatigue-doc-section">
-              <div class="fatigue-doc-heading">Hevy workouts — set load</div>
-              <div class="fatigue-doc-text">Triggered when the description starts with <code class="fatigue-doc-code">Logged with Hevy</code>. Each exercise block is name-matched against 12 pattern groups. Load is calculated from actual sets.</div>
-              <pre class="fatigue-doc-formula">load         = weight(kg) × reps × effortFactor
+            <div class="dev-doc-section">
+              <div class="dev-doc-heading">Hevy workouts — set load</div>
+              <div class="dev-doc-text">Triggered when the description starts with <code class="dev-doc-code">Logged with Hevy</code>. Each exercise block is name-matched against 12 pattern groups. Load is calculated from actual sets.</div>
+              <pre class="dev-doc-formula">load         = weight(kg) × reps × effortFactor
 effortFactor = 0.5 + RPE/10
                default RPE = 7  →  effortFactor = 1.20
 bodyweight   = 75 kg × 0.4 when no weight is logged
 scaledLoad   = load / 1500  (unit divisor)</pre>
-              <div class="fatigue-doc-text" style="margin-top:4px">RPE range: 6 → 1.10 &nbsp;|&nbsp; 7 → 1.20 &nbsp;|&nbsp; 8 → 1.30 &nbsp;|&nbsp; 9 → 1.40 &nbsp;|&nbsp; 10 → 1.50. Time-based sets (e.g. &ldquo;3 min&rdquo;) are skipped — no load calculated.</div>
+              <div class="dev-doc-text" style="margin-top:4px">RPE range: 6 → 1.10 &nbsp;|&nbsp; 7 → 1.20 &nbsp;|&nbsp; 8 → 1.30 &nbsp;|&nbsp; 9 → 1.40 &nbsp;|&nbsp; 10 → 1.50. Time-based sets (e.g. &ldquo;3 min&rdquo;) are skipped — no load calculated.</div>
             </div>
 
-            <div class="fatigue-doc-section">
-              <div class="fatigue-doc-heading">Hevy workouts — exercise patterns</div>
-              <div class="fatigue-doc-text">Name is lowercased and matched by substring. First match wins. 12 groups:</div>
-              <table class="fatigue-doc-table">
+            <div class="dev-doc-section">
+              <div class="dev-doc-heading">Hevy workouts — exercise patterns</div>
+              <div class="dev-doc-text">Name is lowercased and matched by substring. First match wins. 12 groups:</div>
+              <table class="dev-doc-table">
                 <tr><td>bench / push-up / chest fly / dip / pec deck</td><td>Chest primary</td></tr>
                 <tr><td>incline press / chest press</td><td>Chest (incline)</td></tr>
                 <tr><td>row / face pull</td><td>Upper back primary</td></tr>
@@ -286,19 +286,19 @@ scaledLoad   = load / 1500  (unit divisor)</pre>
               </table>
             </div>
 
-            <div class="fatigue-doc-section">
-              <div class="fatigue-doc-heading">Unknown exercises</div>
-              <div class="fatigue-doc-text">If an exercise name doesn&rsquo;t match any of the 12 patterns, it contributes <strong>zero</strong> muscle-specific stimulus for that exercise. If <em>no</em> exercise in the session matches, the whole session falls back to the generic <code class="fatigue-doc-code">WeightTraining</code> type mapping — a light, even spread across all muscles.</div>
-              <div class="fatigue-doc-text" style="margin-top:6px">To model a new exercise: add its name as a substring pattern to the relevant group in <code class="fatigue-doc-code">getExerciseMuscleMapping()</code> in <code class="fatigue-doc-code">core/hevy-parser.js</code>.</div>
+            <div class="dev-doc-section">
+              <div class="dev-doc-heading">Unknown exercises</div>
+              <div class="dev-doc-text">If an exercise name doesn&rsquo;t match any of the 12 patterns, it contributes <strong>zero</strong> muscle-specific stimulus for that exercise. If <em>no</em> exercise in the session matches, the whole session falls back to the generic <code class="dev-doc-code">WeightTraining</code> type mapping — a light, even spread across all muscles.</div>
+              <div class="dev-doc-text" style="margin-top:6px">To model a new exercise: add its name as a substring pattern to the relevant group in <code class="dev-doc-code">getExerciseMuscleMapping()</code> in <code class="dev-doc-code">core/hevy-parser.js</code>.</div>
             </div>
 
-            <div class="fatigue-doc-section">
-              <div class="fatigue-doc-heading">Activity types (non-Hevy)</div>
-              <div class="fatigue-doc-text">If not a Hevy workout, the activity <strong>Type</strong> field maps to hardcoded per-muscle weights. Duration scales the stimulus.</div>
-              <pre class="fatigue-doc-formula">sportFactor    = clamp(min/60,  0.70, 1.45)  caps at 87 min+
+            <div class="dev-doc-section">
+              <div class="dev-doc-heading">Activity types (non-Hevy)</div>
+              <div class="dev-doc-text">If not a Hevy workout, the activity <strong>Type</strong> field maps to hardcoded per-muscle weights. Duration scales the stimulus.</div>
+              <pre class="dev-doc-formula">sportFactor    = clamp(min/60,  0.70, 1.45)  caps at 87 min+
 strengthFactor = clamp(min/45,  0.85, 1.60)  caps at 72 min+
 stimulus = baseWeights × factor</pre>
-              <table class="fatigue-doc-table">
+              <table class="dev-doc-table">
                 <tr><td>Run</td><td>Quads, hamstrings, calves, glutes</td></tr>
                 <tr><td>Hike</td><td>Quads, hamstrings, calves, glutes (heavier than run)</td></tr>
                 <tr><td>Ride</td><td>Quads dominant, glutes, hamstrings</td></tr>
@@ -313,13 +313,13 @@ stimulus = baseWeights × factor</pre>
               </table>
             </div>
 
-            <div class="fatigue-doc-section">
-              <div class="fatigue-doc-heading">When to train again</div>
-              <div class="fatigue-doc-text">Recovery is considered complete when <code class="fatigue-doc-code">rawLoad &le; threshold</code>. Below that, the muscle is <strong>Fresh</strong> and shows &ldquo;Train now.&rdquo; Above it, recovery hours are calculated and the muscle is placed in &ldquo;Train tomorrow&rdquo; or &ldquo;Needs more recovery.&rdquo;</div>
-              <pre class="fatigue-doc-formula">threshold     = normalizationLoad × 0.25
+            <div class="dev-doc-section">
+              <div class="dev-doc-heading">When to train again</div>
+              <div class="dev-doc-text">Recovery is considered complete when <code class="dev-doc-code">rawLoad &le; threshold</code>. Below that, the muscle is <strong>Fresh</strong> and shows &ldquo;Train now.&rdquo; Above it, recovery hours are calculated and the muscle is placed in &ldquo;Train tomorrow&rdquo; or &ldquo;Needs more recovery.&rdquo;</div>
+              <pre class="dev-doc-formula">threshold     = normalizationLoad × 0.25
 recoveryHours = halfLife × log₂(rawLoad / threshold)
                 (only when rawLoad &gt; threshold)</pre>
-              <table class="fatigue-doc-table">
+              <table class="dev-doc-table">
                 <tr><td>Threshold ratio</td><td>0.25 — aligns with the Fresh tier boundary (&lt;25%)</td></tr>
                 <tr><td>&ldquo;Train now&rdquo;</td><td>fatigueScore &lt; 25% (Fresh) only</td></tr>
                 <tr><td>&ldquo;Train tomorrow&rdquo;</td><td>Recovering — recovery completes within ~24 h</td></tr>
@@ -327,33 +327,33 @@ recoveryHours = halfLife × log₂(rawLoad / threshold)
               </table>
             </div>
 
-            <div class="fatigue-doc-section">
-              <div class="fatigue-doc-heading">Fatigue tiers</div>
-              <div class="fatigue-doc-tiers">
-                <div class="fatigue-doc-tier">
-                  <span class="fatigue-doc-tier-dot" style="background:var(--fatigue-color-none)"></span>
-                  <span class="fatigue-doc-tier-label">None (untrained)</span>
-                  <span class="fatigue-doc-tier-desc">No load recorded in window</span>
+            <div class="dev-doc-section">
+              <div class="dev-doc-heading">Fatigue tiers</div>
+              <div class="dev-doc-tiers">
+                <div class="dev-doc-tier">
+                  <span class="dev-doc-tier-dot" style="background:var(--fatigue-color-none)"></span>
+                  <span class="dev-doc-tier-label">None (untrained)</span>
+                  <span class="dev-doc-tier-desc">No load recorded in window</span>
                 </div>
-                <div class="fatigue-doc-tier">
-                  <span class="fatigue-doc-tier-dot" style="background:var(--fatigue-color-fresh)"></span>
-                  <span class="fatigue-doc-tier-label">Fresh (0–24%)</span>
-                  <span class="fatigue-doc-tier-desc">Ready — train freely</span>
+                <div class="dev-doc-tier">
+                  <span class="dev-doc-tier-dot" style="background:var(--fatigue-color-fresh)"></span>
+                  <span class="dev-doc-tier-label">Fresh (0–24%)</span>
+                  <span class="dev-doc-tier-desc">Ready — train freely</span>
                 </div>
-                <div class="fatigue-doc-tier">
-                  <span class="fatigue-doc-tier-dot" style="background:var(--fatigue-color-recovering)"></span>
-                  <span class="fatigue-doc-tier-label">Recovering (25–49%)</span>
-                  <span class="fatigue-doc-tier-desc">Fatigue present — needs hours to a day</span>
+                <div class="dev-doc-tier">
+                  <span class="dev-doc-tier-dot" style="background:var(--fatigue-color-recovering)"></span>
+                  <span class="dev-doc-tier-label">Recovering (25–49%)</span>
+                  <span class="dev-doc-tier-desc">Fatigue present — needs hours to a day</span>
                 </div>
-                <div class="fatigue-doc-tier">
-                  <span class="fatigue-doc-tier-dot" style="background:var(--fatigue-color-fatigued)"></span>
-                  <span class="fatigue-doc-tier-label">Fatigued (50–74%)</span>
-                  <span class="fatigue-doc-tier-desc">Significant load — wait 1–3 days</span>
+                <div class="dev-doc-tier">
+                  <span class="dev-doc-tier-dot" style="background:var(--fatigue-color-fatigued)"></span>
+                  <span class="dev-doc-tier-label">Fatigued (50–74%)</span>
+                  <span class="dev-doc-tier-desc">Significant load — wait 1–3 days</span>
                 </div>
-                <div class="fatigue-doc-tier">
-                  <span class="fatigue-doc-tier-dot" style="background:var(--fatigue-color-high)"></span>
-                  <span class="fatigue-doc-tier-label">Highly fatigued (75–100%)</span>
-                  <span class="fatigue-doc-tier-desc">Heavy load — rest 3–5 days</span>
+                <div class="dev-doc-tier">
+                  <span class="dev-doc-tier-dot" style="background:var(--fatigue-color-high)"></span>
+                  <span class="dev-doc-tier-label">Highly fatigued (75–100%)</span>
+                  <span class="dev-doc-tier-desc">Heavy load — rest 3–5 days</span>
                 </div>
               </div>
             </div>
