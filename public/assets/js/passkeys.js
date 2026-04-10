@@ -315,7 +315,7 @@
     const existing = document.getElementById('passkeyAddForm');
     if (existing) { existing.querySelector('input').focus(); return; }
 
-    const addBtn = document.querySelector('#passkeysGroup .settings-save-btn');
+    const addBtn = document.querySelector('#passkeysGroup .passkey-add-btn');
     if (!addBtn) return;
 
     const form = document.createElement('div');
@@ -330,7 +330,7 @@
     input.value       = '';
 
     const goBtn = document.createElement('button');
-    goBtn.className   = 'settings-save-btn';
+    goBtn.className   = 'settings-save-btn passkey-add-submit-btn';
     goBtn.style.cssText = 'white-space:nowrap;padding:8px 16px;font-size:0.875rem';
     goBtn.textContent = 'Register passkey';
 
