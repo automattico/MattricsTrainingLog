@@ -30,8 +30,20 @@ public/config.js
 "
 PHP_LINT_FILES="
 public/api/bootstrap.php
+public/api/bootstrap-auth.php
 public/api/data.php
 public/api/ai.php
+public/api/auth/challenge.php
+public/api/auth/register.php
+public/api/auth/verify.php
+public/api/auth/passkeys.php
+public/api/auth/logout.php
+public/api/auth/recovery.php
+public/login.php
+public/register.php
+public/recovery.php
+public/index.php
+tests/auth-security-tests.php
 "
 
 cd "$PROJECT_ROOT"
@@ -75,9 +87,14 @@ if command -v php >/dev/null 2>&1; then
   elif [ "$CHECK_ONLY" -eq 1 ]; then
     php -l "private/config.example.php" >/dev/null
   fi
+  php tests/auth-security-tests.php >/dev/null
 elif [ "$CHECK_ONLY" -ne 1 ]; then
   log_error "Missing required command: php"
   exit 1
+fi
+
+if command -v node >/dev/null 2>&1; then
+  node public/tests/settings-tests.js >/dev/null
 fi
 
 if [ "$CHECK_ONLY" -eq 1 ]; then

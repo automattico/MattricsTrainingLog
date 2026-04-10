@@ -45,6 +45,8 @@ function mattrics_private_root(): string
     return dirname(__DIR__, 2) . '/private';
 }
 
+require_once __DIR__ . '/bootstrap-auth.php';
+
 function mattrics_load_config(): array
 {
     $candidates = [];
@@ -271,28 +273,22 @@ function mattrics_with_refresh_lock(callable $callback)
 
 function mattrics_session_start(): void
 {
-    if (session_status() !== PHP_SESSION_NONE) {
-        return;
-    }
-    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-        || (($_SERVER['SERVER_PORT'] ?? 80) == 443);
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path'     => '/',
-        'secure'   => $isHttps,
-        'httponly' => true,
-        'samesite' => $isHttps ? 'Strict' : 'Lax',
-    ]);
-    session_name('mattrics_sess');
-    session_start();
+    mattrics_auth_session_start();
 }
 
 function mattrics_require_auth(): void
 {
     mattrics_session_start();
+    mattrics_require_https_if_needed();
     if (empty($_SESSION['mattrics_authed'])) {
         mattrics_send_json(['error' => 'Unauthorized.'], 401);
     }
+    if (mattrics_session_is_timed_out()) {
+        mattrics_audit_log('session_timeout', ['outcome' => 'success']);
+        mattrics_clear_auth_session();
+        mattrics_send_json(['error' => 'Session expired. Please sign in again.'], 401);
+    }
+    mattrics_touch_auth_session();
 }
 
 function mattrics_read_json_body(): array

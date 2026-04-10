@@ -5,7 +5,9 @@
  *
  * @var string $authPageTitle  <title> text
  * @var string $authPageBody   HTML to inject inside .auth-card
+ * @var string $authPageClass  Optional body class
  */
+$authPageClass = isset($authPageClass) ? (string) $authPageClass : '';
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -66,6 +68,23 @@
     text-transform: uppercase;
     color: rgba(255,255,255,0.55);
     margin-top: 0.25rem;
+  }
+
+  .auth-page-login .auth-wrap {
+    max-width: 520px;
+    gap: 2.5rem;
+  }
+
+  .auth-page-login .auth-logo-brand {
+    font-size: clamp(5rem, 18vw, 7.2rem);
+    color: var(--brand, #0082c9);
+    line-height: 0.82;
+  }
+
+  .auth-page-login .auth-logo-sub {
+    font-size: clamp(1.7rem, 4.8vw, 2.4rem);
+    color: rgba(255, 255, 255, 0.78);
+    margin-top: 0.55rem;
   }
 
   .auth-card {
@@ -149,7 +168,7 @@
   }
 </style>
 </head>
-<body>
+<body class="<?= htmlspecialchars($authPageClass, ENT_QUOTES, 'UTF-8') ?>">
 <div class="auth-wrap">
   <div class="auth-logo">
     <div class="auth-logo-brand">Mattrics</div>

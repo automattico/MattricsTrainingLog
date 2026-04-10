@@ -5,19 +5,22 @@ require_once __DIR__ . '/../bootstrap-auth.php';
 require_once mattrics_lib_root() . '/WebAuthn/src/WebAuthn.php';
 
 mattrics_auth_session_start();
+mattrics_require_https_if_needed();
+mattrics_enforce_rate_limit('challenge');
 
 header('Content-Type: application/json; charset=utf-8');
 
 $action = $_GET['action'] ?? '';
+$purpose = (string) ($_GET['purpose'] ?? $action);
 $rpId   = mattrics_rp_id();
 
 if ($action === 'register') {
     $store = mattrics_load_credentials();
 
     // If a store already exists, the user must be authenticated to add another passkey
-    if ($store !== null && empty($_SESSION['mattrics_authed'])) {
+    if ($store !== null && empty($_SESSION['mattrics_authed']) && !mattrics_recovery_session_is_valid()) {
         http_response_code(401);
-        echo json_encode(['error' => 'Must be authenticated to add another passkey.']);
+        echo json_encode(['error' => 'Authentication is required.']);
         exit;
     }
 
@@ -41,8 +44,9 @@ if ($action === 'register') {
         $excludeIds
     );
 
-    $_SESSION['webauthn_challenge'] = base64_encode($webAuthn->getChallenge()->getBinaryString());
-    $_SESSION['webauthn_user_id']   = base64_encode($userId);
+    mattrics_store_challenge('register', $webAuthn->getChallenge()->getBinaryString(), [
+        'user_id' => base64_encode($userId),
+    ]);
 
     echo json_encode($createArgs);
     exit;
@@ -52,7 +56,14 @@ if ($action === 'login') {
     $store = mattrics_load_credentials();
     if ($store === null) {
         http_response_code(404);
-        echo json_encode(['error' => 'No credential registered.']);
+        echo json_encode(['error' => 'Authentication is not available.']);
+        exit;
+    }
+
+    $challengePurpose = $purpose === 'delete' ? 'delete' : 'login';
+    if ($challengePurpose === 'delete' && empty($_SESSION['mattrics_authed'])) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Authentication is required.']);
         exit;
     }
 
@@ -70,7 +81,7 @@ if ($action === 'login') {
         true  // requireUserVerification
     );
 
-    $_SESSION['webauthn_challenge'] = base64_encode($webAuthn->getChallenge()->getBinaryString());
+    mattrics_store_challenge($challengePurpose, $webAuthn->getChallenge()->getBinaryString());
 
     echo json_encode($getArgs);
     exit;

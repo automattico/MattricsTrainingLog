@@ -5,6 +5,8 @@ require_once __DIR__ . '/../bootstrap-auth.php';
 require_once mattrics_lib_root() . '/WebAuthn/src/WebAuthn.php';
 
 mattrics_auth_session_start();
+mattrics_require_https_if_needed();
+mattrics_enforce_rate_limit('verify');
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -17,15 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $store = mattrics_load_credentials();
 
 // If credentials already exist, user must be authenticated to add another
-if ($store !== null && empty($_SESSION['mattrics_authed'])) {
+if ($store !== null && empty($_SESSION['mattrics_authed']) && !mattrics_recovery_session_is_valid()) {
     http_response_code(401);
-    echo json_encode(['error' => 'Must be authenticated to add another passkey.']);
-    exit;
-}
-
-if (empty($_SESSION['webauthn_challenge'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'No challenge in session. Request a challenge first.']);
+    echo json_encode(['error' => 'Authentication is required.']);
     exit;
 }
 
@@ -39,10 +35,15 @@ if (!is_array($body)) {
 try {
     $rpId      = mattrics_rp_id();
     $webAuthn  = new lbuchs\WebAuthn\WebAuthn('Mattrics', $rpId, ['none', 'packed', 'apple'], true);
-    $challenge = base64_decode((string) $_SESSION['webauthn_challenge']);
+    $clientDataJSON = mattrics_b64url_decode((string) ($body['clientDataJSON'] ?? ''));
+    $challengeRecord = mattrics_validate_challenge_for_client_data('register', $clientDataJSON);
+    if ($challengeRecord === null) {
+        throw new RuntimeException('Invalid registration challenge.');
+    }
+    $challenge = mattrics_challenge_from_client_data($clientDataJSON);
 
     $data = $webAuthn->processCreate(
-        mattrics_b64url_decode((string) ($body['clientDataJSON'] ?? '')),
+        $clientDataJSON,
         mattrics_b64url_decode((string) ($body['attestationObject'] ?? '')),
         $challenge,
         true,   // requireUserVerification
@@ -53,31 +54,53 @@ try {
     // Accept name from request body, fall back to "Default"
     $name = trim((string) ($body['name'] ?? 'Default'));
     if ($name === '') $name = 'Default';
+    $now = gmdate('c');
 
     $newEntry = [
         'internalId'          => bin2hex(random_bytes(16)),
         'name'                => $name,
+        'device_label'        => $name,
         'credentialId'        => base64_encode((string) $data->credentialId),
         'credentialPublicKey' => $data->credentialPublicKey,
         'signatureCounter'    => (int) ($data->signatureCounter ?? 0),
-        'registeredAt'        => gmdate('c'),
+        'registeredAt'        => $now,
+        'created_at'          => $now,
+        'last_used_at'        => null,
     ];
 
+    $isFirstRegistration = $store === null;
     if ($store === null) {
         $store = [
-            'userId'      => $_SESSION['webauthn_user_id'] ?? '',
+            'version'     => 2,
+            'userId'      => (string) ($challengeRecord['user_id'] ?? ''),
             'credentials' => [],
+            'recovery'    => [
+                'generated_at' => null,
+                'last_rotated_at' => null,
+                'codes' => [],
+            ],
         ];
+    }
+    if (($store['userId'] ?? '') === '' && !empty($challengeRecord['user_id'])) {
+        $store['userId'] = (string) $challengeRecord['user_id'];
     }
 
     $store['credentials'][] = $newEntry;
+    $recoveryCodes = null;
+    if ($isFirstRegistration) {
+        $recoveryCodes = mattrics_generate_recovery_codes($store);
+        mattrics_audit_log('recovery_codes_generated', ['outcome' => 'success']);
+    }
     mattrics_save_credentials($store);
 
-    unset($_SESSION['webauthn_challenge'], $_SESSION['webauthn_user_id']);
+    mattrics_consume_challenge('register', $challenge);
+    unset($_SESSION['mattrics_recovery_verified'], $_SESSION['mattrics_recovery_verified_at']);
+    mattrics_audit_log('passkey_added', ['outcome' => 'success', 'credential' => $newEntry['internalId']]);
 
-    echo json_encode(['ok' => true]);
+    echo json_encode(['ok' => true, 'recoveryCodes' => $recoveryCodes]);
 
 } catch (\Throwable $e) {
     http_response_code(400);
-    echo json_encode(['error' => $e->getMessage()]);
+    mattrics_audit_log('passkey_add_failed', ['outcome' => 'failure']);
+    echo json_encode(['error' => 'Passkey registration failed. Please try again.']);
 }

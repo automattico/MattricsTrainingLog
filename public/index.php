@@ -2,10 +2,20 @@
 declare(strict_types=1);
 require_once __DIR__ . '/api/bootstrap-auth.php';
 mattrics_auth_session_start();
+if (mattrics_auth_requires_https() && !mattrics_is_https_request()) {
+    header('Location: https://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($_SERVER['REQUEST_URI'] ?? '/'));
+    exit;
+}
+if (!empty($_SESSION['mattrics_authed']) && mattrics_session_is_timed_out()) {
+    mattrics_audit_log('session_timeout', ['outcome' => 'success']);
+    mattrics_clear_auth_session();
+}
 if (empty($_SESSION['mattrics_authed'])) {
     header('Location: /login.php');
     exit;
 }
+mattrics_touch_auth_session();
+$_csrfToken = mattrics_csrf_token();
 $_initialView = '';
 if (isset($_GET['view']) && preg_match('/^[a-z]+$/', $_GET['view'])) {
     $_initialView = $_GET['view'];
@@ -47,6 +57,7 @@ if (isset($_GET['view']) && preg_match('/^[a-z]+$/', $_GET['view'])) {
 </style>
 <script>
 window.MATTRICS_CONFIG = window.MATTRICS_CONFIG || {};
+window.MATTRICS_AUTH = { csrfToken: <?= json_encode($_csrfToken) ?> };
 if (window.location.protocol === "file:") {
   document.write('<script src="config.js"><\\/script>');
 }
@@ -80,7 +91,6 @@ if (window.location.protocol === "file:") {
 
         <div class="header-controls">
           <div class="window-controls">
-            <div class="control-label">Range</div>
             <div class="window-switcher" id="windowSwitcher">
               <div class="window-option active">
                 <button class="window-btn active" data-days="7" onclick="setWindow(7,this)">7 days</button>
@@ -101,27 +111,22 @@ if (window.location.protocol === "file:") {
                 <button class="window-btn" data-days="0" onclick="setWindow(0,this)">All</button>
               </div>
             </div>
-            <div class="range-summary">
-              <div class="control-label">Showing</div>
-              <div class="context-period range-summary-text" id="rangeSummary" aria-live="polite"></div>
-            </div>
+            <div class="context-period range-summary-text" id="rangeSummary" aria-live="polite"></div>
           </div>
 
           <div class="header-actions">
-            <button class="icon-btn ai-top-btn" onclick="showView('ai', this)" title="Open AI workout" aria-label="Open AI workout">
-              <span class="btn-icon" aria-hidden="true">✦</span>
-              <span>AI Workout</span>
+            <button class="icon-btn logout-btn" onclick="fetch('/api/auth/logout.php',{method:'POST',credentials:'same-origin',headers:{'X-CSRF-Token':window.MATTRICS_AUTH&&window.MATTRICS_AUTH.csrfToken||''}}).then(()=>window.location.href='/login.php')" title="Sign out" aria-label="Sign out">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7"/><polyline points="17 8 21 12 17 16"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </button>
-            <button class="icon-btn refresh-btn" onclick="fetchData({ forceRefresh: true })" title="Refresh from sheet" aria-label="Refresh data">
-              <span class="refresh-icon" aria-hidden="true">↻</span>
-            </button>
-            <button class="icon-btn logout-btn" onclick="fetch('/api/auth/logout.php',{method:'POST',credentials:'same-origin'}).then(()=>window.location.href='/login.php')" title="Sign out" aria-label="Sign out">
-              <span class="btn-icon" aria-hidden="true">⏻</span>
-            </button>
+            <div class="header-actions-row">
+              <div class="data-sync-stamp" id="dataSyncStamp">Last updated unavailable</div>
+              <button class="icon-btn refresh-btn" onclick="fetchData({ forceRefresh: true })" title="Refresh from sheet" aria-label="Refresh data">
+                <span class="refresh-icon" aria-hidden="true">↻</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      <div class="data-sync-stamp" id="dataSyncStamp">Last updated unavailable</div>
       <div class="data-status-banner" id="dataStatusBanner" hidden></div>
     </header>
 
@@ -129,7 +134,14 @@ if (window.location.protocol === "file:") {
       <button class="nav-btn active" onclick="showView('dashboard',this)">Dashboard</button>
       <button class="nav-btn" onclick="showView('fatigue',this)">Muscle Fatigue Map</button>
       <button class="nav-btn" onclick="showView('sessions',this)">Sessions</button>
-      <button class="nav-btn" onclick="showView('settings',this)">Settings</button>
+      <button class="nav-btn nav-btn--ai ai-top-btn" onclick="showView('ai', this)" title="Open AI workout" aria-label="Open AI workout">
+        <svg class="nav-btn-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 1.5l1.15 3.35L12.5 6l-3.35 1.15L8 10.5 6.85 7.15 3.5 6l3.35-1.15L8 1.5Z" fill="currentColor"/>
+          <path d="M12.75 9.5l.68 1.98 1.97.68-1.97.68-.68 1.98-.68-1.98-1.97-.68 1.97-.68.68-1.98Z" fill="currentColor"/>
+        </svg>
+        <span>AI Workout</span>
+      </button>
+      <button class="nav-btn nav-btn--settings" onclick="showView('settings',this)">Settings</button>
     </nav>
 
     <main class="app-main">

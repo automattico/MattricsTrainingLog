@@ -5,6 +5,8 @@ require_once __DIR__ . '/../bootstrap-auth.php';
 require_once mattrics_lib_root() . '/WebAuthn/src/WebAuthn.php';
 
 mattrics_auth_session_start();
+mattrics_require_https_if_needed();
+mattrics_enforce_rate_limit('verify');
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -17,13 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $store = mattrics_load_credentials();
 if ($store === null) {
     http_response_code(400);
-    echo json_encode(['error' => 'No credential registered.']);
-    exit;
-}
-
-if (empty($_SESSION['webauthn_challenge'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'No challenge in session. Request a challenge first.']);
+    echo json_encode(['error' => 'Authentication is not available.']);
     exit;
 }
 
@@ -37,7 +33,12 @@ if (!is_array($body)) {
 try {
     $rpId      = mattrics_rp_id();
     $webAuthn  = new lbuchs\WebAuthn\WebAuthn('Mattrics', $rpId, ['none', 'packed', 'apple'], true);
-    $challenge = base64_decode((string) $_SESSION['webauthn_challenge']);
+    $clientDataJSON = mattrics_b64url_decode((string) ($body['clientDataJSON'] ?? ''));
+    $challengeRecord = mattrics_validate_challenge_for_client_data('login', $clientDataJSON);
+    if ($challengeRecord === null) {
+        throw new RuntimeException('Invalid login challenge.');
+    }
+    $challenge = mattrics_challenge_from_client_data($clientDataJSON);
 
     // Find which credential the browser used (it echoes back its credentialId as $body['id'])
     $usedCredId = base64_encode(mattrics_b64url_decode((string) ($body['id'] ?? '')));
@@ -50,15 +51,13 @@ try {
     }
 
     if ($matchIndex === null) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Unknown credential.']);
-        exit;
+        throw new RuntimeException('Unknown credential.');
     }
 
     $matched = $store['credentials'][$matchIndex];
 
     $webAuthn->processGet(
-        mattrics_b64url_decode((string) ($body['clientDataJSON'] ?? '')),
+        $clientDataJSON,
         mattrics_b64url_decode((string) ($body['authenticatorData'] ?? '')),
         mattrics_b64url_decode((string) ($body['signature'] ?? '')),
         (string) $matched['credentialPublicKey'],
@@ -72,19 +71,24 @@ try {
     $newCounter = $webAuthn->getSignatureCounter();
     if ($newCounter !== null) {
         $store['credentials'][$matchIndex]['signatureCounter'] = $newCounter;
-        mattrics_save_credentials($store);
     }
+    $store['credentials'][$matchIndex]['last_used_at'] = gmdate('c');
+    mattrics_save_credentials($store);
 
-    unset($_SESSION['webauthn_challenge']);
+    mattrics_consume_challenge('login', $challenge);
 
     // Establish authenticated session
     session_regenerate_id(true);
     $_SESSION['mattrics_authed']    = true;
     $_SESSION['mattrics_authed_at'] = time();
+    $_SESSION['mattrics_last_seen_at'] = time();
+    mattrics_csrf_token();
+    mattrics_audit_log('login_success', ['outcome' => 'success', 'credential' => $matched['internalId'] ?? null]);
 
     echo json_encode(['ok' => true]);
 
 } catch (\Throwable $e) {
     http_response_code(401);
-    echo json_encode(['error' => $e->getMessage()]);
+    mattrics_audit_log('login_failure', ['outcome' => 'failure']);
+    echo json_encode(['error' => 'Passkey sign-in failed. Please try again.']);
 }

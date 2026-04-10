@@ -5,6 +5,7 @@
 
   // ── State ──────────────────────────────────────────────────────────────────
   let _passkeys = []; // [{internalId, name, registeredAt}]
+  let _recovery = null;
 
   // ── Utilities ──────────────────────────────────────────────────────────────
   function esc(str) {
@@ -16,12 +17,22 @@
       .replace(/'/g, '&#39;');
   }
 
-  function fmtDate(iso) {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return isNaN(d.getTime())
-      ? iso
-      : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  function fmtDate(value) {
+    if (!value) return '';
+    const raw = String(value).trim();
+    const isoMatch = raw.match(/^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}))?/);
+    if (isoMatch) {
+      return isoMatch[2] ? `${isoMatch[1]} ${isoMatch[2]}` : isoMatch[1];
+    }
+
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return '';
+    const yyyy = String(d.getUTCFullYear()).padStart(4, '0');
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    const hh = String(d.getUTCHours()).padStart(2, '0');
+    const min = String(d.getUTCMinutes()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
   }
 
   // ── API ────────────────────────────────────────────────────────────────────
@@ -29,7 +40,10 @@
     const opts = {
       method,
       credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': (window.MATTRICS_AUTH && window.MATTRICS_AUTH.csrfToken) || '',
+      },
     };
     if (body) opts.body = JSON.stringify(body);
     const res  = await fetch('api/auth/passkeys.php', opts);
@@ -39,7 +53,30 @@
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
-  function renderPasskeysSection(passkeys, errorMsg) {
+  function renderRecoveryBlock(recovery, recoveryCodes) {
+    const status = recovery && recovery.configured
+      ? `${recovery.activeCount || 0} unused recovery codes available.`
+      : 'Recovery codes are not configured yet.';
+    const codesHtml = recoveryCodes && recoveryCodes.length
+      ? `<div class="passkey-confirm-panel" style="margin-top:var(--space-3)">
+          <span class="passkey-confirm-msg">Save these recovery codes now. They will not be shown again.</span>
+          <div style="margin-top:var(--space-2)">
+            ${recoveryCodes.map((code) => `<code style="display:block;margin:4px 0">${esc(code)}</code>`).join('')}
+          </div>
+        </div>`
+      : '';
+
+    return `
+      <div class="passkey-recovery" style="margin-top:var(--space-4)">
+        <div class="passkey-date">${esc(status)}</div>
+        <p style="color:var(--muted);font-size:0.88rem;margin:var(--space-2) 0">Recovery codes are the lockout safety net if every passkey is lost. Regenerating codes invalidates older unused codes.</p>
+        <button class="passkey-add-btn" onclick="passkeyRegenerateRecoveryCodes()">Generate new recovery codes</button>
+        ${codesHtml}
+      </div>
+    `;
+  }
+
+  function renderPasskeysSection(passkeys, errorMsg, recovery, recoveryCodes) {
     const isLast = passkeys.length <= 1;
 
     const rows = passkeys.map((pk) => `
@@ -55,7 +92,7 @@
               </svg>
             </button>
           </div>
-          <span class="passkey-date">${esc(fmtDate(pk.registeredAt))}</span>
+          <span class="passkey-date">Created ${esc(fmtDate(pk.created_at || pk.registeredAt))}${pk.last_used_at ? ` · Last used ${esc(fmtDate(pk.last_used_at))}` : ''}</span>
         </div>
         <button
           class="passkey-icon-btn passkey-delete-btn${isLast ? ' passkey-delete-btn--disabled' : ''}"
@@ -86,6 +123,7 @@
       Add passkey
     </button>
   </div>
+  ${renderRecoveryBlock(recovery, recoveryCodes)}
 </section>`;
   }
 
@@ -96,9 +134,23 @@
     try {
       const json = await apiPasskeys('GET');
       _passkeys = json.passkeys || [];
-      container.innerHTML = renderPasskeysSection(_passkeys, null);
+      _recovery = json.recovery || null;
+      if (json.csrfToken && window.MATTRICS_AUTH) window.MATTRICS_AUTH.csrfToken = json.csrfToken;
+      container.innerHTML = renderPasskeysSection(_passkeys, null, _recovery, null);
     } catch (err) {
-      container.innerHTML = renderPasskeysSection([], err.message);
+      container.innerHTML = renderPasskeysSection([], err.message, null, null);
+    }
+  };
+
+  window.passkeyRegenerateRecoveryCodes = async function passkeyRegenerateRecoveryCodes() {
+    if (!confirm('Generate new recovery codes? Older unused codes will stop working.')) return;
+    try {
+      const json = await apiPasskeys('POST', { action: 'regenerate_recovery' });
+      _recovery = json.recovery || _recovery;
+      const container = document.getElementById('passkeysSection');
+      if (container) container.innerHTML = renderPasskeysSection(_passkeys, null, _recovery, json.recoveryCodes || []);
+    } catch (err) {
+      alert(err.message);
     }
   };
 
@@ -200,7 +252,7 @@
 
       try {
         // 1. Get a fresh challenge
-        const challengeRes = await fetch('/api/auth/challenge.php?action=login', { credentials: 'same-origin' });
+        const challengeRes = await fetch('/api/auth/challenge.php?action=login&purpose=delete', { credentials: 'same-origin' });
         if (!challengeRes.ok) throw new Error('Failed to get challenge.');
         const json = await challengeRes.json();
         const opts = json.publicKey;

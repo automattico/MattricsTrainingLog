@@ -169,6 +169,7 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
+    mattrics_require_csrf();
     $body = mattrics_read_json_body();
     $result = mattrics_validate_settings($body);
 

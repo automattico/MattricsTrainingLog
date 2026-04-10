@@ -4,8 +4,16 @@ declare(strict_types=1);
 require_once __DIR__ . '/api/bootstrap-auth.php';
 
 mattrics_auth_session_start();
+if (mattrics_auth_requires_https() && !mattrics_is_https_request()) {
+    header('Location: https://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($_SERVER['REQUEST_URI'] ?? '/login.php'));
+    exit;
+}
 
 // Already authenticated — go straight to app
+if (!empty($_SESSION['mattrics_authed']) && mattrics_session_is_timed_out()) {
+    mattrics_audit_log('session_timeout', ['outcome' => 'success']);
+    mattrics_clear_auth_session();
+}
 if (!empty($_SESSION['mattrics_authed'])) {
     header('Location: /');
     exit;
@@ -19,11 +27,13 @@ if (!is_file($credPath)) {
 }
 
 $authPageTitle = 'Sign In';
+$authPageClass = 'auth-page-login';
 $authPageBody  = <<<'HTML'
 <h1 class="auth-heading">Sign in</h1>
 <p class="auth-desc">Use your passkey (Touch ID, Face ID, or security key) to sign in.</p>
 <div class="auth-error" id="authError"></div>
 <button class="auth-btn" id="signInBtn" onclick="signIn()">Sign in with passkey</button>
+<p class="auth-note"><a href="/recovery.php" style="color:inherit">Use a recovery code</a></p>
 <script>
 function bufferToBase64url(buffer) {
   const bytes = new Uint8Array(buffer);
