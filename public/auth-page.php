@@ -53,38 +53,26 @@ $authPageClass = isset($authPageClass) ? (string) $authPageClass : '';
   .auth-logo-brand {
     font-family: "Barlow Condensed", sans-serif;
     font-weight: 800;
-    font-size: 2.4rem;
+    font-size: clamp(5rem, 18vw, 7.2rem);
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #fff;
-    line-height: 1;
+    color: var(--brand, #0082c9);
+    line-height: 0.82;
   }
 
   .auth-logo-sub {
     font-family: "DM Sans", sans-serif;
     font-weight: 300;
-    font-size: 0.85rem;
+    font-size: clamp(1.7rem, 4.8vw, 2.4rem);
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.55);
-    margin-top: 0.25rem;
+    color: rgba(255,255,255,0.78);
+    margin-top: 0.55rem;
   }
 
   .auth-page-login .auth-wrap {
     max-width: 520px;
     gap: 2.5rem;
-  }
-
-  .auth-page-login .auth-logo-brand {
-    font-size: clamp(5rem, 18vw, 7.2rem);
-    color: var(--brand, #0082c9);
-    line-height: 0.82;
-  }
-
-  .auth-page-login .auth-logo-sub {
-    font-size: clamp(1.7rem, 4.8vw, 2.4rem);
-    color: rgba(255, 255, 255, 0.78);
-    margin-top: 0.55rem;
   }
 
   .auth-card {

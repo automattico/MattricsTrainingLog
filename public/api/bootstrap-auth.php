@@ -188,7 +188,8 @@ function mattrics_origin_host_allows_rp_id(string $originHost, string $rpId): bo
     if ($originHost === $rpId) {
         return true;
     }
-    return str_ends_with($originHost, '.' . $rpId);
+    $suffix = '.' . $rpId;
+    return substr($originHost, -strlen($suffix)) === $suffix;
 }
 
 function mattrics_validate_client_origin(string $clientDataJSON, string $expectedOrigin): bool
@@ -402,12 +403,15 @@ function mattrics_check_rate_limit(string $scope, int $ipLimit, int $sessionLimi
 
 function mattrics_enforce_rate_limit(string $scope): void
 {
-    $ok = match ($scope) {
-        'challenge' => mattrics_check_rate_limit($scope, 20, 10, 300),
-        'verify' => mattrics_check_rate_limit($scope, 10, 6, 600),
-        'recovery' => mattrics_check_rate_limit($scope, 5, 5, 3600),
-        default => mattrics_check_rate_limit($scope, 20, 10, 300),
-    };
+    if ($scope === 'challenge') {
+        $ok = mattrics_check_rate_limit($scope, 20, 10, 300);
+    } elseif ($scope === 'verify') {
+        $ok = mattrics_check_rate_limit($scope, 10, 6, 600);
+    } elseif ($scope === 'recovery') {
+        $ok = mattrics_check_rate_limit($scope, 5, 5, 3600);
+    } else {
+        $ok = mattrics_check_rate_limit($scope, 20, 10, 300);
+    }
     if (!$ok) {
         http_response_code(429);
         header('Content-Type: application/json; charset=utf-8');
