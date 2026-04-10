@@ -16,6 +16,7 @@ if (empty($_SESSION['mattrics_authed'])) {
 }
 mattrics_touch_auth_session();
 $_csrfToken = mattrics_csrf_token();
+$_assetVersion = (string) (@filemtime(__DIR__ . '/assets/js/passkeys.js') ?: time());
 $_initialView = '';
 if (isset($_GET['view']) && preg_match('/^[a-z]+$/', $_GET['view'])) {
     $_initialView = $_GET['view'];
@@ -250,9 +251,9 @@ if (window.location.protocol === "file:") {
 <script src="assets/js/timeline.js"></script>
 <script src="assets/js/ai.js"></script>
 <script src="assets/js/detail.js"></script>
-<script src="assets/js/settings.js"></script>
-<script src="assets/js/passkeys.js"></script>
+<script src="assets/js/settings.js?v=<?= htmlspecialchars($_assetVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="assets/js/passkeys.js?v=<?= htmlspecialchars($_assetVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
 <script>window.__MATTRICS_INITIAL_VIEW__ = <?= json_encode($_initialView) ?>;</script>
-<script src="assets/js/app.js"></script>
+<script src="assets/js/app.js?v=<?= htmlspecialchars($_assetVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
 </html>
