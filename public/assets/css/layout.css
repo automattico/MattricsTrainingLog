@@ -57,8 +57,8 @@
 }
 
 .site-title {
-  font-size: clamp(32px, 3.2vw, 46px);
-  line-height: 0.84;
+  font-size: clamp(38px, 3.9vw, 56px);
+  line-height: 0.82;
   text-transform: uppercase;
 }
 

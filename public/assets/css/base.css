@@ -59,7 +59,7 @@ button { -webkit-tap-highlight-color: transparent; }
 
 .site-subtitle {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
