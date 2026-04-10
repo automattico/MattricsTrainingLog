@@ -20,6 +20,32 @@
 
   window.addEventListener("resize", () => M.positionRangeSummary());
 
+  const main = document.querySelector(".app-main");
+  if (main && !document.getElementById("view-docs")) {
+    const view = document.createElement("div");
+    view.className = "view";
+    view.id = "view-docs";
+    view.innerHTML = `<section class="section-shell docs-shell"><div id="docsContent"></div></section>`;
+    const aiView = document.getElementById("view-ai");
+    main.insertBefore(view, aiView || null);
+  }
+
+  const nav = document.querySelector(".nav");
+  if (nav) {
+    const docsBtn = nav.querySelector('[onclick*="showView(\'docs\'"]');
+    const settingsBtn = nav.querySelector('[onclick*="showView(\'settings\'"]');
+    if (docsBtn) {
+      docsBtn.classList.add("nav-btn--docs");
+    } else if (settingsBtn) {
+      const button = document.createElement("button");
+      button.className = "nav-btn nav-btn--docs";
+      button.type = "button";
+      button.textContent = "Docs";
+      button.addEventListener("click", () => M.showView("docs", button));
+      nav.insertBefore(button, settingsBtn);
+    }
+  }
+
   document.addEventListener("click", (event) => {
     const trigger = event.target.closest("[data-activity-id]");
     if (!trigger) return;

@@ -1,6 +1,6 @@
 (function () {
   const M = window.Mattrics;
-  const VIEW_IDS = ["dashboard", "fatigue", "sessions", "ai", "settings"];
+  const VIEW_IDS = ["dashboard", "fatigue", "sessions", "ai", "docs", "settings"];
 
   function isValidView(id) {
     return VIEW_IDS.includes(id) && Boolean(document.getElementById(`view-${id}`));
@@ -34,6 +34,44 @@
     const serverView = window.__MATTRICS_INITIAL_VIEW__;
     if (isValidView(serverView)) return serverView;
     return getUrlView();
+  }
+
+  function renderDocsView() {
+    const mount = document.getElementById("docsContent");
+    if (!mount) return;
+
+    if (typeof M.renderDocsView === "function") {
+      M.renderDocsView();
+      return;
+    }
+
+    mount.innerHTML = `<div class="docs-page"><div class="docs-hero">
+      <div class="docs-kicker">Documentation</div>
+      <h1 class="docs-title">Loading docs...</h1>
+      <p class="docs-intro">Preparing the documentation hub.</p>
+    </div></div>`;
+
+    if (M.docsRendererLoading) return;
+    M.docsRendererLoading = true;
+
+    const script = document.createElement("script");
+    script.src = `assets/js/renderers/docs.js?v=${Date.now()}`;
+    script.onload = () => {
+      M.docsRendererLoading = false;
+      const docsView = document.getElementById("view-docs");
+      if (typeof M.renderDocsView === "function" && docsView && docsView.classList.contains("active")) {
+        M.renderDocsView();
+      }
+    };
+    script.onerror = () => {
+      M.docsRendererLoading = false;
+      mount.innerHTML = `<div class="docs-page"><div class="docs-hero">
+        <div class="docs-kicker">Documentation</div>
+        <h1 class="docs-title">Documentation unavailable</h1>
+        <p class="docs-intro">The documentation renderer could not be loaded. Refresh the page and try again.</p>
+      </div></div>`;
+    };
+    document.head.appendChild(script);
   }
 
   M.fetchData = async function fetchData(options = {}) {
@@ -214,6 +252,9 @@
       if (navBtn) navBtn.classList.add("active");
     }
     if (options.persist !== false) updateViewUrl(id);
+    if (id === "docs") {
+      renderDocsView();
+    }
     if (id === "settings") {
       M.renderSettingsView();
     }

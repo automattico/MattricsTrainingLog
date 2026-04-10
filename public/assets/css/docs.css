@@ -183,3 +183,384 @@ details.dev-doc[open] .dev-doc-summary-chevron {
 .dev-doc-tier-desc {
   color: var(--muted);
 }
+
+/* ── Docs hub ──────────────────────────────────────────────────────────────── */
+
+.docs-shell {
+  width: 100%;
+}
+
+.docs-page {
+  display: grid;
+  gap: 18px;
+}
+
+.docs-hero {
+  display: grid;
+  gap: 12px;
+}
+
+.docs-title {
+  font: 700 clamp(2rem, 3vw, 2.8rem)/1.02 "Barlow Condensed", sans-serif;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  margin: 0;
+}
+
+.docs-intro {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  max-width: 80ch;
+  margin: 0;
+}
+
+.docs-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.docs-subnav-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-chip);
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.docs-subnav-pill:hover,
+.docs-subnav-pill:focus-visible {
+  border-color: var(--line-brand);
+  background: var(--surface-chip-hover);
+  color: var(--text);
+}
+
+.docs-subnav-pill:focus-visible {
+  outline: 2px solid rgba(0, 130, 201, 0.55);
+  outline-offset: 2px;
+}
+
+.docs-section-list {
+  display: grid;
+  gap: 14px;
+}
+
+.docs-layout {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.28fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.docs-sidebar {
+  position: sticky;
+  top: 14px;
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.docs-nav-btn {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  text-align: left;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.docs-nav-btn:hover,
+.docs-nav-btn:focus-visible,
+.docs-nav-btn.active {
+  border-color: rgba(0, 130, 201, 0.34);
+  background: rgba(0, 130, 201, 0.12);
+  color: var(--text);
+}
+
+.docs-nav-btn:focus-visible {
+  outline: 2px solid rgba(0, 130, 201, 0.55);
+  outline-offset: 2px;
+}
+
+.docs-nav-label {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: inherit;
+}
+
+.docs-section {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  scroll-margin-top: 18px;
+}
+
+.docs-section-head {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.docs-section-title {
+  font: 700 1.45rem/1.08 "Barlow Condensed", sans-serif;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  margin: 0;
+}
+
+.docs-section-intro {
+  color: var(--muted);
+  font-size: 0.93rem;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 80ch;
+}
+
+.docs-section-body {
+  display: grid;
+  gap: 18px;
+}
+
+.docs-active-panel {
+  min-height: 440px;
+}
+
+.docs-subsection {
+  display: grid;
+  gap: 10px;
+}
+
+.docs-subsection + .docs-subsection {
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.docs-subsection-title {
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.docs-copy {
+  color: var(--muted);
+  font-size: 0.93rem;
+  line-height: 1.72;
+  max-width: 90ch;
+  margin: 0;
+}
+
+.docs-list {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.93rem;
+  line-height: 1.65;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.docs-list li::marker {
+  color: var(--muted-strong);
+}
+
+.docs-lead-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.docs-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.docs-card {
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-card-sm);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 18%), rgba(255, 255, 255, 0.02);
+}
+
+.docs-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.docs-card-text {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.docs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.docs-table th,
+.docs-table td {
+  padding: 9px 0;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  line-height: 1.55;
+}
+
+.docs-table th {
+  width: 220px;
+  text-align: left;
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.docs-table td {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.docs-code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--text);
+}
+
+.docs-formula {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  color: var(--muted-strong);
+}
+
+.docs-note {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.65;
+  padding-top: 4px;
+}
+
+.docs-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-card-sm);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.docs-flow-step {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(0, 130, 201, 0.12);
+  border: 1px solid rgba(0, 130, 201, 0.28);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.docs-flow-arrow {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.docs-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 16%), rgba(255, 255, 255, 0.03);
+}
+
+.docs-callout-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.docs-callout-kicker {
+  font: 600 0.68rem/1 "DM Mono", monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.docs-callout-title {
+  color: var(--text);
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.docs-callout-text {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.docs-callout-btn {
+  min-height: 38px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 130, 201, 0.34);
+  background: rgba(0, 130, 201, 0.14);
+  color: var(--text);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.docs-callout-btn:hover,
+.docs-callout-btn:focus-visible {
+  border-color: var(--line-brand);
+  background: rgba(0, 130, 201, 0.22);
+}
+
+.docs-callout-btn:focus-visible {
+  outline: 2px solid rgba(0, 130, 201, 0.55);
+  outline-offset: 2px;
+}

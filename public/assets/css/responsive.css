@@ -164,6 +164,58 @@
     grid-template-columns: 1fr;
   }
 
+  .docs-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .docs-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .docs-sidebar {
+    position: static;
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .docs-sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .docs-nav-btn {
+    min-width: 156px;
+  }
+
+  .docs-callout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .docs-callout-btn {
+    width: 100%;
+  }
+
+  .docs-table,
+  .docs-table tbody,
+  .docs-table tr {
+    display: block;
+  }
+
+  .docs-table th,
+  .docs-table td {
+    display: block;
+    width: auto;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .docs-table th {
+    padding-bottom: 2px;
+  }
+
   .overview-fatigue-column + .overview-fatigue-column {
     padding-left: 16px;
   }
