@@ -88,7 +88,7 @@
     justify-content: center;
   }
 
-  .refresh-btn { flex: 0 0 40px; }
+  .refresh-btn { flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
 
   .header-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -111,6 +111,9 @@
   .retry-btn,
   .gen-btn,
   .icon-btn { padding: 9px 13px; font-size: 11px; }
+
+  .nav-btn,
+  .window-btn { min-height: 44px; }
 
   .filter-row {
     overflow-x: auto;
@@ -231,6 +234,7 @@
 
   .detail-overlay { padding: 10px; }
   .detail-modal { max-height: calc(100vh - 20px); border-radius: 22px; }
+  .detail-close { width: 44px; min-width: 44px; height: 44px; flex: 0 0 44px; }
 
   .detail-head {
     padding-top: 18px;
@@ -274,5 +278,22 @@
   .hevy-exercise {
     grid-template-columns: 1fr;
     gap: 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-shell { margin-bottom: 20px; }
+
+  .section-shell { padding: 14px; }
+
+  .settings-groups-row { grid-template-columns: 1fr; }
+
+  .filter-row { flex: 1 1 auto; }
+
+  .tooltip-text { max-width: min(240px, calc(100vw - 48px)); }
+
+  .docs-tier-item {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }
