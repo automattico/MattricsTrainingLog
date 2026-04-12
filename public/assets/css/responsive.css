@@ -281,15 +281,6 @@
   }
 }
 
-@media (max-width: 920px) {
-  .tooltip-text {
-    left: auto;
-    right: 0;
-    transform: none;
-    width: min(320px, calc(100vw - 48px));
-  }
-}
-
 @media (max-width: 600px) {
   .app-shell { margin-bottom: 20px; }
 

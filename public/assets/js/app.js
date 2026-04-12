@@ -63,5 +63,28 @@
     M.openDetail(trigger.dataset.activityId);
   });
 
+  function fixTooltipPosition(wrap) {
+    const tip = wrap.querySelector(".tooltip-text");
+    if (!tip) return;
+    tip.style.marginLeft = "";
+    const rect = tip.getBoundingClientRect();
+    const pad = 12;
+    if (rect.right > window.innerWidth - pad) {
+      tip.style.marginLeft = `-${Math.ceil(rect.right - (window.innerWidth - pad))}px`;
+    } else if (rect.left < pad) {
+      tip.style.marginLeft = `${Math.ceil(pad - rect.left)}px`;
+    }
+  }
+
+  document.addEventListener("mouseenter", (e) => {
+    const wrap = e.target.closest(".tooltip-wrap");
+    if (wrap) fixTooltipPosition(wrap);
+  }, true);
+
+  document.addEventListener("focusin", (e) => {
+    const wrap = e.target.closest(".tooltip-wrap");
+    if (wrap) fixTooltipPosition(wrap);
+  });
+
   M.fetchData({ forceRefresh: false });
 }());
