@@ -114,11 +114,44 @@ function mattrics_auth_config(): array
     foreach (array_values(array_unique($candidates)) as $candidate) {
         if (is_file($candidate)) {
             $config = require $candidate;
-            return is_array($config) ? $config : [];
+            return is_array($config) ? mattrics_apply_config_env_overrides($config) : [];
         }
     }
 
-    return [];
+    return mattrics_apply_config_env_overrides([]);
+}
+
+function mattrics_env_has(string $key): bool
+{
+    return getenv($key) !== false;
+}
+
+function mattrics_env_bool(string $key, bool $default): bool
+{
+    $raw = getenv($key);
+    if ($raw === false) {
+        return $default;
+    }
+
+    $parsed = filter_var($raw, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+    return $parsed === null ? $default : $parsed;
+}
+
+function mattrics_apply_config_env_overrides(array $config): array
+{
+    if (mattrics_env_has('MATTRICS_SITE_ORIGIN')) {
+        $config['site_origin'] = trim((string) getenv('MATTRICS_SITE_ORIGIN'));
+    }
+
+    if (mattrics_env_has('MATTRICS_WEBAUTHN_RP_ID')) {
+        $config['webauthn_rp_id'] = trim((string) getenv('MATTRICS_WEBAUTHN_RP_ID'));
+    }
+
+    if (mattrics_env_has('MATTRICS_AUTH_REQUIRE_HTTPS')) {
+        $config['auth_require_https'] = mattrics_env_bool('MATTRICS_AUTH_REQUIRE_HTTPS', true);
+    }
+
+    return $config;
 }
 
 function mattrics_auth_expected_origin(): string

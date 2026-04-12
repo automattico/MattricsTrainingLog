@@ -12,6 +12,7 @@ Mattrics Training Log is a static frontend with a small PHP API layer and an ext
 - [`private/config.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php) stores runtime-only secrets and upstream endpoints. It is never deployed as part of the public web root.
 - `private/cache/training-data.json` stores the last successful sanitized snapshot so the dashboard can open without hitting Google on every visit. The `private/cache/` directory is generated runtime state and stays gitignored.
 - [`apps-script/Code.gs`](/Users/mwieland/dev/MattricsTrainingLog/apps-script/Code.gs) runs in Google Apps Script and exposes the Google Sheet as JSON behind a shared secret.
+- [`docker-compose.yml`](/Users/mwieland/dev/MattricsTrainingLog/docker-compose.yml) runs the current PHP app locally in Docker without changing the deployed architecture.
 
 ## Data flow
 
@@ -51,3 +52,9 @@ Recovery flow:
 - `public/config.js` is treated as local-only and excluded from deploy
 - validation and smoke testing are handled by scripts under [`scripts/`](/Users/mwieland/dev/MattricsTrainingLog/scripts)
 - production deployments must set `site_origin`, confirm HTTPS, and keep all private auth storage outside the web root
+
+## Local container model
+
+- Docker local dev keeps the same code layout and serves `public/` with the PHP built-in server.
+- `private/` remains host-mounted runtime state; Docker does not move secrets or auth data into the image.
+- Local container auth uses env overrides for `site_origin` and `auth_require_https` so passkeys can work on `http://localhost:8080` without editing production config.
