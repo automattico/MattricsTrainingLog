@@ -26,6 +26,7 @@
 <script src="assets/js/renderers/docs/section-body-map.js"></script>
 <script src="assets/js/renderers/docs/section-css-guide.js"></script>
 <script src="assets/js/renderers/docs/section-deployment.js"></script>
+<script src="assets/js/renderers/docs/section-docker-local-dev.js"></script>
 <script src="assets/js/renderers/docs.js"></script>
 <script src="assets/js/feed.js"></script>
 <script src="assets/js/timeline.js"></script>

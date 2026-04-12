@@ -1,0 +1,21 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    working_dir: /app
+    environment:
+      MATTRICS_CONFIG: /app/private/config.php
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - ./docker/php/dev.ini:/usr/local/etc/php/conf.d/zz-mattrics-dev.ini:ro
+      - mattrics_php_sessions:/tmp/php-sessions
+    command:
+      - sh
+      - -lc
+      - MATTRICS_SITE_ORIGIN=http://localhost:8080 MATTRICS_AUTH_REQUIRE_HTTPS=0 php -S 0.0.0.0:8080 -t public
+
+volumes:
+  mattrics_php_sessions:

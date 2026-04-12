@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env.local
+.DS_Store
+node_modules
+tmp
+*.log
+*.tmp
+*.bak
+private
+public/config.js
+docs/images

@@ -77,8 +77,18 @@ function mattrics_load_config(): array
             if (!is_array($config)) {
                 mattrics_send_json(['error' => 'Config file must return an array.'], 500);
             }
-            return $config;
+            return function_exists('mattrics_apply_config_env_overrides')
+                ? mattrics_apply_config_env_overrides($config)
+                : $config;
         }
+    }
+
+    $config = function_exists('mattrics_apply_config_env_overrides')
+        ? mattrics_apply_config_env_overrides([])
+        : [];
+
+    if ($config !== []) {
+        return $config;
     }
 
     mattrics_send_json([
