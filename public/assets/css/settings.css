@@ -328,8 +328,8 @@
 .tooltip-text {
   position: absolute;
   bottom: calc(100% + 8px);
-  right: 0;
-  left: auto;
+  left: 50%;
+  transform: translateX(-50%);
   background: color-mix(in srgb, var(--bg-raised) 90%, black 10%);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-xs);
@@ -342,7 +342,7 @@
   transition: opacity 0.15s ease;
   z-index: 10;
   box-shadow: var(--shadow-sm);
-  width: min(700px, 80vw);
+  width: 560px;
   white-space: normal;
   text-align: left;
   line-height: 1.5;
@@ -444,8 +444,10 @@
   }
 
   .tooltip-text {
-    width: calc(100vw - 32px);
-    max-width: 600px;
+    left: auto;
+    right: 0;
+    transform: none;
+    width: min(300px, calc(100vw - 48px));
   }
 }
 
