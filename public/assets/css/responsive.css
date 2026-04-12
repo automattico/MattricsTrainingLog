@@ -102,7 +102,7 @@
   .sessions-toolbar { flex-direction: column; }
   .feed-display-tools { justify-content: flex-start; }
 
-  .nav { gap: var(--space-1); padding: 4px; border-radius: 18px; }
+  .nav { gap: var(--space-1); padding: 4px; border-radius: 18px; overflow-x: auto; flex-wrap: nowrap; }
 
   .nav-btn,
   .window-btn,
@@ -112,6 +112,7 @@
   .gen-btn,
   .icon-btn { padding: 9px 13px; font-size: 11px; }
 
+  .nav-btn { flex: 0 0 auto; min-width: 0; }
   .nav-btn,
   .window-btn { min-height: 44px; }
 
@@ -123,6 +124,8 @@
     padding: 2px 2px 6px;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .filter-row::-webkit-scrollbar { display: none; }
@@ -176,20 +179,15 @@
   }
 
   .docs-sidebar {
-    position: static;
-    display: flex;
-    overflow-x: auto;
-    gap: 8px;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .docs-sidebar::-webkit-scrollbar {
     display: none;
   }
 
+  .docs-nav-mobile-wrap {
+    display: block;
+  }
+
   .docs-nav-btn {
-    min-width: 156px;
+    min-width: unset;
   }
 
   .docs-callout {
@@ -279,6 +277,32 @@
     grid-template-columns: 1fr;
     gap: 10px;
   }
+}
+
+/* ── Mobile nav style variants (all inside mobile breakpoint) ─────────────── */
+
+@media (max-width: 920px) {
+  /* Grid: wrap top nav into 2 rows of 3 */
+  body[data-nav-style="grid"] .nav {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    border-radius: 14px;
+  }
+  body[data-nav-style="grid"] .nav-btn {
+    flex: 1 1 calc(33.333% - 6px);
+    min-width: 0;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* Bottom bar: hide top nav, show fixed bottom bar */
+  body[data-nav-style="bottom"] .nav { display: none; }
+  body[data-nav-style="bottom"] .nav-bottom { display: flex; }
+  body[data-nav-style="bottom"] .app-shell { padding-bottom: 70px; }
+
+  /* Drawer: hide top nav, show hamburger button */
+  body[data-nav-style="drawer"] .nav { display: none; }
+  body[data-nav-style="drawer"] .nav-hamburger { display: flex; }
 }
 
 @media (max-width: 600px) {

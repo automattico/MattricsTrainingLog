@@ -34,6 +34,33 @@
     </section>`;
   }
 
+  function mobileNavToggle(sections, activeId) {
+    const activeLabel = sections.find((s) => s.id === activeId)?.label || "";
+    return `
+      <div class="docs-nav-mobile-wrap">
+        <button class="docs-nav-mobile-btn" type="button"
+          onclick="Mattrics.toggleDocsMobileNav()"
+          aria-expanded="false" id="docs-nav-mobile-btn">
+          <span class="docs-nav-mobile-label">${esc(activeLabel)}</span>
+          <span class="docs-nav-mobile-chevron" aria-hidden="true">▾</span>
+        </button>
+        <div class="docs-nav-mobile-dropdown" id="docs-nav-mobile-dropdown" hidden>
+          ${sections.map((section) => sectionButton(section, activeId)).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  M.toggleDocsMobileNav = function toggleDocsMobileNav() {
+    const btn = document.getElementById("docs-nav-mobile-btn");
+    const dropdown = document.getElementById("docs-nav-mobile-dropdown");
+    if (!btn || !dropdown) return;
+    const isOpen = !dropdown.hidden;
+    dropdown.hidden = isOpen;
+    btn.setAttribute("aria-expanded", String(!isOpen));
+    btn.classList.toggle("open", !isOpen);
+  };
+
   M.showDocsSection = function showDocsSection(id) {
     M.renderDocsView(id);
   };
@@ -61,6 +88,7 @@
           <h1 class="docs-title">Documentation</h1>
         </header>
         <div class="docs-layout">
+          ${mobileNavToggle(sections, activeId)}
           <nav class="docs-sidebar" aria-label="Documentation sections">
             ${sections.map((section) => sectionButton(section, activeId)).join("")}
           </nav>

@@ -11,6 +11,26 @@
       });
   };
 
+  // Apply saved mobile nav style before first paint
+  document.body.dataset.navStyle = localStorage.getItem("mobileNavStyle") || "scroll";
+
+  window.setMobileNavStyle = function(style) {
+    localStorage.setItem("mobileNavStyle", style);
+    document.body.dataset.navStyle = style;
+    if (style !== "drawer") {
+      const drawer = document.getElementById("navDrawer");
+      const overlay = document.querySelector(".nav-drawer-overlay");
+      const hamburger = document.getElementById("navHamburger");
+      if (drawer) drawer.classList.remove("open");
+      if (overlay) overlay.classList.remove("open");
+      if (hamburger) { hamburger.classList.remove("open"); hamburger.setAttribute("aria-expanded", false); }
+      document.body.classList.remove("drawer-open");
+    }
+    // Re-render settings to reflect the updated pill selection
+    const el = document.getElementById("settingsContent");
+    if (el && el.innerHTML) M.renderSettingsView();
+  };
+
   Object.assign(window, {
     closeDetail: M.closeDetail,
     fetchData: M.fetchData,
@@ -20,9 +40,11 @@
     saveSettings: M.saveSettings,
     setFilter: M.setFilter,
     setFeedMode: M.setFeedMode,
+    setMobileNavStyle: window.setMobileNavStyle,
     setWindow: M.setWindow,
     showSetupHelp: M.showSetupHelp,
     showView: M.showView,
+    toggleDrawer: M.toggleDrawer,
   });
 
   document.addEventListener("keydown", (event) => {
@@ -77,6 +99,7 @@
   }
 
   document.addEventListener("mouseenter", (e) => {
+    if (!e.target.closest) return;
     const wrap = e.target.closest(".tooltip-wrap");
     if (wrap) fixTooltipPosition(wrap);
   }, true);

@@ -303,6 +303,58 @@ details.dev-doc[open] .dev-doc-summary-chevron {
   outline-offset: 2px;
 }
 
+.docs-nav-mobile-wrap {
+  display: none;
+}
+
+.docs-nav-mobile-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.docs-nav-mobile-btn:hover,
+.docs-nav-mobile-btn.open {
+  border-color: rgba(0, 130, 201, 0.4);
+  background: rgba(0, 130, 201, 0.1);
+}
+
+.docs-nav-mobile-chevron {
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 0.18s ease;
+  flex-shrink: 0;
+}
+
+.docs-nav-mobile-btn.open .docs-nav-mobile-chevron {
+  transform: rotate(180deg);
+}
+
+.docs-nav-mobile-dropdown {
+  display: none;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: rgba(20, 22, 28, 0.97);
+}
+
+.docs-nav-mobile-dropdown:not([hidden]) {
+  display: grid;
+}
+
 .docs-nav-label {
   font-size: 13px;
   font-weight: 700;

@@ -245,12 +245,16 @@
     if (!isValidView(id)) return;
     document.querySelectorAll(".view").forEach((view) => view.classList.remove("active"));
     document.querySelectorAll(".nav-btn").forEach((button) => button.classList.remove("active"));
+    document.querySelectorAll(".nav-bottom-btn").forEach((b) => b.classList.remove("active"));
+    document.querySelectorAll(".nav-drawer-btn").forEach((b) => b.classList.remove("active"));
     document.getElementById(`view-${id}`).classList.add("active");
-    if (el && el.classList.contains("nav-btn")) el.classList.add("active");
-    if (!el) {
-      const navBtn = document.querySelector(`.nav-btn[onclick*="showView('${id}'"]`);
-      if (navBtn) navBtn.classList.add("active");
+    // Mark active on whichever nav the clicked element belongs to
+    if (el && (el.classList.contains("nav-btn") || el.classList.contains("nav-bottom-btn") || el.classList.contains("nav-drawer-btn"))) {
+      el.classList.add("active");
     }
+    // Also sync the other navs by matching onclick
+    const sel = `[onclick*="showView('${id}'"]`;
+    document.querySelectorAll(`.nav-btn${sel}, .nav-bottom-btn${sel}, .nav-drawer-btn${sel}`).forEach((b) => b.classList.add("active"));
     if (options.persist !== false) updateViewUrl(id);
     if (id === "docs") {
       renderDocsView();
@@ -259,4 +263,20 @@
       M.renderSettingsView();
     }
   };
+
+  M.toggleDrawer = function toggleDrawer() {
+    const drawer = document.getElementById("navDrawer");
+    const overlay = document.querySelector(".nav-drawer-overlay");
+    const hamburger = document.getElementById("navHamburger");
+    if (!drawer) return;
+    const isOpen = drawer.classList.toggle("open");
+    if (overlay) overlay.classList.toggle("open", isOpen);
+    if (hamburger) {
+      hamburger.classList.toggle("open", isOpen);
+      hamburger.setAttribute("aria-expanded", isOpen);
+    }
+    document.body.classList.toggle("drawer-open", isOpen);
+  };
+
+  window.toggleDrawer = M.toggleDrawer;
 }());

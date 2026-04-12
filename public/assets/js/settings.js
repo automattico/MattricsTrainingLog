@@ -291,6 +291,25 @@
   <div id="passkeysSection"></div>
   </div>
 
+  <section class="settings-group settings-group--mobile-nav">
+    <h2 class="settings-group-title">Mobile Navigation</h2>
+    <p class="settings-hint">Choose how the nav looks on small screens. Applies immediately.</p>
+    <div class="mobile-nav-picker">
+      ${[
+        { key: "scroll", label: "Scroll", desc: "Horizontal scroll (default)" },
+        { key: "grid",   label: "Grid",   desc: "2-row pill grid" },
+        { key: "bottom", label: "Bottom bar", desc: "Fixed bottom tab bar" },
+        { key: "drawer", label: "Drawer", desc: "Hamburger slide-in menu" },
+      ].map(({ key, label, desc }) => `
+        <button
+          class="filter-pill${(document.body.dataset.navStyle || 'scroll') === key ? ' on' : ''}"
+          title="${esc(desc)}"
+          onclick="setMobileNavStyle('${key}');this.closest('.mobile-nav-picker').querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('on'));this.classList.add('on')"
+        >${esc(label)}</button>
+      `).join('')}
+    </div>
+  </section>
+
   <div class="settings-actions">
     <button class="settings-save-btn" type="button" onclick="saveSettings()">Save settings</button>
     <div class="settings-feedback" id="settingsFeedback" hidden></div>

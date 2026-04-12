@@ -56,11 +56,11 @@
 
   M.renderFatigueLegendPanel = function renderFatigueLegendPanel() {
     const items = [
-      { state: "high", label: "Highly fatigued", detail: M.getFatigueTierMeaning("Highly fatigued") },
-      { state: "fatigued", label: "Fatigued", detail: M.getFatigueTierMeaning("Fatigued") },
-      { state: "recovering", label: "Recovering", detail: M.getFatigueTierMeaning("Recovering") },
-      { state: "fresh", label: "Fresh", detail: M.getFatigueTierMeaning("Fresh") },
-      { state: "none", label: "No recent load", detail: M.getFatigueTierMeaning("No recent load") },
+      { state: "high", label: "Highly fatigued", range: "75–100%", detail: M.getFatigueTierMeaning("Highly fatigued") },
+      { state: "fatigued", label: "Fatigued", range: "50–74%", detail: M.getFatigueTierMeaning("Fatigued") },
+      { state: "recovering", label: "Recovering", range: "25–49%", detail: M.getFatigueTierMeaning("Recovering") },
+      { state: "fresh", label: "Fresh", range: "0–24%", detail: M.getFatigueTierMeaning("Fresh") },
+      { state: "none", label: "No recent load", range: null, detail: M.getFatigueTierMeaning("No recent load") },
     ];
 
     return `<div class="overview-fatigue-legend">
@@ -72,7 +72,7 @@
         ${items.map((item) => `<div class="overview-fatigue-legend-item" data-fatigue-state="${item.state}">
           <span class="overview-fatigue-swatch"></span>
           <div class="overview-fatigue-legend-copy">
-            <div class="overview-fatigue-scale-label">${item.label}</div>
+            <div class="overview-fatigue-scale-label">${item.label}${item.range ? ` <span class="overview-fatigue-status-percent">(${item.range})</span>` : ""}</div>
             <div class="overview-fatigue-scale-detail">${item.detail}</div>
           </div>
         </div>`).join("")}

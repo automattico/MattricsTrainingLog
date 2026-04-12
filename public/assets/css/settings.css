@@ -628,3 +628,22 @@
 .passkey-add-input::placeholder {
   color: var(--muted);
 }
+
+/* ── Mobile nav picker ── */
+
+.settings-hint {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: -8px 0 var(--space-4);
+}
+
+.mobile-nav-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-group--mobile-nav {
+  margin-top: var(--space-4);
+}
+
