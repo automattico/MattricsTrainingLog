@@ -342,7 +342,7 @@
   transition: opacity 0.15s ease;
   z-index: 10;
   box-shadow: var(--shadow-sm);
-  max-width: 560px;
+  max-width: 700px;
   white-space: normal;
   text-align: left;
   line-height: 1.5;
@@ -446,7 +446,7 @@
   .tooltip-text {
     left: 0;
     transform: none;
-    max-width: min(480px, calc(100vw - 32px));
+    max-width: min(600px, calc(100vw - 32px));
   }
 }
 
