@@ -40,7 +40,6 @@
     saveSettings: M.saveSettings,
     setFilter: M.setFilter,
     setFeedMode: M.setFeedMode,
-    setMobileNavStyle: window.setMobileNavStyle,
     setWindow: M.setWindow,
     showSetupHelp: M.showSetupHelp,
     showView: M.showView,
