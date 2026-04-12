@@ -290,8 +290,6 @@
 
   .filter-row { flex: 1 1 auto; }
 
-  .tooltip-text { max-width: min(240px, calc(100vw - 48px)); }
-
   .docs-tier-item {
     grid-template-columns: 1fr;
     gap: 4px;

@@ -302,6 +302,12 @@
   cursor: help;
 }
 
+.tooltip-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -14px;
+}
+
 .tooltip-icon {
   display: inline-flex;
   align-items: center;
@@ -317,8 +323,6 @@
   color: var(--muted);
   line-height: 1;
   user-select: none;
-  padding: 14px;
-  margin: -14px;
 }
 
 .tooltip-text {
@@ -338,7 +342,7 @@
   transition: opacity 0.15s ease;
   z-index: 10;
   box-shadow: var(--shadow-sm);
-  max-width: 280px;
+  max-width: 560px;
   white-space: normal;
   text-align: left;
   line-height: 1.5;
@@ -442,7 +446,7 @@
   .tooltip-text {
     left: 0;
     transform: none;
-    max-width: 200px;
+    max-width: min(480px, calc(100vw - 32px));
   }
 }
 
