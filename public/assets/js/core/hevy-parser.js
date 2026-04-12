@@ -9,6 +9,8 @@
       { patterns: ["row", "face pull"], weights: { upperBack: 0.82, trapezius: 0.58, biceps: 0.34, deltoids: 0.22, lowerBack: 0.12 } },
       { patterns: ["pulldown", "pull up", "pullup", "chin up", "chinup"], weights: { upperBack: 0.74, trapezius: 0.28, biceps: 0.48, deltoids: 0.14, lowerBack: 0.08 } },
       { patterns: ["deadlift", "rdl", "romanian deadlift"], weights: { hamstrings: 0.92, gluteal: 0.72, lowerBack: 0.46, upperBack: 0.28, trapezius: 0.18, quadriceps: 0.18, abs: 0.2 } },
+      { patterns: ["hip adduction", "adduction machine", "machine adduction"], weights: { adductors: 1, gluteal: 0.12, hamstrings: 0.08, abs: 0.04 } },
+      { patterns: ["hip abduction", "abduction machine", "machine abduction"], weights: { gluteal: 0.92, adductors: 0.08, hamstrings: 0.12, abs: 0.04 } },
       { patterns: ["shoulder press", "overhead press", "arnold press", "lateral raise", "front raise", "rear delt"], weights: { deltoids: 1, triceps: 0.42, trapezius: 0.24, chest: 0.15, upperBack: 0.12 } },
       { patterns: ["curl", "hammer"], weights: { biceps: 1, deltoids: 0.08 } },
       { patterns: ["triceps", "pushdown", "skull crusher"], weights: { triceps: 1, deltoids: 0.08 } },
