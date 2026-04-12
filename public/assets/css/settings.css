@@ -342,8 +342,7 @@
   transition: opacity 0.15s ease;
   z-index: 10;
   box-shadow: var(--shadow-sm);
-  width: 700px;
-  max-width: 90vw;
+  width: min(700px, 80vw);
   white-space: normal;
   text-align: left;
   line-height: 1.5;
