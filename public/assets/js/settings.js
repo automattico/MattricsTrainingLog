@@ -34,7 +34,7 @@
   function deriveAge(iso) {
     if (!iso) return null;
     const today = new Date();
-    const dob = new Date(iso);
+    const dob = parseBirthdayDate(iso);
     if (isNaN(dob.getTime())) return null;
     let age = today.getFullYear() - dob.getFullYear();
     const m = today.getMonth() - dob.getMonth();
@@ -43,6 +43,12 @@
   }
 
   M.deriveAge = deriveAge;
+
+  function parseBirthdayDate(iso) {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return new Date(NaN);
+    const [year, month, day] = iso.split("-").map((part) => parseInt(part, 10));
+    return new Date(year, month - 1, day);
+  }
 
   function buildBirthdayIso(day, month, year) {
     if (!day || !month || !year) return null;
@@ -87,7 +93,7 @@
       if (!/^\d{4}-\d{2}-\d{2}$/.test(data.birthday)) {
         errors.birthday = "Enter a valid date.";
       } else {
-        const dob = new Date(data.birthday);
+        const dob = parseBirthdayDate(data.birthday);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (isNaN(dob.getTime())) {

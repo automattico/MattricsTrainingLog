@@ -33,10 +33,23 @@
   // ── Inline copies of pure functions under test ────────────────────────────────
   // These are extracted from settings.js so they can run without a DOM or browser.
 
+  function parseBirthdayDate(iso) {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return new Date(NaN);
+    const [year, month, day] = iso.split("-").map((part) => parseInt(part, 10));
+    return new Date(year, month - 1, day);
+  }
+
+  function toLocalIsoDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
   function deriveAge(iso) {
     if (!iso) return null;
     const today = new Date();
-    const dob = new Date(iso);
+    const dob = parseBirthdayDate(iso);
     if (isNaN(dob.getTime())) return null;
     let age = today.getFullYear() - dob.getFullYear();
     const m = today.getMonth() - dob.getMonth();
@@ -81,7 +94,7 @@
       if (!/^\d{4}-\d{2}-\d{2}$/.test(data.birthday)) {
         errors.birthday = "Enter a valid date.";
       } else {
-        const dob = new Date(data.birthday);
+        const dob = parseBirthdayDate(data.birthday);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (isNaN(dob.getTime())) {
@@ -186,14 +199,14 @@
     // Someone born exactly 30 years ago today
     const dob30 = new Date(today);
     dob30.setFullYear(dob30.getFullYear() - 30);
-    const iso30 = dob30.toISOString().slice(0, 10);
+    const iso30 = toLocalIsoDate(dob30);
     assert(deriveAge(iso30) === 30, "exact 30th birthday → age 30");
 
     // Someone whose birthday is tomorrow (hasn't turned 30 yet)
     const dobAlmost30 = new Date(today);
     dobAlmost30.setFullYear(dobAlmost30.getFullYear() - 30);
     dobAlmost30.setDate(dobAlmost30.getDate() + 1); // tomorrow
-    const isoAlmost30 = dobAlmost30.toISOString().slice(0, 10);
+    const isoAlmost30 = toLocalIsoDate(dobAlmost30);
     assert(deriveAge(isoAlmost30) === 29, "birthday tomorrow → still 29");
 
     // null / empty
@@ -203,7 +216,7 @@
     // Future date
     const future = new Date(today);
     future.setFullYear(future.getFullYear() + 1);
-    const isoFuture = future.toISOString().slice(0, 10);
+    const isoFuture = toLocalIsoDate(future);
     const futureAge = deriveAge(isoFuture);
     assert(futureAge !== null && futureAge < 0, "future date → negative age");
   });
@@ -216,26 +229,26 @@
     // Future date
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const isoFuture = tomorrow.toISOString().slice(0, 10);
+    const isoFuture = toLocalIsoDate(tomorrow);
     e = validateSettings(validData({ birthday: isoFuture }));
     assert(!!e.birthday, "future birthday → error");
 
     // Too young (1 year old)
     const oneYearOld = new Date();
     oneYearOld.setFullYear(oneYearOld.getFullYear() - 1);
-    e = validateSettings(validData({ birthday: oneYearOld.toISOString().slice(0, 10) }));
+    e = validateSettings(validData({ birthday: toLocalIsoDate(oneYearOld) }));
     assert(!!e.birthday, "age 1 → too young error");
 
     // Too old (131 years)
     const tooOld = new Date();
     tooOld.setFullYear(tooOld.getFullYear() - 131);
-    e = validateSettings(validData({ birthday: tooOld.toISOString().slice(0, 10) }));
+    e = validateSettings(validData({ birthday: toLocalIsoDate(tooOld) }));
     assert(!!e.birthday, "age 131 → too old error");
 
     // Valid 30-year-old
     const valid30 = new Date();
     valid30.setFullYear(valid30.getFullYear() - 30);
-    e = validateSettings(validData({ birthday: valid30.toISOString().slice(0, 10) }));
+    e = validateSettings(validData({ birthday: toLocalIsoDate(valid30) }));
     assert(!e.birthday, "age 30 → valid");
 
     // Wrong format
