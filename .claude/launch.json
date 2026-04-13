@@ -4,8 +4,8 @@
     {
       "name": "php-server",
       "runtimeExecutable": "php",
-      "runtimeArgs": ["-S", "localhost:8000", "-t", "public"],
-      "port": 8000
+      "runtimeArgs": ["-S", "localhost:8001", "-t", "public"],
+      "port": 8001
     }
   ]
 }
