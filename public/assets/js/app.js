@@ -108,5 +108,5 @@
     if (wrap) fixTooltipPosition(wrap);
   });
 
-  M.fetchData({ forceRefresh: false });
+  M.fetchData({ forceRefresh: true });
 }());
