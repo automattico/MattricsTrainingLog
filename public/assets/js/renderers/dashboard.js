@@ -59,7 +59,10 @@
           <div class="overview-recent-list">
             ${recentItems.map((activity) => {
               const cfg = M.tc(activity.Type);
-              const primary = (M.cardMetrics(activity)[0] || {}).val || "";
+              const primaryMetric = M.cardMetrics(activity)[0] || null;
+              const primary = primaryMetric
+                ? `${primaryMetric.val}${primaryMetric.lab && primaryMetric.lab !== "time" ? ` ${primaryMetric.lab}` : ""}`
+                : "";
               const activityId = M.escAttr(M.getActivityId(activity));
               return `<button class="overview-recent-link" type="button" data-activity-id="${activityId}" aria-label="Open details for ${M.escAttr(activity.Name || cfg.label)}">
                 <span class="overview-recent-main">

@@ -9,6 +9,7 @@
       warning: "",
       lastSuccessfulSyncAt: "",
       lastLiveAttemptAt: "",
+      lastFetchAt: "",
     },
     windowDays: 7,
     typeFilter: "All",

@@ -50,8 +50,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .tl-mini-type,
 .overview-body-caption,
 .overview-donut-kicker,
-.overview-chip,
-.data-sync-stamp {
+.overview-chip {
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.1em;

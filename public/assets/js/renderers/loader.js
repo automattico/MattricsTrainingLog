@@ -1,6 +1,22 @@
 (function () {
   const M = window.Mattrics;
 
+  function updateDataSyncStamp() {
+    const meta = M.state.dataMeta || {};
+    const stamp = document.getElementById("dataSyncStamp");
+    if (!stamp) return;
+
+    const timestamp = M.resolveHeaderTimestamp(meta);
+    if (!timestamp) {
+      stamp.textContent = "Last updated unavailable";
+      return;
+    }
+
+    const line1 = `Last updated: ${M.fmtRelativeAge(timestamp, Date.now())}`;
+    const line2 = `${M.fmtBerlinDate(timestamp)}, ${M.fmtBerlinTime(timestamp)}`;
+    stamp.innerHTML = `<div>${M.esc(line1)}</div><div>${M.esc(line2)}</div>`;
+  }
+
   M.showLoading = function showLoading() {
     document.getElementById("loadScreen").classList.remove("hidden");
     document.getElementById("app").classList.remove("visible");
@@ -25,12 +41,17 @@
 
   M.renderDataStatus = function renderDataStatus() {
     const meta = M.state.dataMeta || {};
-    const stamp = document.getElementById("dataSyncStamp");
     const banner = document.getElementById("dataStatusBanner");
 
-    if (stamp) {
-      const formatted = M.fmtDateTime(meta.lastSuccessfulSyncAt);
-      stamp.textContent = formatted ? `Last updated ${formatted}` : "Last updated unavailable";
+    updateDataSyncStamp();
+
+    if (M.dataSyncStampTicker) {
+      window.clearInterval(M.dataSyncStampTicker);
+      M.dataSyncStampTicker = null;
+    }
+
+    if (M.resolveHeaderTimestamp(meta)) {
+      M.dataSyncStampTicker = window.setInterval(updateDataSyncStamp, 1000);
     }
 
     if (!banner) return;

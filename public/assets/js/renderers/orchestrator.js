@@ -120,6 +120,7 @@
         warning: json.meta && json.meta.warning ? json.meta.warning : "",
         lastSuccessfulSyncAt: json.meta && json.meta.lastSuccessfulSyncAt ? json.meta.lastSuccessfulSyncAt : "",
         lastLiveAttemptAt: json.meta && json.meta.lastLiveAttemptAt ? json.meta.lastLiveAttemptAt : "",
+        lastFetchAt: new Date().toISOString(),
       };
       M.state.allData = json.rows
         .filter((row) => row.Date && row.Type)

@@ -55,6 +55,74 @@
     });
   };
 
+  M.parseTimestamp = function parseTimestamp(value) {
+    if (!value) return null;
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  M.fmtRelativeAge = function fmtRelativeAge(value, nowMs = Date.now()) {
+    const date = M.parseTimestamp(value);
+    if (!date) return "";
+
+    const diffMs = Math.max(0, nowMs - date.getTime());
+    const diffSec = Math.floor(diffMs / 1000);
+
+    if (diffSec < 60) return `${diffSec} ${diffSec === 1 ? "sec" : "secs"} ago`;
+
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin} ${diffMin === 1 ? "min" : "mins"} ago`;
+
+    const hours = Math.floor(diffMin / 60);
+    const mins = diffMin % 60;
+    return `${hours}h${mins}m ago`;
+  };
+
+  M.fmtBerlinDate = function fmtBerlinDate(value) {
+    const date = M.parseTimestamp(value);
+    if (!date) return "";
+
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Berlin",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(date);
+
+    const get = (type) => parts.find((part) => part.type === type)?.value || "";
+    return `${get("year")}-${get("month")}-${get("day")}`;
+  };
+
+  M.fmtBerlinTime = function fmtBerlinTime(value) {
+    const date = M.parseTimestamp(value);
+    if (!date) return "";
+
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Berlin",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+      timeZoneName: "short",
+    }).formatToParts(date);
+
+    const get = (type) => parts.find((part) => part.type === type)?.value || "";
+    return `${get("hour")}:${get("minute")}:${get("second")} ${get("timeZoneName")}`;
+  };
+
+  M.resolveHeaderTimestamp = function resolveHeaderTimestamp(meta) {
+    if (!meta) return null;
+
+    return M.parseTimestamp(
+      meta.lastObservedAt ||
+      meta.observedAt ||
+      meta.bucketTimestamp ||
+      meta.dataBucketTimestamp ||
+      meta.lastSuccessfulSyncAt ||
+      meta.lastFetchAt
+    );
+  };
+
   M.formatContextRange = function formatContextRange(startDs, endDs) {
     if (!startDs || !endDs) return "";
 
