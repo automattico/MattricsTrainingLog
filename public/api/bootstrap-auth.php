@@ -13,8 +13,11 @@ function mattrics_auth_session_start(): void
     }
     $isHttps = mattrics_is_https_request();
     $secureCookie = $isHttps || mattrics_auth_requires_https();
+    $cookieLifetime = mattrics_session_cookie_lifetime();
+    ini_set('session.gc_maxlifetime', (string) $cookieLifetime);
+    ini_set('session.cookie_lifetime', (string) $cookieLifetime);
     session_set_cookie_params([
-        'lifetime' => 0,
+        'lifetime' => $cookieLifetime,
         'path'     => '/',
         'secure'   => $secureCookie,
         'httponly' => true,
@@ -41,6 +44,17 @@ function mattrics_is_local_host(?string $host = null): bool
 {
     $host = strtolower($host ?? mattrics_current_host());
     return $host === 'localhost' || $host === '127.0.0.1' || $host === '::1';
+}
+
+function mattrics_dev_bypass_auth(): void
+{
+    if (!mattrics_is_local_host()) {
+        return;
+    }
+    if (empty($_SESSION['mattrics_authed'])) {
+        $_SESSION['mattrics_authed'] = true;
+        $_SESSION['mattrics_authed_at'] = time();
+    }
 }
 
 if (!function_exists('mattrics_private_root')) {
@@ -95,6 +109,7 @@ function mattrics_lib_root(): string
 
 function mattrics_auth_config(): array
 {
+    $defaults = require __DIR__ . '/config-defaults.php';
     $configPath = getenv('MATTRICS_CONFIG') ?: null;
     $candidates = [];
     if ($configPath) {
@@ -114,11 +129,14 @@ function mattrics_auth_config(): array
     foreach (array_values(array_unique($candidates)) as $candidate) {
         if (is_file($candidate)) {
             $config = require $candidate;
-            return is_array($config) ? mattrics_apply_config_env_overrides($config) : [];
+            if (!is_array($config)) {
+                return mattrics_apply_config_env_overrides($defaults);
+            }
+            return mattrics_apply_config_env_overrides(array_merge($defaults, $config));
         }
     }
 
-    return mattrics_apply_config_env_overrides([]);
+    return mattrics_apply_config_env_overrides($defaults);
 }
 
 function mattrics_env_has(string $key): bool
@@ -607,6 +625,11 @@ function mattrics_csrf_is_valid(string $sent): bool
 function mattrics_session_idle_seconds(): int
 {
     return max(60, (int) (mattrics_auth_config()['session_idle_seconds'] ?? 1800));
+}
+
+function mattrics_session_cookie_lifetime(): int
+{
+    return mattrics_session_absolute_seconds();
 }
 
 function mattrics_session_absolute_seconds(): int

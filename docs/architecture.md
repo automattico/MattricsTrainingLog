@@ -9,7 +9,8 @@ Mattrics Training Log is a static frontend with a small PHP API layer and an ext
 - [`public/api/ai.php`](/Users/mwieland/dev/MattricsTrainingLog/public/api/ai.php) proxies AI workout suggestions server-side so the API key is not exposed in deployed frontend assets.
 - [`public/api/bootstrap.php`](/Users/mwieland/dev/MattricsTrainingLog/public/api/bootstrap.php) loads config, validates methods, and handles upstream requests.
 - [`public/api/bootstrap-auth.php`](/Users/mwieland/dev/MattricsTrainingLog/public/api/bootstrap-auth.php) owns passkey session policy, WebAuthn origin/RP configuration, challenge storage, rate limiting, CSRF tokens, recovery codes, credential storage, and auth audit logging.
-- [`private/config.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php) stores runtime-only secrets and upstream endpoints. It is never deployed as part of the public web root.
+- [`public/api/config-defaults.php`](/Users/mwieland/dev/MattricsTrainingLog/public/api/config-defaults.php) stores checked-in, non-sensitive runtime defaults such as auth policy.
+- [`private/config.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php) stores secrets, upstream endpoints, and any environment-specific overrides. It is never deployed as part of the public web root.
 - `private/cache/training-data.json` stores the last successful sanitized snapshot so the dashboard can open without hitting Google on every visit. The `private/cache/` directory is generated runtime state and stays gitignored.
 - [`apps-script/Code.gs`](/Users/mwieland/dev/MattricsTrainingLog/apps-script/Code.gs) runs in Google Apps Script and exposes the Google Sheet as JSON behind a shared secret.
 - [`docker-compose.yml`](/Users/mwieland/dev/MattricsTrainingLog/docker-compose.yml) runs the current PHP app locally in Docker without changing the deployed architecture.
@@ -40,7 +41,7 @@ Recovery flow:
 ## Session and origin policy
 
 - Production auth requires HTTPS and uses `HttpOnly`, `SameSite=Strict`, secure cookies.
-- `site_origin` in `private/config.php` must be the exact public origin, for example `https://mattrics.example.com`.
+- `site_origin` can be supplied from `private/config.php` when the deployment needs an explicit origin override, for example `https://mattrics.example.com`.
 - `webauthn_rp_id` defaults to the `site_origin` host. A parent-domain RP ID is allowed only when the app origin host is that domain or a real subdomain.
 - Sessions have idle and absolute lifetimes. Expired sessions must re-authenticate.
 - Authenticated state-changing POST endpoints require `X-CSRF-Token`.

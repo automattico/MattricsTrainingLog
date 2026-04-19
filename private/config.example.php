@@ -4,12 +4,15 @@ return [
     'sheet_token' => 'replace-with-a-long-random-shared-secret',
     'anthropic_api_key' => 'sk-ant-api03-...',
     'anthropic_model' => 'claude-sonnet-4-20250514',
+    'app_token' => 'replace-with-a-long-random-app-secret',
 
-    // Auth hardening. In production, set site_origin to the exact public origin.
+    // Optional auth/runtime overrides. Safe defaults live in public/api/config-defaults.php.
+    // Set site_origin in production to the exact public origin when PHP sits behind a proxy/CDN.
     'site_origin' => 'https://mattrics.example.com',
-    // Optional. Defaults to the site_origin host. Use a parent domain only when all auth is served from a real subdomain.
-    'webauthn_rp_id' => '',
-    'auth_require_https' => true,
-    'session_idle_seconds' => 1800,
-    'session_absolute_seconds' => 43200,
+    // Optional. Use only when WebAuthn must target a parent domain instead of the request host.
+    // 'webauthn_rp_id' => 'example.com',
+    // Optional override examples:
+    // 'auth_require_https' => true,
+    // 'session_idle_seconds' => 2592000,
+    // 'session_absolute_seconds' => 2592000,
 ];

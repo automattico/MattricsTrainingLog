@@ -292,6 +292,7 @@ function mattrics_require_auth(): void
 {
     mattrics_session_start();
     mattrics_require_https_if_needed();
+    mattrics_dev_bypass_auth();
     if (empty($_SESSION['mattrics_authed'])) {
         mattrics_send_json(['error' => 'Unauthorized.'], 401);
     }

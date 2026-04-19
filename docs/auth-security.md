@@ -11,13 +11,19 @@ Mattrics is a single-user private app. Passkeys remain the primary authenticatio
 
 ## Configuration
 
-Production `private/config.php` must set:
+Checked-in auth/runtime defaults live in [`public/api/config-defaults.php`](/Users/mwieland/dev/MattricsTrainingLog/public/api/config-defaults.php):
+
+```php
+'auth_require_https' => true,
+'session_idle_seconds' => 2592000,
+'session_absolute_seconds' => 2592000,
+'webauthn_rp_id' => '',
+```
+
+Production `private/config.php` should hold secrets plus only the overrides your environment actually needs. The most common non-secret override is:
 
 ```php
 'site_origin' => 'https://mattrics.example.com',
-'auth_require_https' => true,
-'session_idle_seconds' => 1800,
-'session_absolute_seconds' => 43200,
 ```
 
 `webauthn_rp_id` is optional. If omitted, it defaults to the `site_origin` host. Use a parent domain only when the app runs on that domain or a real subdomain. Unsafe suffixes such as `badexample.com` for `example.com` are rejected.

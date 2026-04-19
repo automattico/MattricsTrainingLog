@@ -6,6 +6,7 @@ if (mattrics_auth_requires_https() && !mattrics_is_https_request()) {
     header('Location: https://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($_SERVER['REQUEST_URI'] ?? '/'));
     exit;
 }
+mattrics_dev_bypass_auth();
 if (!empty($_SESSION['mattrics_authed']) && mattrics_session_is_timed_out()) {
     mattrics_audit_log('session_timeout', ['outcome' => 'success']);
     mattrics_clear_auth_session();

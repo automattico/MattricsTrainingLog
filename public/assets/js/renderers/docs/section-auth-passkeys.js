@@ -45,7 +45,7 @@
           ["Challenge lifecycle", "Ephemeral — created per request, validated within the same session context, discarded after 10 minutes."],
           ["Recovery codes", "One-time hashed codes generated during passkey setup. Stored hashes in <code class=\"docs-code\">private/storage/recovery-codes.json</code>; marked spent after use."],
           ["Validation boundary", "All endpoints under <code class=\"docs-code\">public/api/</code> that mutate state check <code class=\"docs-code\">$_SESSION['mattrics_authed']</code>."],
-          ["Session timeout", "Explicit logout clears <code class=\"docs-code\">mattrics_authed</code> and regenerates the session ID."],
+          ["Session lifetime", "Cookie persists for 30 days. Sessions remain valid for up to 30 days without requiring another login, unless you log out explicitly. Configurable via <code class=\"docs-code\">session_idle_seconds</code> and <code class=\"docs-code\">session_absolute_seconds</code> in <code class=\"docs-code\">private/config.php</code>."],
         ])}
       `)}
 
@@ -60,6 +60,18 @@
         <p class="docs-copy">
           Form submissions and settings mutations are protected with CSRF tokens. The token is generated per session and validated before processing. API calls
           that mutate state via POST require the token to be sent in the request body or as a header.
+        </p>
+      `)}
+
+      ${M.docsSubsection("Local development bypass", `
+        <p class="docs-copy">
+          During local development, when the app is served from <code class="docs-code">localhost</code> or <code class="docs-code">127.0.0.1</code>, the passkey authentication is bypassed for convenience. The session is automatically marked as authenticated on first request, allowing seamless app access without a passkey prompt.
+        </p>
+        <p class="docs-copy">
+          <strong>How it works:</strong> The <code class="docs-code">mattrics_dev_bypass_auth()</code> function in <code class="docs-code">bootstrap-auth.php</code> checks if the request originates from a loopback address (localhost, 127.0.0.1, or ::1). If so, it sets <code class="docs-code">$_SESSION['mattrics_authed'] = true</code> when no authenticated session exists. This is a pure development convenience and has <strong>no effect on production</strong>.
+        </p>
+        <p class="docs-copy">
+          <strong>Security:</strong> The bypass is automatically disabled on any non-loopback host, and a real authenticated session (from an actual passkey login) is never overwritten. Start your local server with <code class="docs-code">php -S localhost:8001 -t public</code> to enable the bypass.
         </p>
       `)}
     `,
