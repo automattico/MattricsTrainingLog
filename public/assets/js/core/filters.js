@@ -1,10 +1,10 @@
 (function () {
   const M = window.Mattrics;
 
-  M.getWindowRange = function getWindowRange() {
+  M.getDashboardWindowRange = function getDashboardWindowRange() {
     if (!M.state.allData.length) return { start: "", end: "" };
 
-    if (M.state.windowDays === 0) {
+    if (M.state.dashboardWindowDays === 0) {
       return {
         start: M.state.allData[M.state.allData.length - 1].Date,
         end: M.state.allData[0].Date,
@@ -13,7 +13,7 @@
 
     const end = M.startOfDay(new Date());
     const start = new Date(end);
-    start.setDate(start.getDate() - (M.state.windowDays - 1));
+    start.setDate(start.getDate() - (M.state.dashboardWindowDays - 1));
     return {
       start: M.toIsoDate(start),
       end: M.toIsoDate(end),
@@ -41,9 +41,9 @@
     return data.filter((activity) => M.canonicalType(activity.Type) === M.state.typeFilter);
   };
 
-  M.getWindowedData = function getWindowedData() {
-    if (M.state.windowDays === 0) return M.state.allData;
-    const { start } = M.getWindowRange();
+  M.getDashboardWindowedData = function getDashboardWindowedData() {
+    if (M.state.dashboardWindowDays === 0) return M.state.allData;
+    const { start } = M.getDashboardWindowRange();
     return M.state.allData.filter((activity) => activity.Date >= start);
   };
 

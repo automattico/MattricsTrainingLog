@@ -1,0 +1,672 @@
+[
+    {
+        "id": "back-extension-machine",
+        "canonicalName": "Back Extension (Machine)",
+        "normalizedName": "back extension machine",
+        "aliases": [
+            "Machine Back Extension",
+            "Lumbar Extension Machine",
+            "Roman Chair Back Extension"
+        ],
+        "matchTerms": [
+            "back extension machine"
+        ],
+        "muscleWeights": {
+            "chest": 0,
+            "deltoids": 0,
+            "trapezius": 0,
+            "upperBack": 0,
+            "triceps": 0,
+            "biceps": 0,
+            "abs": 0.15,
+            "obliques": 0,
+            "lowerBack": 0.7,
+            "gluteal": 0.2,
+            "adductors": 0,
+            "quadriceps": 0,
+            "hamstrings": 0.25,
+            "calves": 0
+        },
+        "fatigueMultiplier": 0.65,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "ai_suggested",
+        "lastUpdatedAt": "2026-04-20T17:22:13+00:00",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "bench-press",
+        "canonicalName": "Bench Press",
+        "normalizedName": "bench press",
+        "aliases": [
+            "Push Up",
+            "Pushup",
+            "Chest Fly",
+            "Pec Deck",
+            "Dip"
+        ],
+        "matchTerms": [
+            "bench",
+            "push up",
+            "pushup",
+            "chest fly",
+            "pec deck",
+            "dip"
+        ],
+        "muscleWeights": {
+            "chest": 1,
+            "deltoids": 0.45,
+            "triceps": 0.52,
+            "abs": 0.08,
+            "trapezius": 0.06
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": true,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "bird-dog",
+        "canonicalName": "Bird Dog",
+        "normalizedName": "bird dog",
+        "aliases": [
+            "quadruped opposite arm and leg raise",
+            "bird-dog exercise"
+        ],
+        "matchTerms": [
+            "bird dog"
+        ],
+        "muscleWeights": {
+            "chest": 0,
+            "deltoids": 0.08,
+            "trapezius": 0.08,
+            "upperBack": 0.2,
+            "triceps": 0.08,
+            "biceps": 0,
+            "abs": 0.45,
+            "obliques": 0.2,
+            "lowerBack": 1,
+            "gluteal": 0.45,
+            "adductors": 0,
+            "quadriceps": 0.08,
+            "hamstrings": 0.2,
+            "calves": 0
+        },
+        "fatigueMultiplier": 0.2,
+        "bodyweightEligible": true,
+        "setTypeHandling": "bodyweight_reps",
+        "source": "ai_suggested",
+        "lastUpdatedAt": "2026-04-22T19:27:17+00:00",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "calf-raise",
+        "canonicalName": "Calf Raise",
+        "normalizedName": "calf raise",
+        "aliases": [
+            "Calf Raises"
+        ],
+        "matchTerms": [
+            "calf raise"
+        ],
+        "muscleWeights": {
+            "calves": 1,
+            "quadriceps": 0.12
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "core",
+        "canonicalName": "Core",
+        "normalizedName": "core",
+        "aliases": [
+            "Plank",
+            "Crunch",
+            "Dead Bug",
+            "Hollow Hold",
+            "Sit Up",
+            "Leg Raise",
+            "Russian Twist"
+        ],
+        "matchTerms": [
+            "plank",
+            "crunch",
+            "twist",
+            "dead bug",
+            "hollow",
+            "sit up",
+            "leg raise",
+            "russian twist"
+        ],
+        "muscleWeights": {
+            "abs": 0.78,
+            "obliques": 0.52,
+            "lowerBack": 0.18
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": true,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "curl",
+        "canonicalName": "Curl",
+        "normalizedName": "curl",
+        "aliases": [
+            "Hammer Curl"
+        ],
+        "matchTerms": [
+            "curl",
+            "hammer"
+        ],
+        "muscleWeights": {
+            "biceps": 1,
+            "deltoids": 0.08
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "deadlift",
+        "canonicalName": "Deadlift",
+        "normalizedName": "deadlift",
+        "aliases": [
+            "RDL",
+            "Romanian Deadlift"
+        ],
+        "matchTerms": [
+            "deadlift",
+            "rdl",
+            "romanian deadlift"
+        ],
+        "muscleWeights": {
+            "hamstrings": 0.92,
+            "gluteal": 0.72,
+            "lowerBack": 0.46,
+            "upperBack": 0.28,
+            "trapezius": 0.18,
+            "quadriceps": 0.18,
+            "abs": 0.2
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "glute-kickback",
+        "canonicalName": "Glute Kickback",
+        "normalizedName": "glute kickback",
+        "aliases": [
+            "Glute Kickout",
+            "Beinheben",
+            "Glute Kickout (Beinheben)"
+        ],
+        "matchTerms": [
+            "glute kickout beinheben"
+        ],
+        "muscleWeights": {
+            "chest": 0,
+            "deltoids": 0,
+            "trapezius": 0,
+            "upperBack": 0,
+            "triceps": 0,
+            "biceps": 0,
+            "abs": 0.08,
+            "obliques": 0,
+            "lowerBack": 0.08,
+            "gluteal": 1,
+            "adductors": 0.2,
+            "quadriceps": 0,
+            "hamstrings": 0.45,
+            "calves": 0
+        },
+        "fatigueMultiplier": 0.45,
+        "bodyweightEligible": true,
+        "setTypeHandling": "bodyweight_reps",
+        "source": "ai_suggested",
+        "lastUpdatedAt": "2026-04-22T19:34:10+00:00",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "heel-taps",
+        "canonicalName": "Heel Taps",
+        "normalizedName": "heel taps",
+        "aliases": [
+            "Heel Touches",
+            "Oblique Heel Taps"
+        ],
+        "matchTerms": [
+            "heel taps"
+        ],
+        "muscleWeights": {
+            "chest": 0,
+            "deltoids": 0,
+            "trapezius": 0,
+            "upperBack": 0,
+            "triceps": 0,
+            "biceps": 0,
+            "abs": 0.45,
+            "obliques": 1,
+            "lowerBack": 0.08,
+            "gluteal": 0,
+            "adductors": 0,
+            "quadriceps": 0,
+            "hamstrings": 0,
+            "calves": 0
+        },
+        "fatigueMultiplier": 0.2,
+        "bodyweightEligible": true,
+        "setTypeHandling": "time_based_ignore",
+        "source": "ai_suggested",
+        "lastUpdatedAt": "2026-04-22T19:33:48+00:00",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "hip-abduction",
+        "canonicalName": "Hip Abduction",
+        "normalizedName": "hip abduction",
+        "aliases": [
+            "Abduction Machine",
+            "Machine Abduction"
+        ],
+        "matchTerms": [
+            "hip abduction",
+            "abduction machine",
+            "machine abduction"
+        ],
+        "muscleWeights": {
+            "gluteal": 0.92,
+            "adductors": 0.08,
+            "hamstrings": 0.12,
+            "abs": 0.04
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "hip-adduction",
+        "canonicalName": "Hip Adduction",
+        "normalizedName": "hip adduction",
+        "aliases": [
+            "Adduction Machine",
+            "Machine Adduction"
+        ],
+        "matchTerms": [
+            "hip adduction",
+            "adduction machine",
+            "machine adduction"
+        ],
+        "muscleWeights": {
+            "adductors": 1,
+            "gluteal": 0.12,
+            "hamstrings": 0.08,
+            "abs": 0.04
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "hip-thrust",
+        "canonicalName": "Hip Thrust",
+        "normalizedName": "hip thrust",
+        "aliases": [
+            "Glute Bridge"
+        ],
+        "matchTerms": [
+            "hip thrust",
+            "glute bridge"
+        ],
+        "muscleWeights": {
+            "gluteal": 1,
+            "hamstrings": 0.35,
+            "abs": 0.14,
+            "lowerBack": 0.12,
+            "adductors": 0.1
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "incline-press",
+        "canonicalName": "Incline Press",
+        "normalizedName": "incline press",
+        "aliases": [
+            "Incline Bench",
+            "Chest Press"
+        ],
+        "matchTerms": [
+            "incline press",
+            "incline bench",
+            "chest press"
+        ],
+        "muscleWeights": {
+            "chest": 0.95,
+            "deltoids": 0.5,
+            "triceps": 0.46,
+            "trapezius": 0.08,
+            "abs": 0.08
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "internal-shoulder-rotation",
+        "canonicalName": "Internal Shoulder Rotation",
+        "normalizedName": "internal shoulder rotation",
+        "aliases": [
+            "Cable Internal Shoulder Rotation",
+            "Band Internal Shoulder Rotation",
+            "Shoulder Internal Rotation",
+            "Internal Shoulder Rotation (Cable or Band)"
+        ],
+        "matchTerms": [
+            "internal shoulder rotation cable or band"
+        ],
+        "muscleWeights": {
+            "chest": 0,
+            "deltoids": 0.65,
+            "trapezius": 0,
+            "upperBack": 0,
+            "triceps": 0,
+            "biceps": 0,
+            "abs": 0,
+            "obliques": 0,
+            "lowerBack": 0,
+            "gluteal": 0,
+            "adductors": 0,
+            "quadriceps": 0,
+            "hamstrings": 0,
+            "calves": 0
+        },
+        "fatigueMultiplier": 0.2,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "ai_suggested",
+        "lastUpdatedAt": "2026-04-22T19:35:07+00:00",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "machine-glute-kickback",
+        "canonicalName": "Machine Glute Kickback",
+        "normalizedName": "machine glute kickback",
+        "aliases": [
+            "Glute Kickback (Machine)",
+            "Machine Kickback"
+        ],
+        "matchTerms": [
+            "glute kickback machine"
+        ],
+        "muscleWeights": {
+            "chest": 0,
+            "deltoids": 0,
+            "trapezius": 0,
+            "upperBack": 0,
+            "triceps": 0,
+            "biceps": 0,
+            "abs": 0.08,
+            "obliques": 0,
+            "lowerBack": 0.2,
+            "gluteal": 1,
+            "adductors": 0.08,
+            "quadriceps": 0.2,
+            "hamstrings": 0.45,
+            "calves": 0
+        },
+        "fatigueMultiplier": 0.65,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "ai_suggested",
+        "lastUpdatedAt": "2026-04-22T19:36:18+00:00",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "pulldown",
+        "canonicalName": "Pulldown",
+        "normalizedName": "pulldown",
+        "aliases": [
+            "Pull Up",
+            "Pullup",
+            "Chin Up",
+            "Chinup"
+        ],
+        "matchTerms": [
+            "pulldown",
+            "pull up",
+            "pullup",
+            "chin up",
+            "chinup"
+        ],
+        "muscleWeights": {
+            "upperBack": 0.74,
+            "trapezius": 0.28,
+            "biceps": 0.48,
+            "deltoids": 0.14,
+            "lowerBack": 0.08
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": true,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "row",
+        "canonicalName": "Row",
+        "normalizedName": "row",
+        "aliases": [
+            "Face Pull"
+        ],
+        "matchTerms": [
+            "row",
+            "face pull"
+        ],
+        "muscleWeights": {
+            "upperBack": 0.82,
+            "trapezius": 0.58,
+            "biceps": 0.34,
+            "deltoids": 0.22,
+            "lowerBack": 0.12
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "shoulder-press",
+        "canonicalName": "Shoulder Press",
+        "normalizedName": "shoulder press",
+        "aliases": [
+            "Overhead Press",
+            "Arnold Press",
+            "Lateral Raise",
+            "Front Raise",
+            "Rear Delt"
+        ],
+        "matchTerms": [
+            "shoulder press",
+            "overhead press",
+            "arnold press",
+            "lateral raise",
+            "front raise",
+            "rear delt"
+        ],
+        "muscleWeights": {
+            "deltoids": 1,
+            "triceps": 0.42,
+            "trapezius": 0.24,
+            "chest": 0.15,
+            "upperBack": 0.12
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "squat",
+        "canonicalName": "Squat",
+        "normalizedName": "squat",
+        "aliases": [
+            "Lunge",
+            "Step Up",
+            "Stepup",
+            "Leg Press",
+            "Split Squat"
+        ],
+        "matchTerms": [
+            "squat",
+            "lunge",
+            "step up",
+            "stepup",
+            "leg press",
+            "split squat"
+        ],
+        "muscleWeights": {
+            "quadriceps": 0.95,
+            "gluteal": 0.35,
+            "hamstrings": 0.42,
+            "adductors": 0.24,
+            "abs": 0.18,
+            "lowerBack": 0.08,
+            "calves": 0.14
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": true,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "treadmill-running",
+        "canonicalName": "Treadmill Running",
+        "normalizedName": "treadmill running",
+        "aliases": [
+            "Treadmill",
+            "Running on Treadmill",
+            "Treadmill Walking"
+        ],
+        "matchTerms": [
+            "treadmill"
+        ],
+        "muscleWeights": {
+            "chest": 0,
+            "deltoids": 0,
+            "trapezius": 0,
+            "upperBack": 0,
+            "triceps": 0,
+            "biceps": 0,
+            "abs": 0.08,
+            "obliques": 0.08,
+            "lowerBack": 0.08,
+            "gluteal": 0.65,
+            "adductors": 0.2,
+            "quadriceps": 1,
+            "hamstrings": 0.45,
+            "calves": 0.45
+        },
+        "fatigueMultiplier": 0.7,
+        "bodyweightEligible": true,
+        "setTypeHandling": "time_based_ignore",
+        "source": "ai_suggested",
+        "lastUpdatedAt": "2026-04-22T19:35:44+00:00",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "triceps-extension",
+        "canonicalName": "Triceps Extension",
+        "normalizedName": "triceps extension",
+        "aliases": [
+            "Pushdown",
+            "Skull Crusher"
+        ],
+        "matchTerms": [
+            "triceps",
+            "pushdown",
+            "skull crusher"
+        ],
+        "muscleWeights": {
+            "triceps": 1,
+            "deltoids": 0.08
+        },
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual"
+    },
+    {
+        "id": "weighted-back-extension",
+        "canonicalName": "Weighted Back Extension",
+        "normalizedName": "weighted back extension",
+        "aliases": [
+            "Weighted Hyperextension",
+            "Back Extension",
+            "Hyperextension"
+        ],
+        "matchTerms": [
+            "back extension weighted hyperextension"
+        ],
+        "muscleWeights": {
+            "chest": 0,
+            "deltoids": 0,
+            "trapezius": 0,
+            "upperBack": 0,
+            "triceps": 0,
+            "biceps": 0,
+            "abs": 0.1,
+            "obliques": 0,
+            "lowerBack": 0.75,
+            "gluteal": 0.55,
+            "adductors": 0,
+            "quadriceps": 0,
+            "hamstrings": 0.3,
+            "calves": 0
+        },
+        "fatigueMultiplier": 1.15,
+        "bodyweightEligible": true,
+        "setTypeHandling": "weight_reps",
+        "source": "ai_suggested",
+        "lastUpdatedAt": "2026-04-20T17:21:22+00:00",
+        "lastUpdatedType": "ai"
+    }
+]

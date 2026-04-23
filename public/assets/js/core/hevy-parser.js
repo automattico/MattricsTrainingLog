@@ -2,25 +2,7 @@
   const M = window.Mattrics;
 
   M.getExerciseMuscleMapping = function getExerciseMuscleMapping(exerciseName) {
-    const normalized = String(exerciseName || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-    const exerciseMappings = [
-      { patterns: ["bench", "push up", "pushup", "chest fly", "pec deck", "dip"], weights: { chest: 1, deltoids: 0.45, triceps: 0.52, abs: 0.08, trapezius: 0.06 } },
-      { patterns: ["incline press", "incline bench", "chest press"], weights: { chest: 0.95, deltoids: 0.5, triceps: 0.46, trapezius: 0.08, abs: 0.08 } },
-      { patterns: ["row", "face pull"], weights: { upperBack: 0.82, trapezius: 0.58, biceps: 0.34, deltoids: 0.22, lowerBack: 0.12 } },
-      { patterns: ["pulldown", "pull up", "pullup", "chin up", "chinup"], weights: { upperBack: 0.74, trapezius: 0.28, biceps: 0.48, deltoids: 0.14, lowerBack: 0.08 } },
-      { patterns: ["deadlift", "rdl", "romanian deadlift"], weights: { hamstrings: 0.92, gluteal: 0.72, lowerBack: 0.46, upperBack: 0.28, trapezius: 0.18, quadriceps: 0.18, abs: 0.2 } },
-      { patterns: ["hip adduction", "adduction machine", "machine adduction"], weights: { adductors: 1, gluteal: 0.12, hamstrings: 0.08, abs: 0.04 } },
-      { patterns: ["hip abduction", "abduction machine", "machine abduction"], weights: { gluteal: 0.92, adductors: 0.08, hamstrings: 0.12, abs: 0.04 } },
-      { patterns: ["shoulder press", "overhead press", "arnold press", "lateral raise", "front raise", "rear delt"], weights: { deltoids: 1, triceps: 0.42, trapezius: 0.24, chest: 0.15, upperBack: 0.12 } },
-      { patterns: ["curl", "hammer"], weights: { biceps: 1, deltoids: 0.08 } },
-      { patterns: ["triceps", "pushdown", "skull crusher"], weights: { triceps: 1, deltoids: 0.08 } },
-      { patterns: ["plank", "crunch", "twist", "dead bug", "hollow", "sit up", "leg raise", "russian twist"], weights: { abs: 0.78, obliques: 0.52, lowerBack: 0.18 } },
-      { patterns: ["hip thrust", "glute bridge"], weights: { gluteal: 1, hamstrings: 0.35, abs: 0.14, lowerBack: 0.12, adductors: 0.1 } },
-      { patterns: ["calf raise"], weights: { calves: 1, quadriceps: 0.12 } },
-      { patterns: ["squat", "lunge", "step up", "stepup", "leg press", "split squat"], weights: { quadriceps: 0.95, gluteal: 0.35, hamstrings: 0.42, adductors: 0.24, abs: 0.18, lowerBack: 0.08, calves: 0.14 } },
-    ];
-
-    return exerciseMappings.find((mapping) => mapping.patterns.some((pattern) => normalized.includes(pattern))) || null;
+    return M.resolveExerciseConfig(exerciseName);
   };
 
   M.parseHevySetLine = function parseHevySetLine(setText, exerciseName) {
@@ -32,7 +14,9 @@
     const rawText = String(setText || "").trim();
     const text = rawText.toLowerCase();
     const exercise = String(exerciseName || "").toLowerCase();
-    const isBodyweightExercise = /(push ?up|pull ?up|chin ?up|dip|sit ?up|crunch|leg raise|bodyweight|bw|air squat|pistol squat)/i.test(exercise);
+    const exerciseConfig = M.resolveExerciseConfig(exerciseName);
+    const isBodyweightExercise = Boolean(exerciseConfig && exerciseConfig.bodyweightEligible)
+      || /(push ?up|pull ?up|chin ?up|dip|sit ?up|crunch|leg raise|bodyweight|bw|air squat|pistol squat)/i.test(exercise);
     const isTimeBased = /\b\d+\s*(?:sec|secs|second|seconds|min|mins|minute|minutes|hr|hrs|hour|hours)\b/i.test(text)
       || /\b\d{1,2}:\d{2}\b/.test(text)
       || /\bfor time\b/i.test(text)

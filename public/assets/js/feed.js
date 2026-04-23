@@ -50,7 +50,7 @@
     }).join("");
   };
   M.renderFeed = function renderFeed(data) {
-    const activities = data || M.applyTypeFilter(M.getWindowedData());
+    const activities = data || M.applyTypeFilter(M.state.allData);
     if (M.state.feedMode === "grouped") {
       M.renderTimeline(activities, "cardList");
       return;

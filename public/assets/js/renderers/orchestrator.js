@@ -1,6 +1,6 @@
 (function () {
   const M = window.Mattrics;
-  const VIEW_IDS = ["dashboard", "fatigue", "sessions", "ai", "docs", "settings"];
+  const VIEW_IDS = ["dashboard", "fatigue", "sessions", "exercises", "ai", "docs", "settings"];
 
   function isValidView(id) {
     return VIEW_IDS.includes(id) && Boolean(document.getElementById(`view-${id}`));
@@ -78,10 +78,17 @@
     M.showLoading();
     const forceRefresh = Boolean(options.forceRefresh);
     let sourceUrl = M.DATA_URL || M.SHEET_URL;
+    const configUrl = M.EXERCISE_CONFIG_URL;
 
     if (!sourceUrl || sourceUrl === "PASTE_YOUR_WEB_APP_URL_HERE" || sourceUrl === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
       M.showError(
         "No data source configured.\n\nFor secure hosting, use api/data.php with private/config.php on the server. For local fallback, set MATTRICS_CONFIG.SHEET_URL and MATTRICS_CONFIG.SHEET_TOKEN.\n\nSee README.md and the Hetzner deploy guide."
+      );
+      return;
+    }
+    if (!configUrl) {
+      M.showError(
+        "No exercise config source configured.\n\nServe the app through PHP so api/exercises.php can read the private JSON seed files."
       );
       return;
     }
@@ -98,12 +105,14 @@
         url.searchParams.set("key", M.SHEET_TOKEN);
         sourceUrl = url.toString();
       }
-
-      const res = await fetch(sourceUrl, {
-        redirect: "follow",
-        credentials: "same-origin",
-        headers: {},
-      });
+      const [res] = await Promise.all([
+        fetch(sourceUrl, {
+          redirect: "follow",
+          credentials: "same-origin",
+          headers: {},
+        }),
+        M.loadExerciseConfigs(),
+      ]);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
       let json;
@@ -131,6 +140,7 @@
         .filter((row) => row.Date)
         .sort((a, b) => new Date(b.Date) - new Date(a.Date));
       M.state.typeFilter = "All";
+      await M.scanAndSyncUnknownExercises(M.state.allData);
       M.showApp();
       M.renderDataStatus();
       await M.loadUserSettings();
@@ -156,34 +166,43 @@
     }
   };
 
-  M.setWindow = function setWindow(days, el) {
-    M.state.windowDays = days;
-    M.state.typeFilter = "All";
-    document.querySelectorAll(".window-btn").forEach((button) => button.classList.remove("active"));
-    document.querySelectorAll(".window-option").forEach((option) => option.classList.remove("active"));
-    el.classList.add("active");
-    if (el.parentElement) el.parentElement.classList.add("active");
+  M.setDashboardWindow = function setDashboardWindow(days, el) {
+    M.state.dashboardWindowDays = days;
+    const controls = el ? el.closest(".dashboard-window-controls") : document.getElementById("dashboardWindowControls");
+    if (controls) {
+      controls.querySelectorAll(".window-btn").forEach((button) => button.classList.remove("active"));
+      controls.querySelectorAll(".window-option").forEach((option) => option.classList.remove("active"));
+    }
+    if (el) {
+      el.classList.add("active");
+      if (el.parentElement) el.parentElement.classList.add("active");
+    }
     M.renderAll();
   };
 
   M.renderAll = function renderAll() {
-    const windowed = M.getWindowedData();
-    M.renderContextBar(windowed);
-    M.renderDashboard(windowed);
-    M.renderFatigueView(windowed);
-    M.renderFilters(windowed);
-    M.renderFeed(windowed);
+    const dashboardWindowed = M.getDashboardWindowedData();
+    const sessionActivities = M.applyTypeFilter(M.state.allData);
+    M.renderContextBar(dashboardWindowed);
+    M.renderDashboard(dashboardWindowed);
+    M.renderFatigueView(M.state.allData);
+    M.renderFilters(M.state.allData);
+    M.renderFeed(sessionActivities);
     M.renderAiPreview();
+    const exerciseView = document.getElementById("view-exercises");
+    if (exerciseView && exerciseView.classList.contains("active") && typeof M.renderExerciseAdminView === "function") {
+      M.renderExerciseAdminView();
+    }
   };
 
   M.renderContextBar = function renderContextBar(data) {
-    const activeContext = document.getElementById("rangeSummary");
+    const activeContext = document.getElementById("dashboardRangeSummary");
     if (!activeContext) return;
 
     if (!data.length) {
       activeContext.textContent = "No activities in this range";
     } else {
-      const range = M.getWindowRange();
+      const range = M.getDashboardWindowRange();
       activeContext.textContent = M.formatContextRange(range.start || data[data.length - 1].Date, range.end || data[0].Date);
     }
 
@@ -191,13 +210,9 @@
   };
 
   M.positionRangeSummary = function positionRangeSummary() {
-    const el = document.getElementById("rangeSummary");
-    const activeBtn = document.querySelector(".window-btn.active");
-    const controls = document.querySelector(".window-controls");
-    if (!el || !activeBtn || !controls) return;
-    const btnRect = activeBtn.getBoundingClientRect();
-    const controlsRect = controls.getBoundingClientRect();
-    el.style.left = (btnRect.left + btnRect.width / 2 - controlsRect.left) + "px";
+    const el = document.getElementById("dashboardRangeSummary");
+    if (!el) return;
+    el.style.left = "";
   };
 
   M.renderFilters = function renderFilters(data) {
@@ -225,9 +240,9 @@
 
   M.setFilter = function setFilter(filter) {
     M.state.typeFilter = filter;
-    const windowed = M.getWindowedData();
-    M.renderFilters(windowed);
-    M.renderFeed(M.applyTypeFilter(windowed));
+    const activities = M.state.allData;
+    M.renderFilters(activities);
+    M.renderFeed(M.applyTypeFilter(activities));
   };
 
   M.setFeedMode = function setFeedMode(mode, el) {
@@ -239,7 +254,7 @@
     }
     document.querySelectorAll(".feed-mode-switch .tl-sw-btn").forEach((button) => button.classList.remove("active"));
     if (el) el.classList.add("active");
-    M.renderFeed();
+    M.renderFeed(M.applyTypeFilter(M.state.allData));
   };
 
   M.showView = function showView(id, el, options = {}) {
@@ -259,6 +274,9 @@
     if (options.persist !== false) updateViewUrl(id);
     if (id === "docs") {
       renderDocsView();
+    }
+    if (id === "exercises" && typeof M.renderExerciseAdminView === "function") {
+      M.renderExerciseAdminView();
     }
     if (id === "settings") {
       M.renderSettingsView();

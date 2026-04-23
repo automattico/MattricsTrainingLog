@@ -39,7 +39,8 @@
 │       ├── core/           Data model — loaded first, no rendering
 │       │   ├── constants.js     Activity types, muscle regions, fatigue config
 │       │   ├── state.js         Global M.state shape
-│       │   ├── fatigue-engine.js Decayed load + score computation
+│       │   ├── exercise-config.js JSON-backed config resolver + unknown scan + sync
+│       │   ├── fatigue-engine.js Decayed load + score computation + unresolved warning payload
 │       │   ├── fatigue-tiers.js  Score → readiness tier labels
 │       │   ├── hevy-parser.js   Hevy workout set parsing
 │       │   ├── activity-analysis.js Grouping and filtering
@@ -49,9 +50,9 @@
 │       │   └── filters.js       Activity type filtering
 │       ├── renderers/      View rendering — loaded after core
 │       │   ├── loader.js        Loading states: spinner, error, show app
-│       │   ├── orchestrator.js  Master router + data pipeline; lazily loads docs.js
+│       │   ├── orchestrator.js  Master router + data pipeline; syncs unknowns before render
 │       │   ├── dashboard.js     Dashboard overview cards
-│       │   ├── fatigue-view.js  Body map, readiness tables, fatigue legend
+│       │   ├── fatigue-view.js  Body map, readiness tables, fatigue legend, unresolved warning
 │       │   ├── docs-helpers.js  Shared HTML builders: docsTable, docsCards, docsMermaid…
 │       │   ├── docs.js          Docs renderer shell — reads M.docsSections, calls mermaid.run()
 │       │   └── docs/            One file per documentation section
@@ -78,6 +79,8 @@
 └── api/
     ├── bootstrap.php        Session + config bootstrap (unauthenticated)
     ├── bootstrap-auth.php   Auth-required bootstrap
+    ├── exercise-config-repository.php Private JSON config + unknown store load/save helpers
+    ├── exercises.php        Exercise/activity config endpoint + unresolved snapshot sync
     ├── data.php             Fetches + caches Google Sheets JSON
     ├── ai.php               Anthropic API proxy (SSE streaming)
     ├── settings.php         Read/write user profile settings

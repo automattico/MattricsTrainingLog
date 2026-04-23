@@ -1,0 +1,218 @@
+[
+    {
+        "id": "exercise:cable core palloff press",
+        "sourceType": "exercise",
+        "normalizedName": "cable core palloff press",
+        "rawNames": [
+            "Cable Core Palloff Press"
+        ],
+        "timesSeen": 1,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:cable half kneeling rotational press pull",
+        "sourceType": "exercise",
+        "normalizedName": "cable half kneeling rotational press pull",
+        "rawNames": [
+            "Cable Half-Kneeling Rotational Press-Pull"
+        ],
+        "timesSeen": 1,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:calf extension machine",
+        "sourceType": "exercise",
+        "normalizedName": "calf extension machine",
+        "rawNames": [
+            "Calf Extension (Machine)"
+        ],
+        "timesSeen": 1,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:calf press machine",
+        "sourceType": "exercise",
+        "normalizedName": "calf press machine",
+        "rawNames": [
+            "Calf Press (Machine)"
+        ],
+        "timesSeen": 1,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:cycling",
+        "sourceType": "exercise",
+        "normalizedName": "cycling",
+        "rawNames": [
+            "Cycling"
+        ],
+        "timesSeen": 4,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:dead hang",
+        "sourceType": "exercise",
+        "normalizedName": "dead hang",
+        "rawNames": [
+            "Dead Hang"
+        ],
+        "timesSeen": 1,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:external shoulder rotation cable or band",
+        "sourceType": "exercise",
+        "normalizedName": "external shoulder rotation cable or band",
+        "rawNames": [
+            "External Shoulder Rotation (Cable or Band)"
+        ],
+        "timesSeen": 12,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:leg extension machine",
+        "sourceType": "exercise",
+        "normalizedName": "leg extension machine",
+        "rawNames": [
+            "Leg Extension (Machine)"
+        ],
+        "timesSeen": 10,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:overhead plate hold",
+        "sourceType": "exercise",
+        "normalizedName": "overhead plate hold",
+        "rawNames": [
+            "Overhead Plate Hold"
+        ],
+        "timesSeen": 1,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:shrug dumbbell",
+        "sourceType": "exercise",
+        "normalizedName": "shrug dumbbell",
+        "rawNames": [
+            "Shrug (Dumbbell)"
+        ],
+        "timesSeen": 2,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:side bend dumbbell",
+        "sourceType": "exercise",
+        "normalizedName": "side bend dumbbell",
+        "rawNames": [
+            "Side Bend (Dumbbell)"
+        ],
+        "timesSeen": 1,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:single leg extensions",
+        "sourceType": "exercise",
+        "normalizedName": "single leg extensions",
+        "rawNames": [
+            "Single Leg Extensions"
+        ],
+        "timesSeen": 4,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:spinning",
+        "sourceType": "exercise",
+        "normalizedName": "spinning",
+        "rawNames": [
+            "Spinning"
+        ],
+        "timesSeen": 20,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:stretching",
+        "sourceType": "exercise",
+        "normalizedName": "stretching",
+        "rawNames": [
+            "Stretching"
+        ],
+        "timesSeen": 33,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:thor s harness dual cable rotational half kneeling pull press",
+        "sourceType": "exercise",
+        "normalizedName": "thor s harness dual cable rotational half kneeling pull press",
+        "rawNames": [
+            "Thor's Harness (Dual Cable Rotational Half-Kneeling Pull-Press)"
+        ],
+        "timesSeen": 8,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:torso rotation",
+        "sourceType": "exercise",
+        "normalizedName": "torso rotation",
+        "rawNames": [
+            "Torso Rotation"
+        ],
+        "timesSeen": 13,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:wall sit",
+        "sourceType": "exercise",
+        "normalizedName": "wall sit",
+        "rawNames": [
+            "Wall Sit"
+        ],
+        "timesSeen": 1,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:y w raises resistance band standing",
+        "sourceType": "exercise",
+        "normalizedName": "y w raises resistance band standing",
+        "rawNames": [
+            "Y-W Raises (Resistance Band, Standing)"
+        ],
+        "timesSeen": 2,
+        "firstSeenAt": "2026-04-20T17:01:24+00:00",
+        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "aiStatus": "not_requested"
+    }
+]

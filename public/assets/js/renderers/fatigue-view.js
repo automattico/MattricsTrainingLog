@@ -1,6 +1,25 @@
 (function () {
   const M = window.Mattrics;
 
+  M.renderFatigueUnresolvedWarning = function renderFatigueUnresolvedWarning(fatigue) {
+    const unresolved = fatigue && fatigue.unresolved;
+    if (!unresolved || !unresolved.hasUnresolved) return "";
+
+    const sample = unresolved.items
+      .slice(0, 3)
+      .map((item) => item.rawNames[0] || item.normalizedName)
+      .filter(Boolean)
+      .join(", ");
+
+    return `<div class="overview-fatigue-warning" role="status" aria-live="polite">
+      <div class="overview-fatigue-warning-title">Unresolved activity mapping</div>
+      <div class="overview-fatigue-warning-copy">${M.esc(unresolved.warningText || "Some recent activities are unresolved, so the fatigue map may be incomplete.")}</div>
+      <div class="overview-fatigue-warning-meta">
+        ${unresolved.count} unresolved item${unresolved.count === 1 ? "" : "s"}${sample ? ` in the current fatigue window: ${M.esc(sample)}${unresolved.count > 3 ? ", ..." : ""}` : ""}
+      </div>
+    </div>`;
+  };
+
   M.renderFatigueBodyFigure = function renderFatigueBodyFigure(fatigue, view) {
     const bodyMap = M.MUSCLE_FATIGUE_BODY_MAP || {};
     const config = bodyMap[view];
@@ -194,6 +213,7 @@
         <div class="overview-insight-title">Muscle Fatigue Map</div>
         <div class="overview-meta">Current recovery state based on recent training. Read the map, then scan what can be trained now or soon.</div>
         <div class="overview-heatmap-shell">
+          ${M.renderFatigueUnresolvedWarning(summary.fatigue)}
           <div class="overview-fatigue-top">
             ${M.renderFatigueBodyFigure(summary.fatigue, "front")}
             ${M.renderFatigueLegendPanel()}

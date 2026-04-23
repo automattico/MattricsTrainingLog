@@ -73,6 +73,46 @@ score   = min(100, rawLoad / normalizationLoad × 100)</div>
         ])}
       `)}
 
+      ${M.docsSubsection("Exercise-admin muscle editing", `
+        <p class="docs-copy">
+          The exercise admin UI uses five semantic buckets instead of free-form decimals. The saved values are still
+          numeric multipliers, not percentages, so the fatigue engine stays numeric while the editor becomes easier
+          to review.
+        </p>
+        ${M.docsTable([
+          ["Not involved (0.00)", "No meaningful fatigue contribution."],
+          ["Stabilizer (0.08)", "Supports movement, mainly for stability."],
+          ["Minor (0.20)", "Contributes slightly, not limiting."],
+          ["Secondary (0.45)", "Clearly involved but not a main driver."],
+          ["Strong secondary (0.65)", "Major assisting role, close to primary."],
+          ["Primary (1.00)", "Main muscle driving the movement."],
+        ])}
+        <p class="docs-copy">
+          Categories replace raw decimals because they are faster to scan, keep the editor consistent across exercises
+          and activity types, and avoid false precision in a relative-load model.
+        </p>
+        ${M.docsTable([
+          ["Primary rule", "At least one involved muscle must be Primary."],
+          ["Multiple Primary", "Compound exercises may mark more than one muscle as Primary."],
+          ["Legacy load", "Old decimal weights are interpreted with threshold mapping on load."],
+          ["Migration", "If a legacy record has no threshold-derived Primary, the editor promotes the highest positive muscle so every existing exercise stays editable."],
+        ])}
+        <p class="docs-copy">
+          The editor renders a live front/back body-map preview while you edit, so the distribution is visible before
+          you save. Saved weights affect fatigue as per-muscle multipliers on the same scaled set load:
+          <code class="docs-code">scaledSetLoad × fatigueMultiplier × muscleWeight</code>.
+        </p>
+        <p class="docs-copy">
+          Load-time thresholds:
+          <code class="docs-code">0 or missing → unchecked</code>,
+          <code class="docs-code">&gt;0 to ≤0.14 → Stabilizer</code>,
+          <code class="docs-code">&gt;0.14 to ≤0.32 → Minor</code>,
+          <code class="docs-code">&gt;0.32 to ≤0.55 → Secondary</code>,
+          <code class="docs-code">&gt;0.55 to ≤0.82 → Strong secondary</code>,
+          <code class="docs-code">&gt;0.82 → Primary</code>.
+        </p>
+      `)}
+
       ${M.docsSubsection("Normalization loads", `
         <p class="docs-copy">
           Each muscle has its own 100% reference. A raw load of <code class="docs-code">1.2</code> means
@@ -99,7 +139,8 @@ recoveryHours = halfLife × log₂(rawLoad / threshold)</div>
       ${M.docsSubsection("Hevy workout parsing", `
         <p class="docs-copy">
           If an activity description starts with <code class="docs-code">Logged with Hevy</code>, the model parses
-          exercises and sets. Each exercise name is lowercased and matched by substring against pattern groups. First match wins.
+          exercises and sets. Resolver matching now comes from <code class="docs-code">api/exercises.php</code>, which
+          indexes canonical names, aliases, and legacy substring <code class="docs-code">matchTerms</code>.
         </p>
         <div class="docs-formula">load         = weightKg × reps × effortFactor
 effortFactor = 0.5 + RPE / 10
@@ -128,8 +169,13 @@ scaledLoad   = load / 1500</div>
           ["squat / lunge / step up / stepup / leg press / split squat", "Quadriceps primary."],
         ])}
         <p class="docs-copy">
-          To model a new exercise, add a substring pattern to the right group in
-          <code class="docs-code">getExerciseMuscleMapping()</code> inside <code class="docs-code">core/hevy-parser.js</code>.
+          Exercise mapping now lives in <code class="docs-code">private/data/exercise-configs.json</code>.
+          The resolver loaded from <code class="docs-code">api/exercises.php</code> uses canonical names, aliases, and legacy substring
+          <code class="docs-code">matchTerms</code> to preserve the previous matching behavior.
+        </p>
+        <p class="docs-copy">
+          Unknown Hevy exercises and unknown non-Hevy activity types are persisted to
+          <code class="docs-code">private/data/exercise-unknowns.json</code> so they are never silently ignored.
         </p>
       `)}
 
@@ -148,7 +194,19 @@ stimulus       = baseWeights × factor</div>
           ["Yoga", "Abs, obliques, and light stabilizers."],
           ["Walk", "Light quads, hamstrings, calves."],
           ["WeightTraining / Workout", "Generic light full-body fallback."],
-          ["Unknown type", "Zero stimulus."],
+          ["Unknown type", "Zero stimulus + unresolved warning/persistence."],
+        ])}
+      `)}
+
+      ${M.docsSubsection("Unresolved warning signal", `
+        <p class="docs-copy">
+          The fatigue view computes unresolved items from the same fixed recent window as the body map. If any recent
+          exercises or activity types are unresolved, the UI shows a warning that the map may be incomplete.
+        </p>
+        ${M.docsTable([
+          ["Scope", "Same 10-day fatigue lookback window as the map and readiness tables."],
+          ["Payload", "<code class=\"docs-code\">hasUnresolved</code>, <code class=\"docs-code\">count</code>, <code class=\"docs-code\">items[]</code>, <code class=\"docs-code\">warningText</code>."],
+          ["Purpose", "Make missing mappings visible without changing current fatigue load math or fallback behavior."],
         ])}
       `)}
     `,

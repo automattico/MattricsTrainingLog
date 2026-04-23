@@ -2,7 +2,7 @@
   const M = window.Mattrics;
 
   M.renderTimeline = function renderTimeline(data, targetId = "tlContent") {
-    const activities = data || M.getWindowedData();
+    const activities = data || M.applyTypeFilter(M.state.allData);
     const groups = {};
     const periodDays = M.state.groupBy === "week" ? 7 : 30;
 

@@ -4,6 +4,7 @@
   const isHttp = typeof window !== "undefined" && /^https?:$/i.test(window.location.protocol);
 
   Mattrics.DATA_URL = config.DATA_URL || (isHttp ? "api/data.php" : "");
+  Mattrics.EXERCISE_CONFIG_URL = config.EXERCISE_CONFIG_URL || (isHttp ? "api/exercises.php" : "");
   Mattrics.AI_PROXY_URL = config.AI_PROXY_URL || (isHttp ? "api/ai.php" : "");
   Mattrics.SHEET_URL = config.SHEET_URL || "";
   Mattrics.SHEET_TOKEN = config.SHEET_TOKEN || "";
@@ -43,6 +44,52 @@
     { key: "hamstrings", slug: "hamstring", label: "Hamstrings", color: "var(--walk)", views: ["back"], order: 130 },
     { key: "calves", slug: "calves", label: "Calves", color: "var(--water)", views: ["front", "back"], order: 140 },
   ];
+
+  Mattrics.EXERCISE_MUSCLE_UI_LEVELS = [
+    {
+      key: "stabilizer",
+      index: 0,
+      label: "Stabilizer",
+      meaning: "Supports movement, mainly for stability",
+      weight: 0.08,
+    },
+    {
+      key: "minor",
+      index: 1,
+      label: "Minor",
+      meaning: "Contributes slightly, not limiting",
+      weight: 0.20,
+    },
+    {
+      key: "secondary",
+      index: 2,
+      label: "Secondary",
+      meaning: "Clearly involved but not a main driver",
+      weight: 0.45,
+    },
+    {
+      key: "strongSecondary",
+      index: 3,
+      label: "Strong secondary",
+      meaning: "Major assisting role, close to primary",
+      weight: 0.65,
+    },
+    {
+      key: "primary",
+      index: 4,
+      label: "Primary",
+      meaning: "Main muscle driving the movement",
+      weight: 1.00,
+    },
+  ];
+
+  Mattrics.EXERCISE_MUSCLE_UI_THRESHOLDS = {
+    stabilizerMax: 0.14,
+    minorMax: 0.32,
+    secondaryMax: 0.55,
+    strongSecondaryMax: 0.82,
+  };
+  Mattrics.EXERCISE_MUSCLE_DEFAULT_LEVEL = "secondary";
 
   Mattrics.MUSCLE_FATIGUE_CONFIG = {
     windowDays: 10,
