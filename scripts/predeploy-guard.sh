@@ -82,6 +82,15 @@ for path in $PUBLIC_REQUIRED_FILES private/config.php; do
   require_file "$path"
 done
 
+for path in \
+  private/data/activity-type-configs.json \
+  private/data/exercise-configs.json \
+  private/data/exercise-dataset.json \
+  private/data/exercise-unknowns.json
+do
+  require_file "$path"
+done
+
 if command -v php >/dev/null 2>&1; then
   for php_file in $PHP_LINT_FILES; do
     php -l "$php_file" >/dev/null
