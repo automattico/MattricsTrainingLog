@@ -11,7 +11,7 @@
   }
 
   .header-row {
-    grid-template-columns: minmax(160px, auto) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(160px, auto) minmax(0, 1fr);
     gap: 18px;
   }
 
@@ -54,41 +54,39 @@
 
   .header-controls {
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 14px;
-  }
-
-  .window-controls {
-    align-items: stretch;
+    align-items: center;
+    justify-content: center;
     gap: 8px;
   }
-
-  .window-switcher {
-    gap: 8px;
-    padding-top: 2px;
-  }
-
-  .window-option {
-    flex: 0 1 auto;
-    min-width: 0;
-  }
-
-  .window-option .window-btn { width: auto; }
 
   .header-actions {
-    align-self: stretch;
-    justify-content: flex-start;
-    width: 100%;
+    justify-content: center;
   }
 
   .ai-top-btn {
-    flex: 1 1 auto;
     min-width: 0;
     justify-content: center;
   }
 
   .refresh-btn { flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
+
+  .dashboard-window-controls {
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .dashboard-window-controls .window-switcher {
+    gap: 8px;
+    padding-top: 2px;
+  }
+
+  .dashboard-window-controls .window-option {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .dashboard-window-controls .window-option .window-btn { width: auto; }
 
   .header-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));

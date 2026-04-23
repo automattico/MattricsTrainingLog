@@ -307,6 +307,9 @@ function mattrics_require_auth(): void
 function mattrics_read_json_body(): array
 {
     $raw = file_get_contents('php://input');
+    if (($raw === false || $raw === '') && PHP_SAPI === 'cli') {
+        $raw = file_get_contents('php://stdin');
+    }
     if ($raw === false || $raw === '') {
         return [];
     }

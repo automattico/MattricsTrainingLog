@@ -1,3 +1,45 @@
+.dashboard-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.dashboard-window-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+}
+
+.dashboard-window-controls .window-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-window-controls .window-option {
+  display: flex;
+}
+
+.dashboard-window-controls .window-option .window-btn {
+  width: 100%;
+}
+
+.dashboard-window-controls .range-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dashboard-window-controls .range-summary .control-label {
+  flex: 0 0 auto;
+}
+
 .header-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

@@ -1,6 +1,31 @@
 (function () {
   const M = window.Mattrics;
 
+  function buildUnresolvedSummary(activities) {
+    const items = M.collectUnknownExercisesFromActivities(activities).map((item) => ({
+      id: item.id,
+      sourceType: item.sourceType,
+      normalizedName: item.normalizedName,
+      rawNames: Array.isArray(item.rawNames) ? item.rawNames.slice() : [],
+      timesSeen: Number(item.timesSeen || 0),
+    }));
+    const count = items.length;
+    const sampleNames = items
+      .slice(0, 3)
+      .map((item) => item.rawNames[0] || item.normalizedName)
+      .filter(Boolean);
+    const warningText = count
+      ? `Some recent exercises or activity types are unresolved, so the fatigue map may be incomplete${sampleNames.length ? `: ${sampleNames.join(", ")}${count > sampleNames.length ? ", ..." : ""}` : "."}`
+      : "";
+
+    return {
+      hasUnresolved: count > 0,
+      count,
+      items,
+      warningText,
+    };
+  }
+
   M.getActivityMuscleStimulus = function getActivityMuscleStimulus(activity) {
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
     const strengthFactor = (min) => clamp((min || 0) / 45, 0.85, 1.6);
@@ -8,20 +33,6 @@
     const scaleWeights = (weights, factor) => Object.fromEntries(
       Object.entries(weights).map(([key, value]) => [key, value * factor])
     );
-    const typeMappings = {
-      Run: { quadriceps: 1.0, hamstrings: 1.0, calves: 0.85, gluteal: 0.65, abs: 0.2, obliques: 0.08 },
-      Walk: { quadriceps: 0.42, hamstrings: 0.31, calves: 0.41, gluteal: 0.15, abs: 0.08 },
-      Hike: { quadriceps: 1.24, hamstrings: 1.06, calves: 0.85, gluteal: 0.79, adductors: 0.26, abs: 0.29 },
-      Ride: { quadriceps: 1.4, hamstrings: 0.5, calves: 0.27, gluteal: 0.59, abs: 0.18 },
-      Canoeing: { upperBack: 1.69, trapezius: 0.92, deltoids: 1.29, biceps: 0.7, triceps: 0.23, abs: 0.47, obliques: 0.35, lowerBack: 0.32 },
-      Canoe: { upperBack: 1.69, trapezius: 0.92, deltoids: 1.29, biceps: 0.7, triceps: 0.23, abs: 0.47, obliques: 0.35, lowerBack: 0.32 },
-      WaterSport: { upperBack: 1.44, trapezius: 0.85, deltoids: 1.21, biceps: 0.7, triceps: 0.23, abs: 0.47, obliques: 0.3, lowerBack: 0.28 },
-      Rowing: { upperBack: 1.35, trapezius: 0.59, deltoids: 0.53, biceps: 0.64, abs: 0.59, obliques: 0.25, lowerBack: 0.77, quadriceps: 0.93, hamstrings: 0.64, gluteal: 0.5, calves: 0.24 },
-      Yoga: { abs: 0.53, obliques: 0.35, deltoids: 0.33, upperBack: 0.37, lowerBack: 0.32, quadriceps: 0.44, hamstrings: 0.4, gluteal: 0.26, calves: 0.11 },
-      Surfing: { abs: 0.7, obliques: 0.4, deltoids: 1.06, upperBack: 1.1, trapezius: 0.52, biceps: 0.51, triceps: 0.34, lowerBack: 0.36, quadriceps: 0.34, hamstrings: 0.28, gluteal: 0.26 },
-      WeightTraining: { chest: 0.28, deltoids: 0.24, trapezius: 0.16, upperBack: 0.22, triceps: 0.16, biceps: 0.16, abs: 0.16, obliques: 0.08, lowerBack: 0.12, gluteal: 0.14, adductors: 0.08, quadriceps: 0.16, hamstrings: 0.12, calves: 0.08 },
-      Workout: { chest: 0.28, deltoids: 0.24, trapezius: 0.16, upperBack: 0.22, triceps: 0.16, biceps: 0.16, abs: 0.16, obliques: 0.08, lowerBack: 0.12, gluteal: 0.14, adductors: 0.08, quadriceps: 0.16, hamstrings: 0.12, calves: 0.08 },
-    };
     const min = parseFloat(activity["Duration (min)"]) || 0;
     const type = activity.Type;
     const hevy = M.parseHevyDescription(activity.Description || "");
@@ -43,7 +54,9 @@
         const match = M.getExerciseMuscleMapping(exercise.name);
         if (!match) return;
         matchedExercise = true;
-        const mappedNormalizations = Object.keys(match.weights)
+        const weights = match.muscleWeights || match.weights || {};
+        const fatigueMultiplier = Number(match.fatigueMultiplier || 1);
+        const mappedNormalizations = Object.keys(weights)
           .map((key) => configFatigue.normalizationLoad[key] || 0)
           .filter(Boolean);
         const smallThreshold = (Math.max(...mappedNormalizations, 0) || 0) * (configFatigue.smallThresholdRatio || 0.02);
@@ -68,7 +81,7 @@
         });
 
         if (parsedSetCount && !ambiguousSetFound) {
-          addStimulus(scaleWeights(match.weights, parsedExerciseLoad));
+          addStimulus(scaleWeights(weights, parsedExerciseLoad * fatigueMultiplier));
           return;
         }
 
@@ -78,15 +91,15 @@
 
         const setCount = exercise.sets.length || 0;
         const setFactor = clamp(setCount / 3, 0.8, 1.6);
-        addStimulus(scaleWeights(match.weights, strengthFactor(min) * setFactor));
+        addStimulus(scaleWeights(weights, strengthFactor(min) * setFactor * fatigueMultiplier));
       });
       if (matchedExercise) return stimulus;
     }
 
-    const base = typeMappings[type];
-    if (!base) return stimulus;
-    const factor = ["WeightTraining", "Workout"].includes(type) ? strengthFactor(min) : sportFactor(min);
-    addStimulus(scaleWeights(base, factor));
+    const typeConfig = M.resolveActivityTypeConfig(type);
+    if (!typeConfig) return stimulus;
+    const factor = typeConfig.canonicalName === "WeightTraining" ? strengthFactor(min) : sportFactor(min);
+    addStimulus(scaleWeights(typeConfig.muscleWeights || {}, factor * Number(typeConfig.fatigueMultiplier || 1)));
     return stimulus;
   };
 
@@ -148,6 +161,7 @@
   M.getMuscleFatigueAnalysis = function getMuscleFatigueAnalysis(activities) {
     const configFatigue = M.MUSCLE_FATIGUE_CONFIG;
     const recent = M.getFixedRecentActivities(activities, configFatigue.windowDays);
+    const unresolved = buildUnresolvedSummary(recent);
     const now = new Date();
     const regions = Object.fromEntries(
       M.MUSCLE_REGIONS.map((region) => [region.key, {
@@ -219,6 +233,7 @@
         lowestFatigue: withMetrics,
         summary: "Fresh across the board",
         detail: `No meaningful muscle load in the last ${configFatigue.windowDays} days yet.`,
+        unresolved,
       };
     }
 
@@ -232,6 +247,7 @@
       lowestFatigue,
       summary: `${highestLabel} ${topTier === "Highly fatigued" ? "are carrying the most fatigue" : "need the most recovery"}`,
       detail: `${lowestLabel} look freshest right now.`,
+      unresolved,
     };
   };
 }());

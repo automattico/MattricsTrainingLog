@@ -4,6 +4,37 @@
   margin-top: 14px;
 }
 
+.overview-fatigue-warning {
+  display: grid;
+  gap: 6px;
+  padding: 13px 14px 12px;
+  border-radius: var(--radius-card-sm);
+  border: 1px solid rgba(255, 176, 77, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 176, 77, 0.08), rgba(255, 176, 77, 0.03)),
+    rgba(255, 255, 255, 0.02);
+}
+
+.overview-fatigue-warning-title {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.overview-fatigue-warning-copy,
+.overview-fatigue-warning-meta {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.overview-fatigue-warning-meta {
+  color: var(--text);
+}
+
 .overview-fatigue-top {
   display: grid;
   grid-template-areas: "front back legend";

@@ -7,11 +7,11 @@ All files use the IIFE + `window.Mattrics` global pattern. Load order in `index.
 ---
 
 ## core/constants.js
-**Exports:** `DATA_URL`, `AI_PROXY_URL`, `SHEET_URL`, `SHEET_TOKEN`, `API_KEY`, `AI_ENABLED`, `TYPES`, `MUSCLE_REGIONS`, `MUSCLE_FATIGUE_CONFIG`, `MUSCLE_FATIGUE_BODY_MAP` (placeholder)
+**Exports:** `DATA_URL`, `EXERCISE_CONFIG_URL`, `AI_PROXY_URL`, `SHEET_URL`, `SHEET_TOKEN`, `API_KEY`, `AI_ENABLED`, `TYPES`, `MUSCLE_REGIONS`, `EXERCISE_MUSCLE_UI_LEVELS`, `EXERCISE_MUSCLE_UI_THRESHOLDS`, `EXERCISE_MUSCLE_DEFAULT_LEVEL`, `MUSCLE_FATIGUE_CONFIG`, `MUSCLE_FATIGUE_BODY_MAP` (placeholder)
 **Consumes:** `window.MATTRICS_CONFIG` (optional runtime config)
 
 ## core/state.js
-**Exports:** `state` (`allData`, `dataMeta`, `windowDays`, `typeFilter`, `feedMode`, `groupBy`, `recent`, `currentFatigue`)
+**Exports:** `state` (`allData`, `dataMeta`, `dashboardWindowDays`, `typeFilter`, `feedMode`, `groupBy`, `recent`, `currentFatigue`, `userSettings`, `exerciseConfigs`, `activityTypeConfigs`, `exerciseConfigMeta`, `exerciseConfigIndex`, `unknownExercises`, `unknownExerciseMeta`, `exerciseAdmin`)
 **Consumes:** nothing
 
 ## core/date-utils.js
@@ -23,16 +23,20 @@ All files use the IIFE + `window.Mattrics` global pattern. Load order in `index.
 **Consumes:** `parseDate`, `toIsoDate`, `shiftDate` (date-utils); `TYPES` (constants)
 
 ## core/filters.js
-**Exports:** `getWindowRange`, `getRollingPeriod`, `applyTypeFilter`, `getWindowedData`, `getFixedRecentActivities`
+**Exports:** `getDashboardWindowRange`, `getRollingPeriod`, `applyTypeFilter`, `getDashboardWindowedData`, `getFixedRecentActivities`
 **Consumes:** `state`, `startOfDay`, `toIsoDate`, `diffDays`, `parseDate` (date-utils); `canonicalType` (formatters); `MUSCLE_FATIGUE_CONFIG` (constants)
+
+## core/exercise-config.js
+**Exports:** `normalizeExerciseConfigName`, `getExerciseMuscleUiLevel`, `getExerciseMuscleUiLevels`, `getExerciseMuscleLevelKeyForWeight`, `getExerciseMuscleWeightForLevelKey`, `getExerciseMuscleEditorState`, `hasExerciseMusclePrimary`, `indexExerciseConfigs`, `resolveExerciseConfig`, `resolveActivityTypeConfig`, `makeUnknownExerciseId`, `collectUnknownExercisesFromActivities`, `syncUnknownExercises`, `scanAndSyncUnknownExercises`, `loadExerciseConfigs`
+**Consumes:** `EXERCISE_CONFIG_URL` (constants); `state`
 
 ## core/hevy-parser.js
 **Exports:** `getExerciseMuscleMapping`, `parseHevySetLine`, `parseHevyDescription`
-**Consumes:** `MUSCLE_FATIGUE_CONFIG` (constants)
+**Consumes:** `MUSCLE_FATIGUE_CONFIG` (constants); `resolveExerciseConfig` (exercise-config)
 
 ## core/fatigue-engine.js
 **Exports:** `getActivityMuscleStimulus`, `getMuscleLoadAnalysis`, `getMuscleFatigueAnalysis`
-**Consumes:** `MUSCLE_REGIONS`, `MUSCLE_FATIGUE_CONFIG` (constants); `parseDate`, `startOfDay`, `toIsoDate` (date-utils); `parseHevyDescription`, `parseHevySetLine`, `getExerciseMuscleMapping` (hevy-parser); `getFixedRecentActivities` (filters); `getMuscleFatigueTier`, `getRecoveryLabel`, `getRelativeDayLabel` (fatigue-tiers — loaded after)
+**Consumes:** `MUSCLE_REGIONS`, `MUSCLE_FATIGUE_CONFIG` (constants); `parseDate`, `startOfDay`, `toIsoDate` (date-utils); `parseHevyDescription`, `parseHevySetLine`, `getExerciseMuscleMapping` (hevy-parser); `resolveActivityTypeConfig`, `collectUnknownExercisesFromActivities` (exercise-config); `getFixedRecentActivities` (filters); `getMuscleFatigueTier`, `getRecoveryLabel`, `getRelativeDayLabel` (fatigue-tiers — loaded after)
 
 > **Note:** `fatigue-tiers.js` loads after `fatigue-engine.js` but the tier functions are only called at runtime (not at parse time), so the load order works.
 
@@ -61,15 +65,15 @@ All files use the IIFE + `window.Mattrics` global pattern. Load order in `index.
 **Consumes:** `state.dataMeta`, `fmtDateTime` (formatters)
 
 ## renderers/orchestrator.js
-**Exports:** `fetchData`, `renderAll`, `setWindow`, `setFilter`, `setFeedMode`, `showView`, `renderContextBar`, `renderFilters`
-**Consumes:** `showLoading`, `showError`, `showApp`, `renderDataStatus` (loader); `state` (state); `normalizeDateValue` (date-utils); `getWindowRange`, `getWindowedData`, `applyTypeFilter` (filters); `formatContextRange`, `canonicalType`, `tc`, `escAttr` (formatters); `renderDashboard`, `renderFatigueView`, `renderFeed`, `renderAiPreview` (called at runtime, loaded later)
+**Exports:** `fetchData`, `renderAll`, `setDashboardWindow`, `setFilter`, `setFeedMode`, `showView`, `renderContextBar`, `renderFilters`
+**Consumes:** `showLoading`, `showError`, `showApp`, `renderDataStatus` (loader); `state` (state); `normalizeDateValue` (date-utils); `getDashboardWindowRange`, `getDashboardWindowedData`, `applyTypeFilter` (filters); `formatContextRange`, `canonicalType`, `tc`, `escAttr` (formatters); `loadExerciseConfigs`, `scanAndSyncUnknownExercises` (exercise-config); `renderDashboard`, `renderFatigueView`, `renderFeed`, `renderAiPreview`, `renderExerciseAdminView` (called at runtime, loaded later)
 
 ## renderers/dashboard.js
 **Exports:** `renderDashboard`
 **Consumes:** `getOverviewMetrics` (activity-analysis); `tc`, `esc`, `escAttr`, `fmt`, `fmtDate`, `getActivityId`, `cardMetrics` (formatters/metrics); `state` (state)
 
 ## renderers/fatigue-view.js
-**Exports:** `renderFatigueView`, `renderFatigueBodyFigure`, `renderFatigueLegendPanel`, `renderFatigueReadinessTables`, `getFatigueReadinessBucket`, `getFatigueReadinessToken`, `getFatiguePercentLabel`, `getMuscleContextLabel`, `bindFatigueHoverCard`
+**Exports:** `renderFatigueView`, `renderFatigueUnresolvedWarning`, `renderFatigueBodyFigure`, `renderFatigueLegendPanel`, `renderFatigueReadinessTables`, `getFatigueReadinessBucket`, `getFatigueReadinessToken`, `getFatiguePercentLabel`, `getMuscleContextLabel`, `bindFatigueHoverCard`
 **Consumes:** `MUSCLE_FATIGUE_BODY_MAP` (body-map); `getFatigueVisualState`, `getFatigueDisplayTier`, `getFatigueTierMeaning` (fatigue-tiers); `escAttr` (formatters); `getOverviewMetrics` (activity-analysis)
 
 ---
@@ -86,11 +90,15 @@ All files use the IIFE + `window.Mattrics` global pattern. Load order in `index.
 **Exports:** `renderAiPreview`, `generateWorkout`
 **Consumes:** `state`, `getFixedRecentActivities`, `getMuscleFatigueAnalysis`, `fmtDate`, `fmt`, `AI_PROXY_URL`, `API_KEY`, `AI_ENABLED`
 
+## exercise-admin.js
+**Exports:** `EXERCISE_ADMIN_DELETE_CONFIRMATION_COPY`, `filterExerciseAdminList`, `getExerciseAdminReviewItems`, `renderExerciseAdminView`
+**Consumes:** `state` (state); `MUSCLE_REGIONS`, `EXERCISE_MUSCLE_UI_LEVELS`, `EXERCISE_MUSCLE_DEFAULT_LEVEL`, `MUSCLE_FATIGUE_BODY_MAP` (constants/body-map); `normalizeExerciseConfigName`, `getExerciseMuscleUiLevel`, `getExerciseMuscleUiLevels`, `getExerciseMuscleEditorState`, `hasExerciseMusclePrimary` (exercise-config); `fmtDateTime`, `esc`, `escAttr` (formatters); `indexExerciseConfigs`, `scanAndSyncUnknownExercises`, `setUnknownExerciseSnapshot`, `renderAll` (runtime refresh hooks)
+
 ## detail.js
 **Exports:** `openDetail`, `closeDetail`
 **Consumes:** `tc`, `esc`, `escAttr`, `fmtDate`, `fmtDateTime`, `fmt`, `detailFacts`, `cardMetrics`, `parseHevyDescription`
 
 ## app.js
-**Exports:** exposes `setWindow`, `setFilter`, `setFeedMode`, `showView`, `openDetail`, `closeDetail`, `fetchData`, `generateWorkout` to `window` globals
+**Exports:** exposes `setDashboardWindow`, `setFilter`, `setFeedMode`, `showView`, `openDetail`, `closeDetail`, `fetchData`, `generateWorkout` to `window` globals
 **Consumes:** all of the above
 **Side effects:** calls `fetchData()` on load; sets up `[data-activity-id]` click delegation; ESC key closes detail modal

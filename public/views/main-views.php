@@ -1,5 +1,34 @@
 <div class="view active" id="view-dashboard">
   <section class="section-shell dashboard-shell">
+    <div class="dashboard-topbar">
+      <div class="window-controls dashboard-window-controls" id="dashboardWindowControls">
+        <div class="control-label">Dashboard range</div>
+        <div class="window-switcher" id="dashboardWindowSwitcher">
+          <div class="window-option active">
+            <button class="window-btn active" data-days="7" onclick="setDashboardWindow(7,this)">7 days</button>
+          </div>
+          <div class="window-option">
+            <button class="window-btn" data-days="14" onclick="setDashboardWindow(14,this)">14 days</button>
+          </div>
+          <div class="window-option">
+            <button class="window-btn" data-days="30" onclick="setDashboardWindow(30,this)">30 days</button>
+          </div>
+          <div class="window-option">
+            <button class="window-btn" data-days="90" onclick="setDashboardWindow(90,this)">3 months</button>
+          </div>
+          <div class="window-option">
+            <button class="window-btn" data-days="180" onclick="setDashboardWindow(180,this)">6 months</button>
+          </div>
+          <div class="window-option">
+            <button class="window-btn" data-days="0" onclick="setDashboardWindow(0,this)">All</button>
+          </div>
+        </div>
+        <div class="range-summary">
+          <div class="control-label">Showing</div>
+          <div class="context-period range-summary-text" id="dashboardRangeSummary" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
     <div class="header-stats" id="dashboardOverview"></div>
   </section>
 </div>
@@ -30,6 +59,12 @@
 <div class="view" id="view-settings">
   <section class="section-shell settings-outer">
     <div id="settingsContent"></div>
+  </section>
+</div>
+
+<div class="view" id="view-exercises">
+  <section class="section-shell">
+    <div id="exerciseAdminContent"></div>
   </section>
 </div>
 

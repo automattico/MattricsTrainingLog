@@ -77,50 +77,24 @@ if (window.location.protocol === "file:") {
         </div>
 
         <div class="header-controls">
-          <div class="window-controls">
-            <div class="control-label">Range</div>
-            <div class="window-switcher" id="windowSwitcher">
-              <div class="window-option active">
-                <button class="window-btn active" data-days="7" onclick="setWindow(7,this)">7 days</button>
-              </div>
-              <div class="window-option">
-                <button class="window-btn" data-days="14" onclick="setWindow(14,this)">14 days</button>
-              </div>
-              <div class="window-option">
-                <button class="window-btn" data-days="30" onclick="setWindow(30,this)">30 days</button>
-              </div>
-              <div class="window-option">
-                <button class="window-btn" data-days="90" onclick="setWindow(90,this)">3 months</button>
-              </div>
-              <div class="window-option">
-                <button class="window-btn" data-days="180" onclick="setWindow(180,this)">6 months</button>
-              </div>
-              <div class="window-option">
-                <button class="window-btn" data-days="0" onclick="setWindow(0,this)">All</button>
-              </div>
-            </div>
-            <div class="range-summary">
-              <div class="control-label">Showing</div>
-              <div class="context-period range-summary-text" id="rangeSummary" aria-live="polite"></div>
-            </div>
-          </div>
-
+          <button class="icon-btn ai-top-btn" onclick="showView('ai', this)" title="Open AI workout" aria-label="Open AI workout">
+            <span class="btn-icon" aria-hidden="true">✦</span>
+            <span>AI Workout</span>
+          </button>
           <div class="header-actions">
-            <button class="icon-btn ai-top-btn" onclick="showView('ai', this)" title="Open AI workout" aria-label="Open AI workout">
-              <span class="btn-icon" aria-hidden="true">✦</span>
-              <span>AI Workout</span>
-            </button>
-            <button class="icon-btn refresh-btn" onclick="fetchData({ forceRefresh: true })" title="Refresh from sheet" aria-label="Refresh data">
-              <span class="refresh-icon" aria-hidden="true">↻</span>
-            </button>
-            <button class="icon-btn logout-btn" onclick="logout()" title="Log out" aria-label="Log out">
-              <span class="btn-icon" aria-hidden="true">→</span>
-              <span>Log out</span>
-            </button>
+            <div class="data-sync-stamp" id="dataSyncStamp">Last updated unavailable</div>
+            <div class="header-actions-row">
+              <button class="icon-btn refresh-btn" onclick="fetchData({ forceRefresh: true })" title="Refresh from sheet" aria-label="Refresh data">
+                <span class="refresh-icon" aria-hidden="true">↻</span>
+              </button>
+              <button class="icon-btn logout-btn" onclick="logout()" title="Log out" aria-label="Log out">
+                <span class="btn-icon" aria-hidden="true">→</span>
+                <span>Log out</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      <div class="data-sync-stamp" id="dataSyncStamp">Last updated unavailable</div>
       <div class="data-status-banner" id="dataStatusBanner" hidden></div>
     </header>
 
@@ -128,6 +102,7 @@ if (window.location.protocol === "file:") {
       <button class="nav-btn active" onclick="showView('dashboard',this)">Dashboard</button>
       <button class="nav-btn" onclick="showView('fatigue',this)">Muscle Fatigue Map</button>
       <button class="nav-btn" onclick="showView('sessions',this)">Sessions</button>
+      <button class="nav-btn" onclick="showView('exercises',this)">Exercises</button>
       <button class="nav-btn nav-btn--docs" onclick="showView('docs',this)">Docs</button>
       <button class="nav-btn nav-btn--settings" onclick="showView('settings',this)">Settings</button>
     </nav>
@@ -135,6 +110,35 @@ if (window.location.protocol === "file:") {
     <main class="app-main">
       <div class="view active" id="view-dashboard">
         <section class="section-shell dashboard-shell">
+          <div class="dashboard-topbar">
+            <div class="window-controls dashboard-window-controls" id="dashboardWindowControls">
+              <div class="control-label">Dashboard range</div>
+              <div class="window-switcher" id="dashboardWindowSwitcher">
+                <div class="window-option active">
+                  <button class="window-btn active" data-days="7" onclick="setDashboardWindow(7,this)">7 days</button>
+                </div>
+                <div class="window-option">
+                  <button class="window-btn" data-days="14" onclick="setDashboardWindow(14,this)">14 days</button>
+                </div>
+                <div class="window-option">
+                  <button class="window-btn" data-days="30" onclick="setDashboardWindow(30,this)">30 days</button>
+                </div>
+                <div class="window-option">
+                  <button class="window-btn" data-days="90" onclick="setDashboardWindow(90,this)">3 months</button>
+                </div>
+                <div class="window-option">
+                  <button class="window-btn" data-days="180" onclick="setDashboardWindow(180,this)">6 months</button>
+                </div>
+                <div class="window-option">
+                  <button class="window-btn" data-days="0" onclick="setDashboardWindow(0,this)">All</button>
+                </div>
+              </div>
+              <div class="range-summary">
+                <div class="control-label">Showing</div>
+                <div class="context-period range-summary-text" id="dashboardRangeSummary" aria-live="polite"></div>
+              </div>
+            </div>
+          </div>
           <div class="header-stats" id="dashboardOverview"></div>
         </section>
       </div>
@@ -164,6 +168,12 @@ if (window.location.protocol === "file:") {
       <div class="view" id="view-settings">
         <section class="section-shell settings-outer">
           <div id="settingsContent"></div>
+        </section>
+      </div>
+
+      <div class="view" id="view-exercises">
+        <section class="section-shell">
+          <div id="exerciseAdminContent"></div>
         </section>
       </div>
 
@@ -229,6 +239,7 @@ if (window.location.protocol === "file:") {
 <script src="assets/js/core/date-utils.js"></script>
 <script src="assets/js/core/formatters.js"></script>
 <script src="assets/js/core/filters.js"></script>
+<script src="assets/js/core/exercise-config.js"></script>
 <script src="assets/js/core/hevy-parser.js"></script>
 <script src="assets/js/core/fatigue-engine.js"></script>
 <script src="assets/js/core/fatigue-tiers.js"></script>
@@ -259,6 +270,7 @@ if (window.location.protocol === "file:") {
 <script src="assets/js/ai.js"></script>
 <script src="assets/js/detail.js"></script>
 <script src="assets/js/settings.js"></script>
+<script src="assets/js/exercise-admin.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>

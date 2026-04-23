@@ -1,3 +1,8 @@
+RewriteEngine On
+
+RewriteRule ^exercises/?$ exercises.php [L,QSA]
+RewriteRule ^exercises/(.*)$ exercises.php/$1 [L,QSA]
+
 <Files "bootstrap.php">
   Require all denied
 </Files>

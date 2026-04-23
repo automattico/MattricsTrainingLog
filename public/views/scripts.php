@@ -3,6 +3,7 @@
 <script src="assets/js/core/date-utils.js"></script>
 <script src="assets/js/core/formatters.js"></script>
 <script src="assets/js/core/filters.js"></script>
+<script src="assets/js/core/exercise-config.js"></script>
 <script src="assets/js/core/hevy-parser.js"></script>
 <script src="assets/js/core/fatigue-engine.js"></script>
 <script src="assets/js/core/fatigue-tiers.js"></script>
@@ -33,6 +34,7 @@
 <script src="assets/js/ai.js"></script>
 <script src="assets/js/detail.js"></script>
 <script src="assets/js/settings.js?v=<?= htmlspecialchars($_assetVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="assets/js/exercise-admin.js?v=<?= htmlspecialchars($_assetVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="assets/js/passkeys.js?v=<?= htmlspecialchars($_assetVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
 <script>window.__MATTRICS_INITIAL_VIEW__ = <?= json_encode($_initialView) ?>;</script>
 <script src="assets/js/app.js?v=<?= htmlspecialchars($_assetVersion, ENT_QUOTES, 'UTF-8') ?>"></script>

@@ -4,6 +4,8 @@ return [
     'sheet_token' => 'replace-with-a-long-random-shared-secret',
     'anthropic_api_key' => 'sk-ant-api03-...',
     'anthropic_model' => 'claude-sonnet-4-20250514',
+    'openai_api_key' => 'sk-...',
+    'openai_model' => 'gpt-5.4-mini',
     'app_token' => 'replace-with-a-long-random-app-secret',
 
     // Optional auth/runtime overrides. Safe defaults live in public/api/config-defaults.php.
