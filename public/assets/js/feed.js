@@ -18,7 +18,7 @@
       const primary = metrics[0] || null;
       const secondary = metrics.slice(1, compact ? 3 : 4);
       const desc = (activity.Description || "").trim();
-      const cleanDesc = desc.startsWith("Logged with Hevy") ? "" : (desc.length > (compact ? 120 : 240) ? `${desc.slice(0, compact ? 120 : 240)}…` : desc);
+      const cleanDesc = M.isHevyDescription(desc) ? "" : (desc.length > (compact ? 120 : 240) ? `${desc.slice(0, compact ? 120 : 240)}…` : desc);
       const activityId = M.escAttr(M.getActivityId(activity));
 
       return `<article class="a-card ${compact ? "a-card-compact" : ""}" style="--card-accent:${cfg.color}">

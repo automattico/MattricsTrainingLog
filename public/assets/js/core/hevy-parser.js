@@ -5,6 +5,16 @@
     return M.resolveExerciseConfig(exerciseName);
   };
 
+  const HEVY_HEADER_RE = /^Logged with Hevy(?:App\.com)?\s*/i;
+
+  M.isHevyDescription = function isHevyDescription(desc) {
+    return HEVY_HEADER_RE.test(String(desc || "").trim());
+  };
+
+  M.stripHevyHeader = function stripHevyHeader(desc) {
+    return String(desc || "").trim().replace(HEVY_HEADER_RE, "").trim();
+  };
+
   M.parseHevySetLine = function parseHevySetLine(setText, exerciseName) {
     const fatigueConfig = M.MUSCLE_FATIGUE_CONFIG;
     const us = (M.state && M.state.userSettings) || {};
@@ -73,11 +83,10 @@
   };
 
   M.parseHevyDescription = function parseHevyDescription(desc) {
-    const text = (desc || "").trim();
-    if (!text.startsWith("Logged with Hevy")) return null;
+    const text = String(desc || "").trim();
+    if (!M.isHevyDescription(text)) return null;
 
-    const blocks = text
-      .replace(/^Logged with Hevy\s*/, "")
+    const blocks = M.stripHevyHeader(text)
       .trim()
       .split(/\n\s*\n/)
       .map((block) => block.trim())

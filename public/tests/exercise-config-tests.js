@@ -152,6 +152,12 @@ assert(M.resolveActivityTypeConfig("Unknown Activity Type") === null, "unknown a
 const bodyweightSet = M.parseHevySetLine("12 reps", "Push Up");
 assert(bodyweightSet.kind === "parsed" && bodyweightSet.load > 0, "bodyweight-eligible exercise configs still parse rep-only sets");
 
+const hevyAppExercises = M.parseHevyDescription("Logged with HevyApp.com\n\nBench Press\n80 kg x 5");
+assert(
+  Array.isArray(hevyAppExercises) && hevyAppExercises.length === 1 && hevyAppExercises[0].name === "Bench Press",
+  "Hevy parser recognizes the HevyApp.com export header"
+);
+
 const hevyStimulus = M.getActivityMuscleStimulus({
   Type: "WeightTraining",
   "Duration (min)": "45",
