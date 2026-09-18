@@ -24,7 +24,7 @@ fi
 
 if [ -f ".env.local" ]; then
   require_vars SFTP_HOST SFTP_PORT SFTP_USER SFTP_REMOTE_DIR
-  require_any_auth
+  require_key_auth
 fi
 
 log_info "Production gate passed."

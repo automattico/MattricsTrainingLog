@@ -13,12 +13,15 @@ This repository follows the static-site operating model:
 2. Fill in deploy placeholders in `.env.local`.
 3. Keep `.env.local`, `private/config.php`, and `public/config.js` out of Git.
 
-Supported deploy auth:
+Deploy auth is **SSH key only**. `deploy.sh` refuses to run if `SFTP_PASSWORD` is set.
 
-- preferred: `SFTP_KEY_PATH`
-- fallback: `SFTP_PASSWORD`
-
-If both are set, key-based auth is used.
+- `SFTP_KEY_PATH` — the deploy key. Point it at the **public** key (`~/.ssh/id_ed25519_hetzner.pub`);
+  with `IdentitiesOnly` the private half is taken from the SSH agent, i.e. the Bitwarden desktop
+  app's SSH agent (must be running and unlocked; it asks for approval per connection).
+- `SFTP_IDENTITY_AGENT` — optional path of the agent socket (`~/.bitwarden-ssh-agent.sock`) for
+  shells that do not export `SSH_AUTH_SOCK`.
+- `deploy/known_hosts` — pinned Hetzner host keys; connections to any other host key fail.
+  Public host keys are not secrets and are committed on purpose.
 
 ## Runtime config
 

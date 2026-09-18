@@ -11,7 +11,7 @@ set_defaults
 
 require_command lftp
 require_vars SFTP_HOST SFTP_PORT SFTP_USER SFTP_REMOTE_DIR
-require_any_auth
+require_key_auth
 
 tmp_file=$(mktemp)
 trap 'rm -f "$tmp_file"' EXIT HUP INT TERM

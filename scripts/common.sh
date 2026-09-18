@@ -33,18 +33,24 @@ require_file() {
   fi
 }
 
-require_any_auth() {
-  if [ -n "${SFTP_KEY_PATH:-}" ]; then
-    require_file "$SFTP_KEY_PATH"
-    return
-  fi
-
+require_key_auth() {
+  # SSH key auth only. The key path may be a public key: with IdentitiesOnly the
+  # private half is then looked up in the SSH agent (Bitwarden SSH agent).
   if [ -n "${SFTP_PASSWORD:-}" ]; then
-    return
+    log_error "SFTP_PASSWORD is set — this deploy uses SSH key auth only; remove it from .env.local"
+    exit 1
   fi
-
-  log_error "Missing deploy auth: set SFTP_KEY_PATH or SFTP_PASSWORD"
-  exit 1
+  if [ -z "${SFTP_KEY_PATH:-}" ]; then
+    log_error "Missing deploy auth: set SFTP_KEY_PATH (see .env.example)"
+    exit 1
+  fi
+  require_file "$SFTP_KEY_PATH"
+  if ! grep -q '^[^#[:space:]]' "$SFTP_KNOWN_HOSTS" 2>/dev/null; then
+    log_error "No host key pinned in $SFTP_KNOWN_HOSTS — run:"
+    log_error "  ssh-keyscan -p $SFTP_PORT $SFTP_HOST >> deploy/known_hosts"
+    log_error "  ssh-keygen -lf deploy/known_hosts   # compare with the konsoleH fingerprint"
+    exit 1
+  fi
 }
 
 require_vars() {
@@ -60,6 +66,9 @@ require_vars() {
 set_defaults() {
   : "${SFTP_PORT:=22}"
   : "${SFTP_REMOTE_PRIVATE_DIR:=/mattrics-private}"
+  : "${SFTP_KNOWN_HOSTS:=$PROJECT_ROOT/deploy/known_hosts}"
+  case "$SFTP_KNOWN_HOSTS" in /*) : ;; *) SFTP_KNOWN_HOSTS="$PROJECT_ROOT/$SFTP_KNOWN_HOSTS" ;; esac
+  case "${SFTP_KEY_PATH:-}" in ''|/*) : ;; *) SFTP_KEY_PATH="$PROJECT_ROOT/$SFTP_KEY_PATH" ;; esac
 }
 
 sftp_open_target() {
@@ -75,12 +84,13 @@ lftp_base_settings() {
 }
 
 lftp_auth_settings() {
-  if [ -n "${SFTP_KEY_PATH:-}" ]; then
-    printf '%s\n' \
-      "set sftp:connect-program \"ssh -a -x -i $SFTP_KEY_PATH\"" \
-      "open \"sftp://$SFTP_USER@$SFTP_HOST:$SFTP_PORT\""
-    return
+  # -l passes the user because lftp does not hand it to the connect-program itself.
+  # StrictHostKeyChecking=yes + the pinned known_hosts file make an unexpected host key fatal.
+  connect="ssh -a -x -l $SFTP_USER -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$SFTP_KNOWN_HOSTS -o IdentitiesOnly=yes -i $SFTP_KEY_PATH"
+  if [ -n "${SFTP_IDENTITY_AGENT:-}" ]; then
+    connect="$connect -o IdentityAgent=$SFTP_IDENTITY_AGENT"
   fi
-
-  printf '%s\n' "open -u \"$SFTP_USER\",\"$SFTP_PASSWORD\" \"$(sftp_open_target)\""
+  printf '%s\n' \
+    "set sftp:connect-program \"$connect\"" \
+    "open \"sftp://$SFTP_USER@$SFTP_HOST:$SFTP_PORT\""
 }

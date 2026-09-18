@@ -14,7 +14,7 @@ cd "$PROJECT_ROOT"
 require_command lftp
 require_command php
 require_vars SFTP_HOST SFTP_PORT SFTP_USER SFTP_REMOTE_DIR SFTP_REMOTE_LIB_DIR
-require_any_auth
+require_key_auth
 
 log_info "Git status before deploy:"
 git status --short --untracked-files=all || true
