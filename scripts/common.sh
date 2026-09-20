@@ -65,7 +65,7 @@ require_vars() {
 
 set_defaults() {
   : "${SFTP_PORT:=22}"
-  : "${SFTP_REMOTE_PRIVATE_DIR:=/mattrics-private}"
+  : "${MATTRICS_REMOTE_DIR:=sites/mattrics}"
   : "${SFTP_KNOWN_HOSTS:=$PROJECT_ROOT/deploy/known_hosts}"
   case "$SFTP_KNOWN_HOSTS" in /*) : ;; *) SFTP_KNOWN_HOSTS="$PROJECT_ROOT/$SFTP_KNOWN_HOSTS" ;; esac
   case "${SFTP_KEY_PATH:-}" in ''|/*) : ;; *) SFTP_KEY_PATH="$PROJECT_ROOT/$SFTP_KEY_PATH" ;; esac

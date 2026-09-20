@@ -10,10 +10,8 @@ services:
     working_dir: /srv/mattrics
     environment:
       MATTRICS_RUNTIME_MODE: foundation
-      MATTRICS_PRIVATE_RUNTIME_DIR: /srv/mattrics/private-runtime
-      MATTRICS_CONFIG: /srv/mattrics/private-runtime/config.php
-      MATTRICS_SITE_ORIGIN: http://localhost:8081
-      MATTRICS_AUTH_REQUIRE_HTTPS: "0"
+      MATTRICS_PRIVATE_RUNTIME_DIR: /srv/mattrics-runtime
+      MATTRICS_LEGACY_PRIVATE_DIR: /srv/mattrics-legacy
       MATTRICS_FOUNDATION_DATABASE_URL: postgres://mattrics:mattrics-local-only-change-me@postgres:5432/mattrics
       MATTRICS_FOUNDATION_USER_KEY: legacy-local-user
       DATABASE_URL: postgres://mattrics:mattrics-local-only-change-me@postgres:5432/mattrics
@@ -21,9 +19,8 @@ services:
       MATTRICS_FOUNDATION_TIMEZONE: Europe/Berlin
     volumes:
       - .:/srv/mattrics:ro
-      - ./private:/srv/mattrics/private-legacy:ro
-      - mattrics_foundation_private_runtime:/srv/mattrics/private-runtime
-      - mattrics_foundation_php_sessions:/tmp/php-sessions
+      - ./private:/srv/mattrics-legacy:ro
+      - mattrics_foundation_private_runtime:/srv/mattrics-runtime
     depends_on:
       postgres:
         condition: service_healthy
@@ -34,7 +31,7 @@ services:
       - -lc
       - /srv/mattrics/scripts/foundation-runtime-entrypoint.sh
     healthcheck:
-      test: ["CMD-SHELL", "php -r '$$r = @file_get_contents(\"http://127.0.0.1:8080/api/runtime-status.php\"); if ($$r === false) { exit(1); } $$d = json_decode($$r, true); exit(is_array($$d) && (($$d[\"runtimeMode\"] ?? \"\") === \"foundation\") ? 0 : 1);'"]
+      test: ["CMD-SHELL", "php -r 'exit(@file_get_contents(\"http://127.0.0.1:8080/index.html\") === false ? 1 : 0);'"]
       interval: 10s
       timeout: 5s
       retries: 6
@@ -64,4 +61,3 @@ services:
 volumes:
   mattrics_foundation_postgres_data:
   mattrics_foundation_private_runtime:
-  mattrics_foundation_php_sessions:

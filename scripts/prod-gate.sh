@@ -1,30 +1,36 @@
 #!/bin/sh
 set -eu
 
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-COMMON_SH_PATH="$SCRIPT_DIR/common.sh"
-# shellcheck disable=SC1091
-. "$SCRIPT_DIR/common.sh"
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+cd "$ROOT"
 
-load_env
-set_defaults
+say() { printf '%s\n' "$*"; }
+die() { printf 'prod-gate: %s\n' "$*" >&2; exit 1; }
 
-cd "$PROJECT_ROOT"
+command -v php >/dev/null 2>&1 || die "php is required"
+command -v node >/dev/null 2>&1 || die "node is required"
 
-require_command git
-require_command curl
+say "Running predeploy source guard ..."
+./scripts/predeploy-guard.sh --check
 
-if command -v php >/dev/null 2>&1; then
-  php -v >/dev/null
-fi
+say "Linting PHP ..."
+find api lib scripts tests -type f -name '*.php' -print | sort | while IFS= read -r file; do
+  php -l "$file" >/dev/null
+done
 
-if command -v lftp >/dev/null 2>&1; then
-  lftp --version >/dev/null
-fi
+say "Checking shell syntax ..."
+find . -maxdepth 2 -type f -name '*.sh' -print | sort | while IFS= read -r file; do
+  sh -n "$file"
+done
 
-if [ -f ".env.local" ]; then
-  require_vars SFTP_HOST SFTP_PORT SFTP_USER SFTP_REMOTE_DIR
-  require_key_auth
-fi
+say "Running PHP tests ..."
+for test_file in tests/*.php; do
+  php "$test_file"
+done
 
-log_info "Production gate passed."
+say "Running JavaScript tests ..."
+for test_file in tests/js/*.js; do
+  node "$test_file"
+done
+
+say "Production gate passed."
