@@ -7,6 +7,16 @@ The deployable web root is `public/`.
 
 Agents must preserve the deployment and security model defined here.
 
+## Codex Slice Framework
+
+Future architecture and migration work must read:
+
+- `docs/architecture-next.md`
+- `docs/codex-framework.md`
+- `docs/implementation-progress.md`
+
+Every implementation slice must update `docs/implementation-progress.md`, add a slice report, and create the next slice prompt. Existing static deploy rules remain valid until the Docker/Postgres migration explicitly replaces them. Secrets rules remain absolute.
+
 ---
 
 ## Feature-to-File Map

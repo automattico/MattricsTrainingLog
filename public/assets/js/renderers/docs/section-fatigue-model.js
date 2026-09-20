@@ -5,13 +5,13 @@
     id: "docs-fatigue-model",
     label: "Fatigue model",
     title: "Decay-based load accumulation",
-    intro: "Each activity contributes muscle-specific stimulus, which decays over time and is normalized into a 0–100 fatigue score.",
+    intro: "Activities contribute local muscle stimulus and optional systemic stimulus, which decay over time into a 0–100 readiness score.",
     body: `
       ${M.docsSubsection("Calculation pipeline", `
         <div class="docs-flow">
           <div class="docs-flow-step">Activity log</div>
           <div class="docs-flow-arrow">→</div>
-          <div class="docs-flow-step">Raw stimulus per muscle</div>
+          <div class="docs-flow-step">Local + systemic stimulus</div>
           <div class="docs-flow-arrow">→</div>
           <div class="docs-flow-step">Exponential decay</div>
           <div class="docs-flow-arrow">→</div>
@@ -22,12 +22,14 @@
       `)}
 
       ${M.docsSubsection("Core formula", `
-        <div class="docs-formula">rawLoad = Σ( stimulus × 0.5^(hoursAgo / halfLife) )
-score   = min(100, rawLoad / normalizationLoad × 100)</div>
+        <div class="docs-formula">localScore       = rawLocalLoad / normalizationLoad × 100
+systemicPenalty  = systemicScore × 0.25
+finalMuscleScore = clamp(localScore + systemicPenalty, 0, 100)</div>
         ${M.docsTable([
-          ["stimulus", "The muscle-specific load contributed by one activity before decay."],
+          ["local stimulus", "The muscle-specific load contributed by one activity before decay."],
+          ["systemic stimulus", "The whole-body fatigue load contributed by demanding activity."],
           ["hoursAgo", "Elapsed hours from the activity timestamp to now."],
-          ["halfLife", "Per-muscle recovery half-life in hours. After one half-life, 50% of stimulus remains."],
+          ["adjusted half-life", "Base half-life adjusted modestly by fatigue severity."],
           ["rawLoad", "All remaining decayed stimulus for one muscle across the lookback window."],
           ["normalizationLoad", "The per-muscle reference for a fully loaded 100% score."],
           ["score", "The displayed fatigue score, capped at 100."],
@@ -38,7 +40,7 @@ score   = min(100, rawLoad / normalizationLoad × 100)</div>
         ${M.docsTiers([
           { color: "var(--fatigue-color-none)",       name: "No recent load",   range: "—",        desc: "Raw load is zero or negligible",          action: "Train today" },
           { color: "var(--fatigue-color-fresh)",      name: "Fresh",            range: "0 – 24 %",  desc: "Low accumulated stimulus",               action: "Train today" },
-          { color: "var(--fatigue-color-recovering)", name: "Recovering",       range: "25 – 49 %", desc: "Still within half-life window",           action: "Train tomorrow" },
+          { color: "var(--fatigue-color-recovering)", name: "Recovering",       range: "25 – 49 %", desc: "Still recovering, but often trainable", action: "Train today / soon" },
           { color: "var(--fatigue-color-fatigued)",   name: "Fatigued",         range: "50 – 74 %", desc: "Significant stimulus remaining",          action: "Needs recovery" },
           { color: "var(--fatigue-color-high)",       name: "Highly fatigued",  range: "75 – 100 %",desc: "Near or at normalization ceiling",        action: "Rest" },
         ])}
@@ -46,10 +48,15 @@ score   = min(100, rawLoad / normalizationLoad × 100)</div>
           The Muscle Fatigue Map table sorts columns from soonest ready to latest ready, making it practical for
           choosing the next session rather than just inspecting raw percentages.
         </p>
+        <p class="docs-copy">
+          The readiness ETA aims for <em>trainable again</em> rather than perfectly fresh. Full freshness still uses the
+          lower threshold described below.
+        </p>
       `)}
 
       ${M.docsSubsection("Decay and half-lives", `
-        <div class="docs-formula">remaining = stimulus × 0.5^(hoursElapsed / halfLife)</div>
+        <div class="docs-formula">adjustedHalfLife = baseHalfLife × clamp(0.85 + 0.35 × severity, 0.85, 1.35)
+remaining        = stimulus × 0.5^(hoursElapsed / adjustedHalfLife)</div>
         ${M.docsTable([
           ["72 h", "Chest, upper back, lower back, quadriceps, hamstrings, gluteal, adductors."],
           ["60 h", "Deltoids, trapezius, calves."],
@@ -67,8 +74,12 @@ score   = min(100, rawLoad / normalizationLoad × 100)</div>
           ["Estimated bodyweight", "<code class=\"docs-code\">75 kg</code> fallback when no profile value is available."],
           ["Bodyweight load factor", "<code class=\"docs-code\">0.4</code> — used to estimate bodyweight exercise load."],
           ["Default RPE", "<code class=\"docs-code\">7.5</code> when a Hevy set has no usable RPE value."],
+          ["Relative load clamp", "<code class=\"docs-code\">0.55</code> to <code class=\"docs-code\">1.35</code>."],
+          ["Systemic half-life", "<code class=\"docs-code\">24 h</code> before severity adjustment."],
+          ["Systemic penalty", "<code class=\"docs-code\">25%</code> of systemic score added to final muscle score."],
           ["Small threshold ratio", "<code class=\"docs-code\">0.02</code> — ignores tiny residual loads."],
-          ["Recovery threshold ratio", "<code class=\"docs-code\">0.25</code> — aligned with the Fresh tier boundary."],
+          ["Trainable threshold ratio", "<code class=\"docs-code\">0.50</code> — used for the readiness ETA in the board."],
+          ["Fresh threshold ratio", "<code class=\"docs-code\">0.25</code> — aligned with the Fresh tier boundary."],
           ["Strength load divisor", "<code class=\"docs-code\">1500</code> — converts set volume into model-scale stimulus."],
         ])}
       `)}
@@ -92,15 +103,21 @@ score   = min(100, rawLoad / normalizationLoad × 100)</div>
           and activity types, and avoid false precision in a relative-load model.
         </p>
         ${M.docsTable([
-          ["Primary rule", "At least one involved muscle must be Primary."],
+          ["Primary rule", "At least one involved muscle must be Primary unless the exercise is excluded from fatigue."],
+          ["No-fatigue configs", "Resolved exercises with fatigueImpact none may have no selected muscles and contribute zero local/systemic fatigue."],
           ["Multiple Primary", "Compound exercises may mark more than one muscle as Primary."],
           ["Legacy load", "Old decimal weights are interpreted with threshold mapping on load."],
           ["Migration", "If a legacy record has no threshold-derived Primary, the editor promotes the highest positive muscle so every existing exercise stays editable."],
         ])}
         <p class="docs-copy">
           The editor renders a live front/back body-map preview while you edit, so the distribution is visible before
-          you save. Saved weights affect fatigue as per-muscle multipliers on the same scaled set load:
-          <code class="docs-code">scaledSetLoad × fatigueMultiplier × muscleWeight</code>.
+          you save. Saved weights affect local fatigue as per-muscle multipliers on the local share of parsed set stimulus.
+          Total stimulus comes from parsed set load or the fallback duration and set-count path, then fatigue archetype
+          shares split it into local and systemic channels.
+        </p>
+        <p class="docs-copy">
+          Use <code class="docs-code">Exclude from muscle fatigue</code> for stretching, mobility, Yin Yoga, or recovery
+          work that should be recognized without adding fake fatigue.
         </p>
         <p class="docs-copy">
           Load-time thresholds:
@@ -119,37 +136,41 @@ score   = min(100, rawLoad / normalizationLoad × 100)</div>
           different things for upper back than for obliques.
         </p>
         ${M.docsTable([
-          ["Upper back", "2.45"], ["Chest", "2.40"], ["Gluteal", "2.30"], ["Quadriceps", "2.25"],
-          ["Deltoids", "2.20"], ["Hamstrings", "2.05"], ["Trapezius", "1.90"], ["Lower back", "1.85"],
-          ["Abs", "1.70"], ["Triceps", "1.65"], ["Biceps", "1.55"], ["Calves", "1.55"],
-          ["Adductors", "1.50"], ["Obliques", "1.45"],
+          ["Chest", "3.50"], ["Upper back", "3.50"], ["Gluteal", "7.50"], ["Quadriceps", "5.50"],
+          ["Abs", "5.00"], ["Hamstrings", "4.00"], ["Obliques", "3.50"], ["Adductors", "3.20"],
+          ["Deltoids", "2.80"], ["Lower back", "2.50"], ["Triceps", "2.50"], ["Biceps", "2.50"],
+          ["Trapezius", "2.30"], ["Calves", "1.55"],
         ])}
       `)}
 
-      ${M.docsSubsection("Recovery threshold", `
-        <div class="docs-formula">threshold     = normalizationLoad × 0.25
-recoveryHours = halfLife × log₂(rawLoad / threshold)</div>
+      ${M.docsSubsection("Recovery thresholds", `
+        <div class="docs-formula">trainableThreshold = normalizationLoad × 0.50
+freshThreshold     = normalizationLoad × 0.25</div>
         ${M.docsTable([
-          ["Below threshold", "Fresh — train now."],
-          ["Above threshold", "Recovery hours calculated and used to group muscle into tomorrow or later."],
+          ["Readiness ETA", "Projects the displayed score forward until combined local + systemic fatigue drops below the trainable threshold."],
+          ["Full freshness", "Tracks when the same combined score drops below the Fresh threshold."],
           ["No raw load", "No recent load — grouped as train today."],
         ])}
       `)}
 
       ${M.docsSubsection("Hevy workout parsing", `
         <p class="docs-copy">
-          If an activity description starts with <code class="docs-code">Logged with Hevy</code>, the model parses
+          If an activity description starts with <code class="docs-code">Logged with Hevy</code> or
+          <code class="docs-code">Logged with HevyApp.com</code>, the model parses
           exercises and sets. Resolver matching now comes from <code class="docs-code">api/exercises.php</code>, which
           indexes canonical names, aliases, and legacy substring <code class="docs-code">matchTerms</code>.
         </p>
-        <div class="docs-formula">load         = weightKg × reps × effortFactor
-effortFactor = 0.5 + RPE / 10
-bodyweight   = estimatedBodyweightKg × 0.4
-scaledLoad   = load / 1500</div>
+        <div class="docs-formula">baseLoad       = weightKg × reps
+effortFactor   = 0.5 + RPE / 10
+relativeFactor = clamp(weightKg / personalReferenceLoadKg, 0.55, 1.35)
+setStimulus    = (baseLoad / 1500) × effortFactor × relativeFactor</div>
         ${M.docsTable([
           ["RPE 6–10", "Effort factor 1.10 → 1.50 (steps of 0.10 per RPE point)."],
-          ["Time sets", "Skipped — no load data in this model."],
+          ["Reference load", "Same-exercise history, then same-family history, then bodyweight and experience heuristic."],
+          ["Archetype split", "Parsed strength stimulus is split into local and systemic fatigue by internal config."],
+          ["Time sets", "Skipped by default; duration-based cardio configs use logged set minutes for light stimulus."],
           ["Unmatched exercise", "Zero muscle-specific stimulus; session falls back to WeightTraining mapping if no exercises match."],
+          ["No-fatigue exercise", "Resolved and warning-free, but contributes zero fatigue by design."],
         ])}
       `)}
 
@@ -160,7 +181,9 @@ scaledLoad   = load / 1500</div>
           ["row / face pull", "Upper back primary."],
           ["pulldown / pull-up / pullup / chin-up / chinup", "Upper back width."],
           ["deadlift / rdl / romanian deadlift", "Hamstrings and gluteal."],
-          ["shoulder press / overhead press / arnold press / lateral raise / front raise / rear delt", "Deltoids primary."],
+          ["shoulder press / overhead press / arnold press", "Deltoids primary."],
+          ["lateral raise / single arm lateral raise", "Deltoids isolation."],
+          ["external shoulder rotation / cable external rotation", "Light rotator cuff / delt support work."],
           ["curl / hammer", "Biceps primary."],
           ["triceps / pushdown / skull crusher", "Triceps primary."],
           ["plank / crunch / twist / dead bug / hollow / sit up / leg raise / russian twist", "Abs and core."],

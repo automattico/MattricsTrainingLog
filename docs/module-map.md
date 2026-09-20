@@ -35,7 +35,7 @@ All files use the IIFE + `window.Mattrics` global pattern. Load order in `index.
 **Consumes:** `MUSCLE_FATIGUE_CONFIG` (constants); `resolveExerciseConfig` (exercise-config)
 
 ## core/fatigue-engine.js
-**Exports:** `getActivityMuscleStimulus`, `getMuscleLoadAnalysis`, `getMuscleFatigueAnalysis`
+**Exports:** `getActivityFatigueStimulus`, `getActivityMuscleStimulus`, `getPersonalReferenceLoadDetails`, `getPersonalReferenceLoadKg`, `getFatigueArchetypeShares`, `getStrengthExperienceScale`, `getRepRangeKey`, `getMuscleLoadAnalysis`, `getMuscleFatigueAnalysis`
 **Consumes:** `MUSCLE_REGIONS`, `MUSCLE_FATIGUE_CONFIG` (constants); `parseDate`, `startOfDay`, `toIsoDate` (date-utils); `parseHevyDescription`, `parseHevySetLine`, `getExerciseMuscleMapping` (hevy-parser); `resolveActivityTypeConfig`, `collectUnknownExercisesFromActivities` (exercise-config); `getFixedRecentActivities` (filters); `getMuscleFatigueTier`, `getRecoveryLabel`, `getRelativeDayLabel` (fatigue-tiers — loaded after)
 
 > **Note:** `fatigue-tiers.js` loads after `fatigue-engine.js` but the tier functions are only called at runtime (not at parse time), so the load order works.

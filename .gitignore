@@ -3,6 +3,8 @@ public/config.js
 private/config.php
 private/cache/
 private/*.json
+private/import-hevy/
+private/import-garmin/
 .env.local
 
 # OS

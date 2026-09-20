@@ -3,6 +3,7 @@
   <button class="nav-btn" onclick="showView('fatigue',this)">Muscle Fatigue Map</button>
   <button class="nav-btn" onclick="showView('sessions',this)">Sessions</button>
   <button class="nav-btn" onclick="showView('exercises',this)">Exercises</button>
+  <button class="nav-btn" onclick="showView('connectors',this)">Connectors</button>
   <button class="nav-btn nav-btn--ai ai-top-btn" onclick="showView('ai', this)" title="Open AI workout" aria-label="Open AI workout">
     <svg class="nav-btn-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path d="M8 1.5l1.15 3.35L12.5 6l-3.35 1.15L8 10.5 6.85 7.15 3.5 6l3.35-1.15L8 1.5Z" fill="currentColor"/>
@@ -26,6 +27,7 @@
   <button class="nav-drawer-btn" onclick="showView('fatigue',this);toggleDrawer()">Muscle Fatigue Map</button>
   <button class="nav-drawer-btn" onclick="showView('sessions',this);toggleDrawer()">Sessions</button>
   <button class="nav-drawer-btn" onclick="showView('exercises',this);toggleDrawer()">Exercises</button>
+  <button class="nav-drawer-btn" onclick="showView('connectors',this);toggleDrawer()">Connectors</button>
   <button class="nav-drawer-btn nav-drawer-btn--ai" onclick="showView('ai',this);toggleDrawer()">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path d="M8 1.5l1.15 3.35L12.5 6l-3.35 1.15L8 10.5 6.85 7.15 3.5 6l3.35-1.15L8 1.5Z" fill="currentColor"/>
@@ -72,6 +74,14 @@
       <circle cx="14.5" cy="13.5" r="1.2" fill="currentColor" opacity=".7"/>
     </svg>
     <span>Exercises</span>
+  </button>
+  <button class="nav-bottom-btn" onclick="showView('connectors',this)">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <rect x="3" y="5" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.6" opacity=".7"/>
+      <path d="M7 8.5h6M7 11.5h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".7"/>
+      <circle cx="14.5" cy="11.5" r="1.2" fill="currentColor" opacity=".7"/>
+    </svg>
+    <span>Connectors</span>
   </button>
   <button class="nav-bottom-btn nav-bottom-btn--ai" onclick="showView('ai',this)">
     <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true">

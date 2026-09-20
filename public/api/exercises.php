@@ -4,6 +4,8 @@ declare(strict_types=1);
 require __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/exercise-config-repository.php';
 require_once __DIR__ . '/exercise-config-ai.php';
+require_once __DIR__ . '/foundation-read.php';
+require_once __DIR__ . '/foundation-write.php';
 
 mattrics_require_auth();
 
@@ -16,6 +18,119 @@ function mattrics_exercises_request_path(): string
     return $path;
 }
 
+function mattrics_use_canonical_exercise_config_source(): bool
+{
+    return mattrics_foundation_write_available();
+}
+
+function mattrics_join_exercise_config_warning(?string ...$parts): ?string
+{
+    $clean = array_values(array_filter(array_map(
+        static fn(?string $part): string => trim((string) $part),
+        $parts
+    )));
+
+    if ($clean === []) {
+        return null;
+    }
+
+    return implode(' ', $clean);
+}
+
+function mattrics_find_exercise_config_by_id_for_active_source(string $id): ?array
+{
+    if (mattrics_use_canonical_exercise_config_source()) {
+        return mattrics_foundation_write_find_exercise_by_id($id);
+    }
+
+    return mattrics_find_exercise_config_by_id($id);
+}
+
+function mattrics_find_activity_type_config_by_id_for_active_source(string $id): ?array
+{
+    if (mattrics_use_canonical_exercise_config_source()) {
+        return mattrics_foundation_write_find_activity_type_by_id($id);
+    }
+
+    return mattrics_find_activity_type_config_by_id($id);
+}
+
+function mattrics_find_exercise_config_match_for_active_source(string $normalizedName): ?array
+{
+    if (mattrics_use_canonical_exercise_config_source()) {
+        return mattrics_foundation_write_find_exercise_match($normalizedName);
+    }
+
+    return mattrics_find_exercise_config_match($normalizedName);
+}
+
+function mattrics_find_activity_type_config_match_for_active_source(string $normalizedName): ?array
+{
+    if (mattrics_use_canonical_exercise_config_source()) {
+        return mattrics_foundation_write_find_activity_type_match($normalizedName);
+    }
+
+    return mattrics_find_activity_type_config_match($normalizedName);
+}
+
+function mattrics_filter_unknown_exercise_records_for_active_source(array $records): array
+{
+    return array_values(array_filter($records, static function (array $record): bool {
+        $sourceType = (string) ($record['sourceType'] ?? '');
+        $normalizedName = (string) ($record['normalizedName'] ?? '');
+        if ($normalizedName === '') {
+            return false;
+        }
+
+        if ($sourceType === 'exercise') {
+            return mattrics_find_exercise_config_match_for_active_source($normalizedName) === null;
+        }
+
+        if ($sourceType === 'activityType') {
+            return mattrics_find_activity_type_config_match_for_active_source($normalizedName) === null;
+        }
+
+        return true;
+    }));
+}
+
+function mattrics_prune_resolved_unknown_exercise_records_for_active_source(): array
+{
+    $records = mattrics_read_unknown_exercise_records();
+    $remaining = mattrics_filter_unknown_exercise_records_for_active_source($records);
+
+    if (count($remaining) !== count($records)) {
+        mattrics_write_unknown_exercise_records($remaining);
+    }
+
+    return $remaining;
+}
+
+function mattrics_run_canonical_config_post_write_sync(): array
+{
+    $warnings = [];
+
+    try {
+        mattrics_foundation_write_shadow_sync_legacy_catalogs();
+    } catch (Throwable $throwable) {
+        $warnings[] = 'Canonical write succeeded, but legacy config shadow sync failed.';
+    }
+
+    try {
+        $unknowns = mattrics_prune_resolved_unknown_exercise_records_for_active_source();
+    } catch (Throwable $throwable) {
+        $warnings[] = 'Canonical write succeeded, but unknown review sync failed.';
+        $unknowns = mattrics_filter_unknown_exercise_records_for_active_source(
+            mattrics_read_unknown_exercise_records()
+        );
+    }
+
+    return [
+        'unknowns' => $unknowns,
+        'warning' => mattrics_join_exercise_config_warning(...$warnings),
+    ];
+}
+
 function mattrics_build_exercise_config_payload(array $metaExtra = []): array
 {
     return [
@@ -24,6 +139,38 @@ function mattrics_build_exercise_config_payload(array $metaExtra = []): array
         'unknowns' => mattrics_prune_resolved_unknown_exercise_records(),
         'meta' => array_merge(mattrics_exercise_config_meta(), $metaExtra),
     ];
+}
+
+function mattrics_build_legacy_exercise_config_get_payload(?string $warning = null): array
+{
+    return mattrics_build_exercise_config_payload([
+        'source' => 'legacy',
+        'warning' => $warning,
+        'lastSuccessfulSyncAt' => null,
+    ]);
+}
+
+function mattrics_build_canonical_exercise_config_payload(array $metaExtra = []): array
+{
+    return [
+        'exercises' => mattrics_foundation_read_exercises(),
+        'activityTypes' => mattrics_foundation_read_activity_types(),
+        'unknowns' => mattrics_prune_resolved_unknown_exercise_records_for_active_source(),
+        'meta' => array_merge(mattrics_exercise_config_meta(), [
+            'source' => 'canonical',
+            'lastSuccessfulSyncAt' => mattrics_foundation_read_latest_successful_sync_at(),
+            'warning' => null,
+        ], $metaExtra),
+    ];
+}
+
+function mattrics_build_active_exercise_config_payload(array $metaExtra = []): array
+{
+    if (mattrics_use_canonical_exercise_config_source()) {
+        return mattrics_build_canonical_exercise_config_payload($metaExtra);
+    }
+
+    return mattrics_build_exercise_config_payload($metaExtra);
 }
 
 function mattrics_merge_preview_match_terms(array ...$lists): array
@@ -47,6 +194,7 @@ function mattrics_build_unknown_preview_suggestion(array $unknown, array $sugges
             $unknown['rawNames'] ?? []
         ),
         'muscleWeights' => $suggestion['muscleWeights'] ?? [],
+        'fatigueImpact' => (string) ($suggestion['fatigueImpact'] ?? 'normal'),
         'fatigueMultiplier' => (float) ($suggestion['fatigueMultiplier'] ?? 1),
         'bodyweightEligible' => (bool) ($suggestion['bodyweightEligible'] ?? false),
         'setTypeHandling' => (string) ($suggestion['setTypeHandling'] ?? 'weight_reps'),
@@ -73,6 +221,7 @@ function mattrics_build_existing_exercise_preview_suggestion(array $exercise, ar
             $exercise['matchTerms'] ?? []
         ),
         'muscleWeights' => $suggestion['muscleWeights'] ?? [],
+        'fatigueImpact' => (string) ($suggestion['fatigueImpact'] ?? 'normal'),
         'fatigueMultiplier' => (float) ($suggestion['fatigueMultiplier'] ?? 1),
         'bodyweightEligible' => (bool) ($suggestion['bodyweightEligible'] ?? false),
         'setTypeHandling' => (string) ($suggestion['setTypeHandling'] ?? 'weight_reps'),
@@ -95,7 +244,7 @@ function mattrics_handle_unknown_suggestion_request(string $unknownId): void
         mattrics_send_json(['error' => 'AI suggestion currently supports exercise unknowns only.'], 422);
     }
 
-    $existing = mattrics_find_exercise_config_match((string) ($unknown['normalizedName'] ?? ''));
+    $existing = mattrics_find_exercise_config_match_for_active_source((string) ($unknown['normalizedName'] ?? ''));
     if ($existing !== null) {
         mattrics_remove_unknown_exercise_record($unknownId);
         mattrics_send_json([
@@ -112,6 +261,7 @@ function mattrics_handle_unknown_suggestion_request(string $unknownId): void
                 'canonicalName' => (string) ($datasetMatch['canonicalName'] ?? ''),
                 'aliases' => $datasetMatch['aliases'] ?? [],
                 'muscleWeights' => $datasetMatch['muscleWeights'] ?? [],
+                'fatigueImpact' => (string) ($datasetMatch['fatigueImpact'] ?? 'normal'),
                 'fatigueMultiplier' => (float) ($datasetMatch['fatigueMultiplier'] ?? 1),
                 'bodyweightEligible' => (bool) ($datasetMatch['bodyweightEligible'] ?? false),
                 'setTypeHandling' => (string) ($datasetMatch['setTypeHandling'] ?? 'weight_reps'),
@@ -130,7 +280,7 @@ function mattrics_handle_unknown_suggestion_request(string $unknownId): void
             ]));
 
             mattrics_send_json(array_merge(
-                mattrics_build_exercise_config_payload([
+                mattrics_build_active_exercise_config_payload([
                     'syncedAt' => gmdate('c'),
                     'matchedVia' => 'external_dataset',
                 ]),
@@ -160,7 +310,7 @@ function mattrics_handle_unknown_suggestion_request(string $unknownId): void
         ]));
 
         mattrics_send_json(array_merge(
-            mattrics_build_exercise_config_payload([
+            mattrics_build_active_exercise_config_payload([
                 'syncedAt' => gmdate('c'),
                 'confidence' => $suggestion['confidence'],
                 'shortReason' => $suggestion['shortReason'],
@@ -199,22 +349,41 @@ function mattrics_handle_exercise_create_request(?array $body = null): void
     mattrics_require_csrf();
 
     $body = is_array($body) ? $body : mattrics_read_json_body();
+    $configType = (string) ($body['configType'] ?? 'exercise');
+    $warning = null;
 
     try {
-        $created = mattrics_create_exercise_config_record($body);
-        $unknowns = mattrics_prune_resolved_unknown_exercise_records();
+        if (mattrics_use_canonical_exercise_config_source()) {
+            if ($configType === 'activityType') {
+                $created = mattrics_foundation_write_create_activity_type_config_record($body);
+            } else {
+                $created = mattrics_foundation_write_create_exercise_config_record($body);
+            }
+            $sync = mattrics_run_canonical_config_post_write_sync();
+            $unknowns = $sync['unknowns'];
+            $warning = $sync['warning'];
+        } elseif ($configType === 'activityType') {
+            $created = mattrics_create_activity_type_config_record($body);
+        } else {
+            $created = mattrics_create_exercise_config_record($body);
+        }
+        if (!isset($unknowns)) {
+            $unknowns = mattrics_prune_resolved_unknown_exercise_records();
+        }
     } catch (RuntimeException $exception) {
         mattrics_send_json(['error' => $exception->getMessage()], 422);
     }
 
     mattrics_send_json(array_merge(
-        mattrics_build_exercise_config_payload([
+        mattrics_build_active_exercise_config_payload([
             'syncedAt' => gmdate('c'),
             'action' => 'created',
+            'warning' => $warning,
         ]),
         [
             'ok' => true,
-            'exercise' => $created,
+            'configType' => $configType,
+            ...($configType === 'activityType' ? ['activityType' => $created] : ['exercise' => $created]),
             'unknowns' => $unknowns,
             'recalculatedAt' => gmdate('c'),
         ]
@@ -225,26 +394,45 @@ function mattrics_handle_exercise_update_request(string $exerciseId): void
 {
     mattrics_require_csrf();
 
-    if (mattrics_find_exercise_config_by_id($exerciseId) === null) {
-        mattrics_send_json(['error' => 'Exercise config not found.'], 404);
+    $body = mattrics_read_json_body();
+    $exercise = mattrics_find_exercise_config_by_id_for_active_source($exerciseId);
+    $activityType = $exercise === null ? mattrics_find_activity_type_config_by_id_for_active_source($exerciseId) : null;
+    if ($exercise === null && $activityType === null) {
+        mattrics_send_json(['error' => 'Config not found.'], 404);
     }
 
-    $body = mattrics_read_json_body();
-
+    $warning = null;
     try {
-        $updated = mattrics_update_exercise_config_record($exerciseId, $body);
+        if (mattrics_use_canonical_exercise_config_source()) {
+            if ($exercise !== null) {
+                $updated = mattrics_foundation_write_update_exercise_config_record($exerciseId, $body);
+                $configType = 'exercise';
+            } else {
+                $updated = mattrics_foundation_write_update_activity_type_config_record($exerciseId, $body);
+                $configType = 'activityType';
+            }
+            $warning = mattrics_run_canonical_config_post_write_sync()['warning'];
+        } elseif ($exercise !== null) {
+            $updated = mattrics_update_exercise_config_record($exerciseId, $body);
+            $configType = 'exercise';
+        } else {
+            $updated = mattrics_update_activity_type_config_record($exerciseId, $body);
+            $configType = 'activityType';
+        }
     } catch (RuntimeException $exception) {
         mattrics_send_json(['error' => $exception->getMessage()], 422);
     }
 
     mattrics_send_json(array_merge(
-        mattrics_build_exercise_config_payload([
+        mattrics_build_active_exercise_config_payload([
             'syncedAt' => gmdate('c'),
             'action' => 'updated',
+            'warning' => $warning,
         ]),
         [
             'ok' => true,
-            'exercise' => $updated,
+            'configType' => $configType,
+            ...($configType === 'activityType' ? ['activityType' => $updated] : ['exercise' => $updated]),
             'recalculatedAt' => gmdate('c'),
         ]
     ));
@@ -254,7 +442,7 @@ function mattrics_handle_exercise_suggestion_request(string $exerciseId): void
 {
     mattrics_require_csrf();
 
-    $exercise = mattrics_find_exercise_config_by_id($exerciseId);
+    $exercise = mattrics_find_exercise_config_by_id_for_active_source($exerciseId);
     if ($exercise === null) {
         mattrics_send_json(['error' => 'Exercise config not found.'], 404);
     }
@@ -281,7 +469,7 @@ function mattrics_handle_exercise_suggestion_request(string $exerciseId): void
     ]));
 
     mattrics_send_json(array_merge(
-        mattrics_build_exercise_config_payload([
+        mattrics_build_active_exercise_config_payload([
             'syncedAt' => gmdate('c'),
             'action' => 'suggested',
             'confidence' => $suggestion['confidence'],
@@ -299,7 +487,7 @@ function mattrics_handle_exercise_merge_request(string $exerciseId): void
 {
     mattrics_require_csrf();
 
-    if (mattrics_find_exercise_config_by_id($exerciseId) === null) {
+    if (mattrics_find_exercise_config_by_id_for_active_source($exerciseId) === null) {
         mattrics_send_json(['error' => 'Exercise config not found.'], 404);
     }
 
@@ -309,16 +497,23 @@ function mattrics_handle_exercise_merge_request(string $exerciseId): void
         mattrics_send_json(['error' => 'targetExerciseId is required.'], 422);
     }
 
+    $warning = null;
     try {
-        $updated = mattrics_merge_exercise_config_record_as_alias($exerciseId, $targetExerciseId);
+        if (mattrics_use_canonical_exercise_config_source()) {
+            $updated = mattrics_foundation_write_merge_exercise_config_record_as_alias($exerciseId, $targetExerciseId);
+            $warning = mattrics_run_canonical_config_post_write_sync()['warning'];
+        } else {
+            $updated = mattrics_merge_exercise_config_record_as_alias($exerciseId, $targetExerciseId);
+        }
     } catch (RuntimeException $exception) {
         mattrics_send_json(['error' => $exception->getMessage()], 422);
     }
 
     mattrics_send_json(array_merge(
-        mattrics_build_exercise_config_payload([
+        mattrics_build_active_exercise_config_payload([
             'syncedAt' => gmdate('c'),
             'action' => 'merged',
+            'warning' => $warning,
         ]),
         [
             'ok' => true,
@@ -344,16 +539,24 @@ function mattrics_handle_unknown_merge_request(string $unknownId): void
         mattrics_send_json(['error' => 'targetExerciseId is required.'], 422);
     }
 
+    $warning = null;
     try {
-        $updated = mattrics_merge_unknown_exercise_record_as_alias($unknownId, $targetExerciseId);
+        if (mattrics_use_canonical_exercise_config_source()) {
+            $updated = mattrics_foundation_write_merge_unknown_exercise_record_as_alias($unknownId, $targetExerciseId);
+            mattrics_remove_unknown_exercise_record($unknownId);
+            $warning = mattrics_run_canonical_config_post_write_sync()['warning'];
+        } else {
+            $updated = mattrics_merge_unknown_exercise_record_as_alias($unknownId, $targetExerciseId);
+        }
     } catch (RuntimeException $exception) {
         mattrics_send_json(['error' => $exception->getMessage()], 422);
     }
 
     mattrics_send_json(array_merge(
-        mattrics_build_exercise_config_payload([
+        mattrics_build_active_exercise_config_payload([
             'syncedAt' => gmdate('c'),
             'action' => 'merged',
+            'warning' => $warning,
         ]),
         [
             'ok' => true,
@@ -367,25 +570,44 @@ function mattrics_handle_unknown_merge_request(string $unknownId): void
 function mattrics_handle_exercise_delete_request(string $exerciseId): void
 {
     mattrics_require_csrf();
-
-    if (mattrics_find_exercise_config_by_id($exerciseId) === null) {
-        mattrics_send_json(['error' => 'Exercise config not found.'], 404);
+    $exercise = mattrics_find_exercise_config_by_id_for_active_source($exerciseId);
+    $activityType = $exercise === null ? mattrics_find_activity_type_config_by_id_for_active_source($exerciseId) : null;
+    if ($exercise === null && $activityType === null) {
+        mattrics_send_json(['error' => 'Config not found.'], 404);
     }
 
+    $warning = null;
     try {
-        $deleted = mattrics_delete_exercise_config_record($exerciseId);
+        if (mattrics_use_canonical_exercise_config_source()) {
+            if ($exercise !== null) {
+                $deleted = mattrics_foundation_write_delete_exercise_config_record($exerciseId);
+                $configType = 'exercise';
+            } else {
+                $deleted = mattrics_foundation_write_delete_activity_type_config_record($exerciseId);
+                $configType = 'activityType';
+            }
+            $warning = mattrics_run_canonical_config_post_write_sync()['warning'];
+        } elseif ($exercise !== null) {
+            $deleted = mattrics_delete_exercise_config_record($exerciseId);
+            $configType = 'exercise';
+        } else {
+            $deleted = mattrics_delete_activity_type_config_record($exerciseId);
+            $configType = 'activityType';
+        }
     } catch (RuntimeException $exception) {
         mattrics_send_json(['error' => $exception->getMessage()], 422);
     }
 
     mattrics_send_json(array_merge(
-        mattrics_build_exercise_config_payload([
+        mattrics_build_active_exercise_config_payload([
             'syncedAt' => gmdate('c'),
             'action' => 'deleted',
+            'warning' => $warning,
         ]),
         [
             'ok' => true,
-            'deletedExercise' => $deleted,
+            'configType' => $configType,
+            ...($configType === 'activityType' ? ['deletedActivityType' => $deleted] : ['deletedExercise' => $deleted]),
             'recalculatedAt' => gmdate('c'),
         ]
     ));
@@ -420,7 +642,17 @@ try {
     }
 
     if ($method === 'GET') {
-        mattrics_send_json(mattrics_build_exercise_config_payload());
+        if (mattrics_foundation_read_enabled()) {
+            try {
+                mattrics_send_json(mattrics_build_canonical_exercise_config_payload());
+            } catch (Throwable $throwable) {
+                mattrics_send_json(mattrics_build_legacy_exercise_config_get_payload(
+                    'Canonical read failed. Showing legacy exercise config data instead.'
+                ));
+            }
+        }
+
+        mattrics_send_json(mattrics_build_legacy_exercise_config_get_payload());
     }
 
     if ($method === 'POST') {

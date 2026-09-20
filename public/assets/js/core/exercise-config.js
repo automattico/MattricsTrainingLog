@@ -7,6 +7,7 @@
       ...record,
       aliases: Array.isArray(record.aliases) ? record.aliases.slice() : [],
       matchTerms: Array.isArray(record.matchTerms) ? record.matchTerms.slice() : [],
+      fatigueImpact: record.fatigueImpact || "normal",
       muscleWeights: { ...(record.muscleWeights || {}) },
       weights: { ...(record.muscleWeights || {}) },
     };
@@ -40,6 +41,7 @@
 
   M.normalizeExerciseConfigName = function normalizeExerciseConfigName(name) {
     return String(name == null ? "" : name)
+      .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
       .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, " ")
@@ -131,6 +133,7 @@
     const activityTypes = ensureArray(payload && payload.activityTypes);
     const unknowns = ensureArray(payload && payload.unknowns);
     const meta = payload && payload.meta && typeof payload.meta === "object" ? payload.meta : {};
+    const previousMeta = M.state.exerciseConfigMeta || {};
     const normalize = M.normalizeExerciseConfigName;
 
     const index = {
@@ -161,6 +164,11 @@
       });
     });
 
+    index.exerciseMatchTerms.sort((left, right) => (
+      right.term.length - left.term.length
+      || String(left.record && left.record.id || "").localeCompare(String(right.record && right.record.id || ""))
+    ));
+
     activityTypes.forEach((record) => {
       const normalizedName = normalize(record && record.normalizedName ? record.normalizedName : record && record.canonicalName);
       if (normalizedName && !index.activityTypesByCanonical.has(normalizedName)) {
@@ -180,6 +188,15 @@
     M.state.exerciseConfigMeta = {
       loadedAt: meta.loadedAt || "",
       seedVersion: Number(meta.seedVersion || 0),
+      source: Object.prototype.hasOwnProperty.call(meta, "source")
+        ? String(meta.source || "")
+        : String(previousMeta.source || ""),
+      warning: Object.prototype.hasOwnProperty.call(meta, "warning")
+        ? String(meta.warning || "")
+        : String(previousMeta.warning || ""),
+      lastSuccessfulSyncAt: Object.prototype.hasOwnProperty.call(meta, "lastSuccessfulSyncAt")
+        ? String(meta.lastSuccessfulSyncAt || "")
+        : String(previousMeta.lastSuccessfulSyncAt || ""),
     };
     M.state.exerciseConfigIndex = index;
     setUnknownExerciseState(unknowns, {
@@ -251,7 +268,9 @@
     };
 
     ensureArray(activities).forEach((activity) => {
-      const hevyExercises = M.parseHevyDescription(activity && activity.Description);
+      const hevyExercises = typeof M.getActivityWorkoutBlocks === "function"
+        ? M.getActivityWorkoutBlocks(activity)
+        : M.parseHevyDescription(activity && activity.Description);
       if (Array.isArray(hevyExercises) && hevyExercises.length) {
         hevyExercises.forEach((exercise) => {
           if (!M.resolveExerciseConfig(exercise && exercise.name)) {

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
+require_once __DIR__ . '/foundation-read.php';
 
 mattrics_require_auth();
 mattrics_require_method('GET');
@@ -54,7 +55,44 @@ function mattrics_build_snapshot_response(array $snapshot, bool $stale = false, 
     ];
 }
 
-function mattrics_fetch_live_snapshot(array $allowedFields, ?array $previousSnapshot = null): array
+function mattrics_merge_warning_messages(?string ...$warnings): ?string
+{
+    $parts = [];
+    foreach ($warnings as $warning) {
+        $clean = trim((string) $warning);
+        if ($clean !== '') {
+            $parts[] = $clean;
+        }
+    }
+
+    return $parts === [] ? null : implode(' ', $parts);
+}
+
+function mattrics_build_canonical_data_response(bool $includeChildren = false): array
+{
+    $rows = mattrics_foundation_read_activities();
+
+    $response = [
+        'rows' => $rows,
+        'count' => count($rows),
+        'meta' => [
+            'source' => 'canonical',
+            'stale' => false,
+            'lastSuccessfulSyncAt' => mattrics_foundation_read_latest_successful_sync_at(),
+            'lastLiveAttemptAt' => null,
+            'warning' => null,
+            'sourceVersion' => 1,
+        ],
+    ];
+
+    if ($includeChildren) {
+        $response['activityChildren'] = mattrics_foundation_read_activity_children();
+    }
+
+    return $response;
+}
+
+function mattrics_fetch_live_snapshot(array $allowedFields, ?array $previousSnapshot = null, ?string $warning = null): array
 {
     $config = mattrics_load_config();
     $sheetUrl = trim((string) ($config['sheet_url'] ?? ''));
@@ -85,7 +123,7 @@ function mattrics_fetch_live_snapshot(array $allowedFields, ?array $previousSnap
         ];
 
         mattrics_write_snapshot($snapshot);
-        return mattrics_build_snapshot_response($snapshot, false, 'live');
+        return mattrics_build_snapshot_response($snapshot, false, 'live', $warning);
     } catch (Throwable $exception) {
         if ($previousSnapshot !== null) {
             $fallback = $previousSnapshot;
@@ -97,7 +135,10 @@ function mattrics_fetch_live_snapshot(array $allowedFields, ?array $previousSnap
                 $fallback,
                 true,
                 'cache',
-                'Live refresh failed. Showing the last successful sync instead.'
+                mattrics_merge_warning_messages(
+                    $warning,
+                    'Live refresh failed. Showing the last successful sync instead.'
+                )
             );
         }
 
@@ -105,21 +146,34 @@ function mattrics_fetch_live_snapshot(array $allowedFields, ?array $previousSnap
     }
 }
 
+$canonicalEnabled = mattrics_foundation_read_enabled();
+$includeChildren = isset($_GET['includeChildren']) && $_GET['includeChildren'] === '1';
 $forceRefresh = isset($_GET['refresh']) && $_GET['refresh'] === '1';
-$snapshot = mattrics_read_snapshot();
+$legacyForceRefresh = $forceRefresh && !$canonicalEnabled;
+$canonicalFallbackWarning = null;
 
-if (!$forceRefresh && $snapshot !== null) {
-    mattrics_send_json(mattrics_build_snapshot_response($snapshot, false, 'cache'));
+if ($canonicalEnabled) {
+    try {
+        mattrics_send_json(mattrics_build_canonical_data_response($includeChildren));
+    } catch (Throwable $throwable) {
+        $canonicalFallbackWarning = 'Canonical read failed. Showing legacy training data instead.';
+    }
 }
 
-$response = mattrics_with_refresh_lock(static function () use ($allowedFields, $forceRefresh, $snapshot) {
+$snapshot = mattrics_read_snapshot();
+
+if (!$legacyForceRefresh && $snapshot !== null) {
+    mattrics_send_json(mattrics_build_snapshot_response($snapshot, false, 'cache', $canonicalFallbackWarning));
+}
+
+$response = mattrics_with_refresh_lock(static function () use ($allowedFields, $legacyForceRefresh, $snapshot, $canonicalFallbackWarning) {
     $latestSnapshot = mattrics_read_snapshot();
 
-    if (!$forceRefresh && $latestSnapshot !== null) {
-        return mattrics_build_snapshot_response($latestSnapshot, false, 'cache');
+    if (!$legacyForceRefresh && $latestSnapshot !== null) {
+        return mattrics_build_snapshot_response($latestSnapshot, false, 'cache', $canonicalFallbackWarning);
     }
 
-    return mattrics_fetch_live_snapshot($allowedFields, $latestSnapshot ?: $snapshot);
+    return mattrics_fetch_live_snapshot($allowedFields, $latestSnapshot ?: $snapshot, $canonicalFallbackWarning);
 });
 
 mattrics_send_json($response);

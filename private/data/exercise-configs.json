@@ -27,12 +27,15 @@
             "hamstrings": 0.25,
             "calves": 0
         },
-        "fatigueMultiplier": 0.65,
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 1,
         "bodyweightEligible": false,
         "setTypeHandling": "weight_reps",
         "source": "ai_suggested",
         "lastUpdatedAt": "2026-04-20T17:22:13+00:00",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "hip_dominant",
+        "fatigueArchetype": "machine_compound"
     },
     {
         "id": "bench-press",
@@ -60,12 +63,15 @@
             "abs": 0.08,
             "trapezius": 0.06
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": true,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "horizontal_press",
+        "fatigueArchetype": "freeweight_compound"
     },
     {
         "id": "bird-dog",
@@ -94,12 +100,15 @@
             "hamstrings": 0.2,
             "calves": 0
         },
-        "fatigueMultiplier": 0.2,
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 1,
         "bodyweightEligible": true,
         "setTypeHandling": "bodyweight_reps",
         "source": "ai_suggested",
         "lastUpdatedAt": "2026-04-22T19:27:17+00:00",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "core",
+        "fatigueArchetype": "isolation"
     },
     {
         "id": "calf-raise",
@@ -115,12 +124,15 @@
             "calves": 1,
             "quadriceps": 0.12
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": false,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "calf",
+        "fatigueArchetype": "isolation"
     },
     {
         "id": "core",
@@ -150,12 +162,15 @@
             "obliques": 0.52,
             "lowerBack": 0.18
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": true,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "core",
+        "fatigueArchetype": "isolation"
     },
     {
         "id": "curl",
@@ -172,12 +187,47 @@
             "biceps": 1,
             "deltoids": 0.08
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": false,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "arm_isolation",
+        "fatigueArchetype": "isolation"
+    },
+    {
+        "id": "cycling",
+        "canonicalName": "Cycling",
+        "normalizedName": "cycling",
+        "aliases": [
+            "Stationary Bike",
+            "Bike",
+            "Bicycle"
+        ],
+        "matchTerms": [
+            "cycling",
+            "stationary bike",
+            "bike",
+            "bicycle"
+        ],
+        "muscleWeights": {
+            "quadriceps": 1,
+            "gluteal": 0.45,
+            "hamstrings": 0.45,
+            "calves": 0.2,
+            "abs": 0.2
+        },
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 0.45,
+        "bodyweightEligible": false,
+        "setTypeHandling": "time_duration",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-30T00:00:00Z",
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "conditioning_lower",
+        "fatigueArchetype": "conditioning_hybrid"
     },
     {
         "id": "deadlift",
@@ -201,12 +251,56 @@
             "quadriceps": 0.18,
             "abs": 0.2
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": false,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "hinge",
+        "fatigueArchetype": "hinge_squat"
+    },
+    {
+        "id": "external-shoulder-rotation",
+        "canonicalName": "External Shoulder Rotation",
+        "normalizedName": "external shoulder rotation",
+        "aliases": [
+            "External Shoulder Rotation (Cable or Band)",
+            "Cable External Rotation",
+            "Band External Rotation"
+        ],
+        "matchTerms": [
+            "external shoulder rotation",
+            "cable external rotation",
+            "band external rotation",
+            "rotator cuff external rotation"
+        ],
+        "muscleWeights": {
+            "chest": 0,
+            "deltoids": 0.35,
+            "trapezius": 0.12,
+            "upperBack": 0.18,
+            "triceps": 0,
+            "biceps": 0,
+            "abs": 0,
+            "obliques": 0,
+            "lowerBack": 0,
+            "gluteal": 0,
+            "adductors": 0,
+            "quadriceps": 0,
+            "hamstrings": 0,
+            "calves": 0
+        },
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-30T00:00:00Z",
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "shoulder_isolation",
+        "fatigueArchetype": "isolation"
     },
     {
         "id": "glute-kickback",
@@ -236,12 +330,15 @@
             "hamstrings": 0.45,
             "calves": 0
         },
-        "fatigueMultiplier": 0.45,
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 1,
         "bodyweightEligible": true,
         "setTypeHandling": "bodyweight_reps",
         "source": "ai_suggested",
         "lastUpdatedAt": "2026-04-22T19:34:10+00:00",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "hip_isolation",
+        "fatigueArchetype": "isolation"
     },
     {
         "id": "heel-taps",
@@ -270,12 +367,15 @@
             "hamstrings": 0,
             "calves": 0
         },
-        "fatigueMultiplier": 0.2,
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 1,
         "bodyweightEligible": true,
         "setTypeHandling": "time_based_ignore",
         "source": "ai_suggested",
         "lastUpdatedAt": "2026-04-22T19:33:48+00:00",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "core",
+        "fatigueArchetype": "isolation"
     },
     {
         "id": "hip-abduction",
@@ -296,12 +396,15 @@
             "hamstrings": 0.12,
             "abs": 0.04
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": false,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "hip_isolation",
+        "fatigueArchetype": "isolation"
     },
     {
         "id": "hip-adduction",
@@ -322,12 +425,15 @@
             "hamstrings": 0.08,
             "abs": 0.04
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": false,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "hip_isolation",
+        "fatigueArchetype": "isolation"
     },
     {
         "id": "hip-thrust",
@@ -347,12 +453,15 @@
             "lowerBack": 0.12,
             "adductors": 0.1
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": false,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "hip_dominant",
+        "fatigueArchetype": "freeweight_compound"
     },
     {
         "id": "incline-press",
@@ -374,12 +483,15 @@
             "trapezius": 0.08,
             "abs": 0.08
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": false,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "horizontal_press",
+        "fatigueArchetype": "machine_compound"
     },
     {
         "id": "internal-shoulder-rotation",
@@ -410,11 +522,88 @@
             "hamstrings": 0,
             "calves": 0
         },
-        "fatigueMultiplier": 0.2,
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 1,
         "bodyweightEligible": false,
         "setTypeHandling": "weight_reps",
         "source": "ai_suggested",
         "lastUpdatedAt": "2026-04-22T19:35:07+00:00",
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "shoulder_isolation",
+        "fatigueArchetype": "isolation"
+    },
+    {
+        "id": "lateral-raise",
+        "canonicalName": "Lateral Raise",
+        "normalizedName": "lateral raise",
+        "aliases": [
+            "Lateral Raise (Dumbbell)",
+            "Lateral Raise (Cable)",
+            "Single Arm Lateral Raise (Cable)"
+        ],
+        "matchTerms": [
+            "lateral raise",
+            "single arm lateral raise"
+        ],
+        "muscleWeights": {
+            "chest": 0,
+            "deltoids": 1,
+            "trapezius": 0.18,
+            "upperBack": 0.08,
+            "triceps": 0,
+            "biceps": 0,
+            "abs": 0,
+            "obliques": 0,
+            "lowerBack": 0,
+            "gluteal": 0,
+            "adductors": 0,
+            "quadriceps": 0,
+            "hamstrings": 0,
+            "calves": 0
+        },
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-30T00:00:00Z",
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "shoulder_isolation",
+        "fatigueArchetype": "isolation"
+    },
+    {
+        "id": "leg-extension-machine",
+        "canonicalName": "Leg Extension Machine",
+        "normalizedName": "leg extension machine",
+        "aliases": [
+            "Leg Extension",
+            "Machine Leg Extension"
+        ],
+        "matchTerms": [
+            "leg extension machine"
+        ],
+        "muscleWeights": {
+            "chest": 0,
+            "deltoids": 0,
+            "trapezius": 0,
+            "upperBack": 0,
+            "triceps": 0,
+            "biceps": 0,
+            "abs": 0,
+            "obliques": 0,
+            "lowerBack": 0,
+            "gluteal": 0,
+            "adductors": 0,
+            "quadriceps": 1,
+            "hamstrings": 0,
+            "calves": 0
+        },
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "ai_suggested",
+        "lastUpdatedAt": "2026-04-30T09:01:21+00:00",
         "lastUpdatedType": "manual"
     },
     {
@@ -444,12 +633,15 @@
             "hamstrings": 0.45,
             "calves": 0
         },
-        "fatigueMultiplier": 0.65,
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 1,
         "bodyweightEligible": false,
         "setTypeHandling": "weight_reps",
         "source": "ai_suggested",
         "lastUpdatedAt": "2026-04-22T19:36:18+00:00",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "hip_isolation",
+        "fatigueArchetype": "isolation"
     },
     {
         "id": "pulldown",
@@ -475,12 +667,15 @@
             "deltoids": 0.14,
             "lowerBack": 0.08
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": true,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "vertical_pull",
+        "fatigueArchetype": "machine_compound"
     },
     {
         "id": "row",
@@ -500,12 +695,15 @@
             "deltoids": 0.22,
             "lowerBack": 0.12
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": false,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "horizontal_pull",
+        "fatigueArchetype": "freeweight_compound"
     },
     {
         "id": "shoulder-press",
@@ -513,18 +711,12 @@
         "normalizedName": "shoulder press",
         "aliases": [
             "Overhead Press",
-            "Arnold Press",
-            "Lateral Raise",
-            "Front Raise",
-            "Rear Delt"
+            "Arnold Press"
         ],
         "matchTerms": [
             "shoulder press",
             "overhead press",
-            "arnold press",
-            "lateral raise",
-            "front raise",
-            "rear delt"
+            "arnold press"
         ],
         "muscleWeights": {
             "deltoids": 1,
@@ -533,12 +725,80 @@
             "chest": 0.15,
             "upperBack": 0.12
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": false,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "vertical_press",
+        "fatigueArchetype": "freeweight_compound"
+    },
+    {
+        "id": "single-leg-leg-extension",
+        "canonicalName": "Single-Leg Leg Extension",
+        "normalizedName": "single leg leg extension",
+        "aliases": [
+            "Single Leg Extensions",
+            "Single Leg Extension"
+        ],
+        "matchTerms": [
+            "single leg extensions"
+        ],
+        "muscleWeights": {
+            "chest": 0,
+            "deltoids": 0,
+            "trapezius": 0,
+            "upperBack": 0,
+            "triceps": 0,
+            "biceps": 0,
+            "abs": 0,
+            "obliques": 0,
+            "lowerBack": 0,
+            "gluteal": 0,
+            "adductors": 0,
+            "quadriceps": 1,
+            "hamstrings": 0,
+            "calves": 0
+        },
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "ai_suggested",
+        "lastUpdatedAt": "2026-04-30T09:01:41+00:00",
         "lastUpdatedType": "manual"
+    },
+    {
+        "id": "spinning",
+        "canonicalName": "Spinning",
+        "normalizedName": "spinning",
+        "aliases": [
+            "Spin Bike",
+            "Indoor Cycling"
+        ],
+        "matchTerms": [
+            "spinning",
+            "spin bike",
+            "indoor cycling"
+        ],
+        "muscleWeights": {
+            "quadriceps": 1,
+            "gluteal": 0.45,
+            "hamstrings": 0.45,
+            "calves": 0.2,
+            "abs": 0.2
+        },
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 0.45,
+        "bodyweightEligible": false,
+        "setTypeHandling": "time_duration",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-30T00:00:00Z",
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "conditioning_lower",
+        "fatigueArchetype": "conditioning_hybrid"
     },
     {
         "id": "squat",
@@ -568,12 +828,76 @@
             "lowerBack": 0.08,
             "calves": 0.14
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": true,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "squat",
+        "fatigueArchetype": "hinge_squat"
+    },
+    {
+        "id": "standing-cable-glute-kickback",
+        "canonicalName": "Standing Cable Glute Kickback",
+        "normalizedName": "standing cable glute kickback",
+        "aliases": [
+            "Standing Cable Glute Kickbacks",
+            "Cable Glute Kickbacks",
+            "Cable Kickbacks"
+        ],
+        "matchTerms": [
+            "standing cable glute kickbacks"
+        ],
+        "muscleWeights": {
+            "chest": 0,
+            "deltoids": 0,
+            "trapezius": 0,
+            "upperBack": 0,
+            "triceps": 0,
+            "biceps": 0,
+            "abs": 0.08,
+            "obliques": 0.08,
+            "lowerBack": 0.2,
+            "gluteal": 1,
+            "adductors": 0.08,
+            "quadriceps": 0.08,
+            "hamstrings": 0.2,
+            "calves": 0
+        },
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 1,
+        "bodyweightEligible": false,
+        "setTypeHandling": "weight_reps",
+        "source": "ai_suggested",
+        "lastUpdatedAt": "2026-05-26T21:24:27+00:00",
         "lastUpdatedType": "manual"
+    },
+    {
+        "id": "stretching",
+        "canonicalName": "Stretching",
+        "normalizedName": "stretching",
+        "aliases": [
+            "Yin Yoga",
+            "Mobility",
+            "Recovery Stretching"
+        ],
+        "matchTerms": [
+            "stretching",
+            "yin yoga",
+            "mobility"
+        ],
+        "muscleWeights": [],
+        "fatigueImpact": "none",
+        "fatigueMultiplier": 0,
+        "bodyweightEligible": false,
+        "setTypeHandling": "time_based_ignore",
+        "source": "manual",
+        "lastUpdatedAt": "2026-04-30T00:00:00Z",
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "core",
+        "fatigueArchetype": "isolation"
     },
     {
         "id": "treadmill-running",
@@ -603,12 +927,15 @@
             "hamstrings": 0.45,
             "calves": 0.45
         },
-        "fatigueMultiplier": 0.7,
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 1,
         "bodyweightEligible": true,
         "setTypeHandling": "time_based_ignore",
         "source": "ai_suggested",
         "lastUpdatedAt": "2026-04-22T19:35:44+00:00",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "conditioning_lower",
+        "fatigueArchetype": "conditioning_hybrid"
     },
     {
         "id": "triceps-extension",
@@ -627,12 +954,15 @@
             "triceps": 1,
             "deltoids": 0.08
         },
+        "fatigueImpact": "normal",
         "fatigueMultiplier": 1,
         "bodyweightEligible": false,
         "setTypeHandling": "weight_reps",
         "source": "manual",
         "lastUpdatedAt": "2026-04-20T00:00:00Z",
-        "lastUpdatedType": "manual"
+        "lastUpdatedType": "manual",
+        "exerciseFamily": "arm_isolation",
+        "fatigueArchetype": "isolation"
     },
     {
         "id": "weighted-back-extension",
@@ -662,11 +992,14 @@
             "hamstrings": 0.3,
             "calves": 0
         },
-        "fatigueMultiplier": 1.15,
+        "fatigueImpact": "normal",
+        "fatigueMultiplier": 1,
         "bodyweightEligible": true,
         "setTypeHandling": "weight_reps",
         "source": "ai_suggested",
         "lastUpdatedAt": "2026-04-20T17:21:22+00:00",
-        "lastUpdatedType": "ai"
+        "lastUpdatedType": "ai",
+        "exerciseFamily": "hip_dominant",
+        "fatigueArchetype": "freeweight_compound"
     }
 ]

@@ -85,7 +85,6 @@ function mattrics_build_unknown_suggestion_prompt(array $unknown): array
         '- canonicalName: string',
         '- aliases: string[]',
         '- muscleWeights: object keyed only by allowed muscles, numeric values, at least one value > 0',
-        '- fatigueMultiplier: number',
         '- bodyweightEligible: boolean',
         '- setTypeHandling: one of ' . implode(', ', MATTRICS_EXERCISE_CONFIG_ALLOWED_SET_TYPES),
         '- confidence: number between 0 and 1',
@@ -124,7 +123,6 @@ function mattrics_build_existing_exercise_suggestion_prompt(array $exercise): ar
         'aliases: ' . ($aliases !== '' ? $aliases : '(none)'),
         'matchTerms: ' . ($matchTerms !== '' ? $matchTerms : '(none)'),
         'currentMuscleWeights: ' . ($muscleSummary !== [] ? implode(', ', $muscleSummary) : '(none)'),
-        'currentFatigueMultiplier: ' . (string) ($exercise['fatigueMultiplier'] ?? 1),
         'currentBodyweightEligible: ' . ((bool) ($exercise['bodyweightEligible'] ?? false) ? 'true' : 'false'),
         'currentSetTypeHandling: ' . (string) ($exercise['setTypeHandling'] ?? 'weight_reps'),
         'Allowed muscles: ' . $allowedMuscles,
@@ -134,7 +132,6 @@ function mattrics_build_existing_exercise_suggestion_prompt(array $exercise): ar
         '- canonicalName: string',
         '- aliases: string[]',
         '- muscleWeights: object keyed only by allowed muscles, numeric values, at least one value > 0',
-        '- fatigueMultiplier: number',
         '- bodyweightEligible: boolean',
         '- setTypeHandling: one of ' . implode(', ', MATTRICS_EXERCISE_CONFIG_ALLOWED_SET_TYPES),
         '- confidence: number between 0 and 1',
@@ -161,7 +158,6 @@ function mattrics_openai_suggestion_schema(): array
             'canonicalName',
             'aliases',
             'muscleWeights',
-            'fatigueMultiplier',
             'bodyweightEligible',
             'setTypeHandling',
             'confidence',
@@ -179,7 +175,6 @@ function mattrics_openai_suggestion_schema(): array
                 'required' => MATTRICS_EXERCISE_CONFIG_ALLOWED_MUSCLES,
                 'properties' => $muscleProperties,
             ],
-            'fatigueMultiplier' => ['type' => 'number'],
             'bodyweightEligible' => ['type' => 'boolean'],
             'setTypeHandling' => [
                 'type' => 'string',
@@ -301,11 +296,9 @@ function mattrics_validate_unknown_suggestion_payload(array $payload): array
     }
     $cleanAliases = array_values(array_unique($cleanAliases));
 
-    $muscleWeights = mattrics_normalize_semantic_muscle_weights($payload, 'AI suggestion');
-    $fatigueMultiplier = $payload['fatigueMultiplier'] ?? null;
-    if (!is_numeric($fatigueMultiplier)) {
-        throw new RuntimeException('AI suggestion fatigueMultiplier must be numeric.');
-    }
+    $fatigueImpact = mattrics_normalize_fatigue_impact($payload, 'AI suggestion');
+    $muscleWeights = mattrics_normalize_semantic_muscle_weights_with_options($payload, 'AI suggestion', $fatigueImpact === 'none');
+    $fatigueMultiplier = mattrics_normalize_fatigue_multiplier($payload, 'AI suggestion');
 
     $bodyweightEligible = $payload['bodyweightEligible'] ?? null;
     if (!is_bool($bodyweightEligible)) {
@@ -332,7 +325,8 @@ function mattrics_validate_unknown_suggestion_payload(array $payload): array
         'canonicalName' => $canonicalName,
         'aliases' => $cleanAliases,
         'muscleWeights' => $muscleWeights,
-        'fatigueMultiplier' => (float) $fatigueMultiplier,
+        'fatigueImpact' => $fatigueImpact,
+        'fatigueMultiplier' => $fatigueMultiplier,
         'bodyweightEligible' => $bodyweightEligible,
         'setTypeHandling' => $setTypeHandling,
         'confidence' => $confidence,

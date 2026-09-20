@@ -33,6 +33,7 @@
 <script src="assets/js/timeline.js"></script>
 <script src="assets/js/ai.js"></script>
 <script src="assets/js/detail.js"></script>
+<script src="assets/js/connectors.js?v=<?= htmlspecialchars($_assetVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="assets/js/settings.js?v=<?= htmlspecialchars($_assetVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="assets/js/exercise-admin.js?v=<?= htmlspecialchars($_assetVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="assets/js/passkeys.js?v=<?= htmlspecialchars($_assetVersion, ENT_QUOTES, 'UTF-8') ?>"></script>

@@ -197,6 +197,10 @@
     width: 100%;
   }
 
+  .connectors-grid {
+    grid-template-columns: 1fr;
+  }
+
   .docs-table,
   .docs-table tbody,
   .docs-table tr {
@@ -309,6 +313,12 @@
   .section-shell { padding: 14px; }
 
   .settings-groups-row { grid-template-columns: 1fr; }
+
+  .connectors-actions,
+  .connectors-detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
   .filter-row { flex: 1 1 auto; }
 

@@ -112,9 +112,12 @@ $validExercises = [[
     'aliases' => ['Push Up'],
     'matchTerms' => ['bench', 'push up'],
     'muscleWeights' => ['chest' => 1.0, 'triceps' => 0.52],
+    'fatigueImpact' => 'normal',
     'fatigueMultiplier' => 1,
     'bodyweightEligible' => true,
     'setTypeHandling' => 'weight_reps',
+    'exerciseFamily' => 'horizontal_press',
+    'fatigueArchetype' => 'freeweight_compound',
     'status' => 'approved',
     'reviewNeeded' => false,
     'source' => 'manual',
@@ -129,6 +132,8 @@ $validActivityTypes = [[
     'aliases' => [],
     'muscleWeights' => ['quadriceps' => 1.0, 'hamstrings' => 1.0],
     'fatigueMultiplier' => 1,
+    'exerciseFamily' => 'conditioning_lower',
+    'fatigueArchetype' => 'conditioning_hybrid',
     'status' => 'approved',
     'reviewNeeded' => false,
     'source' => 'manual',
@@ -151,9 +156,12 @@ $validDatasetRecords = [[
     'canonicalName' => 'Lateral Raise',
     'aliases' => ['Machine Lateral Raise', 'Cable Lateral Raise'],
     'muscleWeights' => ['deltoids' => 1.0, 'trapezius' => 0.18],
+    'fatigueImpact' => 'normal',
     'fatigueMultiplier' => 0.82,
     'bodyweightEligible' => false,
     'setTypeHandling' => 'weight_reps',
+    'exerciseFamily' => 'shoulder_isolation',
+    'fatigueArchetype' => 'isolation',
 ]];
 
 mattrics_write_exercise_config_records($validExercises);
@@ -166,8 +174,14 @@ $loadedUnknowns = mattrics_read_unknown_exercise_records();
 
 test_assert(count($loadedExercises) === 1, 'repository reads exercise configs');
 test_assert(($loadedExercises[0]['canonicalName'] ?? '') === 'Bench Press', 'repository preserves exercise canonical name');
+test_assert(($loadedExercises[0]['fatigueImpact'] ?? '') === 'normal', 'repository defaults exercise fatigue impact to normal');
+test_assert(($loadedExercises[0]['exerciseFamily'] ?? '') === 'horizontal_press', 'repository preserves optional exercise family');
+test_assert(($loadedExercises[0]['fatigueArchetype'] ?? '') === 'freeweight_compound', 'repository preserves optional exercise fatigue archetype');
 test_assert(count($loadedActivityTypes) === 1, 'repository reads activity type configs');
 test_assert(($loadedActivityTypes[0]['canonicalName'] ?? '') === 'Run', 'repository preserves activity type canonical name');
+test_assert(($loadedActivityTypes[0]['fatigueArchetype'] ?? '') === 'conditioning_hybrid', 'repository preserves optional activity fatigue archetype');
+test_assert(mattrics_normalize_config_name('HIITRun') === 'hiit run', 'repository normalizer splits acronym-prefixed camel case names');
+test_assert(mattrics_normalize_config_name('Strength_Workout') === 'strength workout', 'repository normalizer keeps delimiter cleanup stable');
 test_assert(count($loadedUnknowns) === 1, 'repository reads unknown exercise records');
 test_assert(($loadedUnknowns[0]['id'] ?? '') === 'exercise:mystery curl', 'repository preserves unknown exercise ids');
 
@@ -182,12 +196,61 @@ test_assert(
     ($openAiSchema['properties']['muscleWeights']['required'] ?? []) === MATTRICS_EXERCISE_CONFIG_ALLOWED_MUSCLES,
     'OpenAI schema requires all allowed muscle keys in muscleWeights'
 );
+test_assert(
+    !in_array('fatigueMultiplier', $openAiSchema['required'] ?? [], true)
+        && !array_key_exists('fatigueMultiplier', $openAiSchema['properties'] ?? []),
+    'OpenAI schema no longer exposes fatigueMultiplier'
+);
+
+write_raw(mattrics_exercise_config_path(), json_encode([[
+    'id' => 'legacy-bench-press',
+    'canonicalName' => 'Legacy Bench Press',
+    'normalizedName' => 'legacy bench press',
+    'aliases' => [],
+    'matchTerms' => [],
+    'muscleWeights' => ['chest' => 1.0, 'triceps' => 0.52],
+    'fatigueMultiplier' => 0.85,
+    'bodyweightEligible' => true,
+    'setTypeHandling' => 'weight_reps',
+    'exerciseFamily' => 'horizontal_press',
+    'fatigueArchetype' => 'freeweight_compound',
+    'status' => 'approved',
+    'reviewNeeded' => false,
+    'source' => 'manual',
+    'lastUpdatedAt' => '2026-04-20T00:00:00Z',
+    'lastUpdatedType' => 'manual',
+]], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+$legacyExercise = mattrics_read_exercise_config_records()[0] ?? [];
+test_assert(($legacyExercise['canonicalName'] ?? '') === 'Legacy Bench Press', 'legacy exercise records with fatigueMultiplier still load');
+test_assert(abs((float) ($legacyExercise['fatigueMultiplier'] ?? 0) - 0.85) < 0.00001, 'legacy exercise reads preserve fatigueMultiplier');
 
 mattrics_write_exercise_dataset_records($validDatasetRecords);
 $loadedDataset = mattrics_read_exercise_dataset_records();
 test_assert(count($loadedDataset) === 1, 'repository reads external dataset records');
 test_assert(($loadedDataset[0]['canonicalName'] ?? '') === 'Lateral Raise', 'repository preserves external dataset canonical name');
+test_assert(($loadedDataset[0]['exerciseFamily'] ?? '') === 'shoulder_isolation', 'repository preserves external dataset exercise family');
 test_assert(abs((float) ($loadedDataset[0]['muscleWeights']['trapezius'] ?? 0) - 0.20) < 0.00001, 'repository normalizes dataset weights to the semantic ladder');
+
+$noFatigueExercise = [[
+    'id' => 'stretching',
+    'canonicalName' => 'Stretching',
+    'normalizedName' => 'stretching',
+    'aliases' => [],
+    'matchTerms' => ['stretching'],
+    'muscleWeights' => [],
+    'fatigueImpact' => 'none',
+    'fatigueMultiplier' => 0,
+    'bodyweightEligible' => false,
+    'setTypeHandling' => 'time_based_ignore',
+    'source' => 'manual',
+    'lastUpdatedAt' => '2026-04-30T00:00:00Z',
+    'lastUpdatedType' => 'manual',
+]];
+mattrics_write_exercise_config_records($noFatigueExercise);
+$loadedNoFatigue = mattrics_read_exercise_config_records();
+test_assert(($loadedNoFatigue[0]['fatigueImpact'] ?? '') === 'none', 'repository allows no-fatigue exercise configs');
+test_assert(($loadedNoFatigue[0]['muscleWeights'] ?? null) === [], 'repository allows no-fatigue configs with no muscle weights');
+mattrics_write_exercise_config_records($validExercises);
 
 $datasetUnknown = [
     'id' => 'exercise:machine lateral raise',
@@ -252,6 +315,24 @@ expect_runtime_exception(
         ]]);
     },
     'repository rejects invalid unknown sourceType'
+);
+
+expect_runtime_exception(
+    static function () use ($validExercises): void {
+        $invalid = $validExercises;
+        $invalid[0]['exerciseFamily'] = 'novice';
+        mattrics_write_exercise_config_records($invalid);
+    },
+    'repository rejects invalid optional exercise family'
+);
+
+expect_runtime_exception(
+    static function () use ($validActivityTypes): void {
+        $invalid = $validActivityTypes;
+        $invalid[0]['fatigueArchetype'] = 'global_magic';
+        mattrics_write_activity_type_config_records($invalid);
+    },
+    'repository rejects invalid optional activity fatigue archetype'
 );
 
 expect_runtime_exception(
@@ -320,12 +401,23 @@ $updatedExercise = mattrics_update_exercise_config_record('bench-press', [
     'aliases' => ['Push Up', 'Mystery Curl'],
     'matchTerms' => ['bench', 'push up', 'mystery curl'],
     'muscleWeights' => ['chest' => 1.0, 'triceps' => 0.52],
-    'fatigueMultiplier' => 1.05,
+    'fatigueMultiplier' => 1,
     'bodyweightEligible' => true,
     'setTypeHandling' => 'weight_reps',
 ]);
 test_assert(!array_key_exists('status', $updatedExercise), 'repository update returns simplified configured exercise records');
 test_assert(!array_key_exists('reviewNeeded', $updatedExercise), 'repository update no longer exposes reviewNeeded');
+
+$updatedActivityType = mattrics_update_activity_type_config_record('run', [
+    'canonicalName' => 'Run',
+    'aliases' => ['Jog'],
+    'muscleWeights' => ['quadriceps' => 1.0, 'hamstrings' => 0.62],
+    'fatigueMultiplier' => 1,
+]);
+test_assert(($updatedActivityType['canonicalName'] ?? '') === 'Run', 'repository updates activity type configs');
+test_assert(($updatedActivityType['status'] ?? '') === 'approved', 'repository update preserves activity type status');
+test_assert(($updatedActivityType['reviewNeeded'] ?? null) === false, 'repository update preserves activity type review flags');
+test_assert(abs((float) ($updatedActivityType['muscleWeights']['hamstrings'] ?? 0) - 0.65) < 0.00001, 'repository update normalizes activity type muscle weights');
 
 $prunedUnknowns = mattrics_prune_resolved_unknown_exercise_records();
 test_assert(count($prunedUnknowns) === 0, 'resolved unknown exercises are pruned after alias updates');
@@ -339,7 +431,6 @@ $mergeExercises = [
         'aliases' => ['Neutral Grip Curl'],
         'matchTerms' => ['hammer curl', 'neutral grip curl'],
         'muscleWeights' => ['biceps' => 1.0, 'trapezius' => 0.15],
-        'fatigueMultiplier' => 0.85,
         'bodyweightEligible' => false,
         'setTypeHandling' => 'weight_reps',
         'status' => 'draft_active',
@@ -387,6 +478,22 @@ $deletedExercise = mattrics_delete_exercise_config_record('hammer-curl');
 test_assert(($deletedExercise['id'] ?? '') === 'hammer-curl', 'delete returns the removed exercise');
 test_assert(mattrics_find_exercise_config_by_id('hammer-curl') === null, 'delete removes the exercise config from storage');
 
+$createdActivityType = mattrics_create_activity_type_config_record([
+    'canonicalName' => 'Mobility Flow',
+    'aliases' => ['Mobility'],
+    'muscleWeights' => ['abs' => 0.42, 'obliques' => 0.22],
+    'fatigueMultiplier' => 0.5,
+]);
+test_assert(($createdActivityType['canonicalName'] ?? '') === 'Mobility Flow', 'repository creates new activity type configs');
+test_assert(($createdActivityType['status'] ?? '') === 'approved', 'repository create defaults activity type status to approved');
+test_assert(($createdActivityType['reviewNeeded'] ?? null) === false, 'repository create defaults activity type reviewNeeded to false');
+
+$deletedActivityType = mattrics_delete_activity_type_config_record('run');
+test_assert(($deletedActivityType['id'] ?? '') === 'run', 'delete returns the removed activity type');
+test_assert(mattrics_find_activity_type_config_by_id('run') === null, 'delete removes the activity type config from storage');
+
+mattrics_write_activity_type_config_records($validActivityTypes);
+
 $collisionExercises = [
     $validExercises[0],
     [
@@ -396,7 +503,6 @@ $collisionExercises = [
         'aliases' => ['Face Pull'],
         'matchTerms' => ['row', 'face pull'],
         'muscleWeights' => ['upperBack' => 0.8, 'biceps' => 0.3],
-        'fatigueMultiplier' => 1,
         'bodyweightEligible' => false,
         'setTypeHandling' => 'weight_reps',
         'status' => 'approved',
@@ -430,7 +536,6 @@ $decodedSuggestion = mattrics_decode_unknown_suggestion_output(json_encode([
     'canonicalName' => 'Hammer Curl',
     'aliases' => ['Dumbbell Hammer Curl'],
     'muscleWeights' => ['biceps' => 1.0, 'triceps' => 0.1],
-    'fatigueMultiplier' => 0.8,
     'bodyweightEligible' => false,
     'setTypeHandling' => 'weight_reps',
     'confidence' => 0.78,
@@ -460,7 +565,6 @@ expect_runtime_exception(
             'canonicalName' => 'Bad Curl',
             'aliases' => [],
             'muscleWeights' => ['forearms' => 1.0],
-            'fatigueMultiplier' => 1,
             'bodyweightEligible' => false,
             'setTypeHandling' => 'weight_reps',
             'confidence' => 0.5,
@@ -496,7 +600,8 @@ $patchDraftResult = run_php_fixture(
         'aliases' => ['Push Up', 'Mystery Curl'],
         'matchTerms' => ['bench', 'push up', 'mystery curl'],
         'muscleWeights' => ['chest' => 1.0, 'triceps' => 0.52],
-        'fatigueMultiplier' => 1.1,
+        'fatigueImpact' => 'normal',
+        'fatigueMultiplier' => 1,
         'bodyweightEligible' => true,
         'setTypeHandling' => 'weight_reps',
     ], JSON_UNESCAPED_SLASHES)
@@ -530,7 +635,8 @@ $createResult = run_php_fixture(
         'aliases' => ['Alt Mystery Curl'],
         'matchTerms' => ['mystery curl', 'alt mystery curl'],
         'muscleWeights' => ['biceps' => 1.0, 'trapezius' => 0.12],
-        'fatigueMultiplier' => 0.85,
+        'fatigueImpact' => 'normal',
+        'fatigueMultiplier' => 1,
         'bodyweightEligible' => false,
         'setTypeHandling' => 'weight_reps',
     ], JSON_UNESCAPED_SLASHES)
@@ -549,6 +655,39 @@ if (!$createResult['started']) {
 
 mattrics_write_exercise_config_records($validExercises);
 mattrics_write_activity_type_config_records($validActivityTypes);
+mattrics_write_unknown_exercise_records([[
+    'id' => 'activityType:mobility flow',
+    'sourceType' => 'activityType',
+    'normalizedName' => 'mobility flow',
+    'rawNames' => ['Mobility Flow'],
+    'timesSeen' => 1,
+    'firstSeenAt' => '2026-04-20T00:00:00Z',
+    'lastSeenAt' => '2026-04-20T00:00:00Z',
+    'aiStatus' => 'not_requested',
+]]);
+
+$activityTypeCreateResult = run_php_fixture(
+    dirname(__DIR__) . '/tests/fixtures/run-activity-type-create-endpoint.php',
+    json_encode([
+        'configType' => 'activityType',
+        'canonicalName' => 'Mobility Flow',
+        'aliases' => ['Mobility'],
+        'muscleWeights' => ['abs' => 0.42, 'obliques' => 0.22],
+        'fatigueMultiplier' => 0.5,
+    ], JSON_UNESCAPED_SLASHES)
+);
+if (!$activityTypeCreateResult['started']) {
+    test_assert(false, 'activity type create endpoint runner starts');
+} else {
+    $decoded = $activityTypeCreateResult['decoded'];
+    test_assert(($decoded['ok'] ?? false) === true, 'activity type create endpoint returns ok');
+    test_assert(($decoded['activityType']['canonicalName'] ?? '') === 'Mobility Flow', 'activity type create endpoint returns the created activity type');
+    test_assert(($decoded['configType'] ?? '') === 'activityType', 'activity type create endpoint reports its config type');
+    test_assert(count($decoded['unknowns'] ?? []) === 0, 'activity type create endpoint prunes the resolved unknown');
+}
+
+mattrics_write_exercise_config_records($validExercises);
+mattrics_write_activity_type_config_records($validActivityTypes);
 mattrics_write_unknown_exercise_records($validUnknowns);
 
 $regenerateMock = json_encode([
@@ -557,7 +696,6 @@ $regenerateMock = json_encode([
         'canonicalName' => 'Bench Press',
         'aliases' => ['Barbell Bench Press', 'Push Up'],
         'muscleWeights' => ['chest' => 1.0, 'triceps' => 0.52],
-        'fatigueMultiplier' => 1.05,
         'bodyweightEligible' => true,
         'setTypeHandling' => 'weight_reps',
         'confidence' => 0.82,
@@ -589,6 +727,7 @@ $patchCollisionResult = run_php_fixture(
         'aliases' => ['Face Pull'],
         'matchTerms' => ['bench'],
         'muscleWeights' => ['chest' => 1.0],
+        'fatigueImpact' => 'normal',
         'fatigueMultiplier' => 1,
         'bodyweightEligible' => true,
         'setTypeHandling' => 'weight_reps',
@@ -654,6 +793,41 @@ if (!$deleteResult['started']) {
 mattrics_write_exercise_config_records($validExercises);
 mattrics_write_activity_type_config_records($validActivityTypes);
 mattrics_write_unknown_exercise_records($validUnknowns);
+
+$activityTypePatchResult = run_php_fixture(
+    dirname(__DIR__) . '/tests/fixtures/run-activity-type-patch-endpoint.php',
+    json_encode([
+        'configType' => 'activityType',
+        'canonicalName' => 'Run',
+        'aliases' => ['Jog'],
+        'muscleWeights' => ['quadriceps' => 1.0, 'hamstrings' => 0.62],
+        'fatigueMultiplier' => 1,
+    ], JSON_UNESCAPED_SLASHES)
+);
+if (!$activityTypePatchResult['started']) {
+    test_assert(false, 'activity type patch endpoint runner starts');
+} else {
+    $decoded = $activityTypePatchResult['decoded'];
+    test_assert(($decoded['ok'] ?? false) === true, 'activity type patch endpoint returns ok');
+    test_assert(($decoded['activityType']['canonicalName'] ?? '') === 'Run', 'activity type patch endpoint returns the updated activity type');
+    test_assert(($decoded['activityType']['status'] ?? '') === 'approved', 'activity type patch endpoint preserves status');
+    test_assert(trim($activityTypePatchResult['stderr']) === '', 'activity type patch endpoint runner does not emit stderr');
+}
+
+$activityTypeDeleteResult = run_php_fixture(dirname(__DIR__) . '/tests/fixtures/run-activity-type-delete-endpoint.php');
+if (!$activityTypeDeleteResult['started']) {
+    test_assert(false, 'activity type delete endpoint runner starts');
+} else {
+    $decoded = $activityTypeDeleteResult['decoded'];
+    test_assert(($decoded['ok'] ?? false) === true, 'activity type delete endpoint returns ok');
+    test_assert(($decoded['deletedActivityType']['id'] ?? '') === 'run', 'activity type delete endpoint returns the removed activity type');
+    test_assert(($decoded['configType'] ?? '') === 'activityType', 'activity type delete endpoint reports its config type');
+    test_assert(trim($activityTypeDeleteResult['stderr']) === '', 'activity type delete endpoint runner does not emit stderr');
+}
+
+mattrics_write_exercise_config_records($validExercises);
+mattrics_write_activity_type_config_records($validActivityTypes);
+mattrics_write_unknown_exercise_records($validUnknowns);
 mattrics_write_exercise_dataset_records($validDatasetRecords);
 
 $datasetUnknowns = [[
@@ -702,7 +876,6 @@ $mockSuccess = json_encode([
         'canonicalName' => 'Hammer Curl',
         'aliases' => ['Dumbbell Hammer Curl', 'Neutral Grip Curl'],
         'muscleWeights' => ['biceps' => 1.0, 'trapezius' => 0.15],
-        'fatigueMultiplier' => 0.85,
         'bodyweightEligible' => false,
         'setTypeHandling' => 'weight_reps',
         'confidence' => 0.83,

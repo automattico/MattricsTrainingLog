@@ -157,6 +157,14 @@ function mattrics_env_bool(string $key, bool $default): bool
 
 function mattrics_apply_config_env_overrides(array $config): array
 {
+    if (mattrics_env_has('MATTRICS_FOUNDATION_DATABASE_URL')) {
+        $config['foundation_database_url'] = trim((string) getenv('MATTRICS_FOUNDATION_DATABASE_URL'));
+    }
+
+    if (mattrics_env_has('MATTRICS_FOUNDATION_USER_KEY')) {
+        $config['foundation_user_key'] = trim((string) getenv('MATTRICS_FOUNDATION_USER_KEY'));
+    }
+
     if (mattrics_env_has('MATTRICS_SITE_ORIGIN')) {
         $config['site_origin'] = trim((string) getenv('MATTRICS_SITE_ORIGIN'));
     }

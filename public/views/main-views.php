@@ -68,6 +68,12 @@
   </section>
 </div>
 
+<div class="view" id="view-connectors">
+  <section class="section-shell">
+    <div id="connectorsContent"></div>
+  </section>
+</div>
+
 <div class="view" id="view-docs">
   <section class="section-shell docs-shell">
     <div id="docsContent"></div>

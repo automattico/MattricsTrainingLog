@@ -107,7 +107,6 @@ Return JSON:
   "canonicalName": string,
   "aliases": string[],
   "muscleWeights": { [muscle]: number },
-  "fatigueMultiplier": number,
   "bodyweightEligible": boolean,
   "setTypeHandling": "weight_reps" | "bodyweight_reps" | "time_based_ignore",
   "confidence": number,
@@ -122,7 +121,6 @@ Return JSON:
 - required fields present
 - muscleWeights keys valid
 - at least one muscle > 0
-- fatigueMultiplier numeric
 - setTypeHandling valid enum
 - canonicalName non-empty
 

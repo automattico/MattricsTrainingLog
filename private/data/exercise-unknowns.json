@@ -8,7 +8,7 @@
         ],
         "timesSeen": 1,
         "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
         "aiStatus": "not_requested"
     },
     {
@@ -20,7 +20,7 @@
         ],
         "timesSeen": 1,
         "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
         "aiStatus": "not_requested"
     },
     {
@@ -32,7 +32,7 @@
         ],
         "timesSeen": 1,
         "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
         "aiStatus": "not_requested"
     },
     {
@@ -44,19 +44,7 @@
         ],
         "timesSeen": 1,
         "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
-        "aiStatus": "not_requested"
-    },
-    {
-        "id": "exercise:cycling",
-        "sourceType": "exercise",
-        "normalizedName": "cycling",
-        "rawNames": [
-            "Cycling"
-        ],
-        "timesSeen": 4,
-        "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
         "aiStatus": "not_requested"
     },
     {
@@ -68,31 +56,19 @@
         ],
         "timesSeen": 1,
         "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
         "aiStatus": "not_requested"
     },
     {
-        "id": "exercise:external shoulder rotation cable or band",
+        "id": "exercise:front raise dumbbell",
         "sourceType": "exercise",
-        "normalizedName": "external shoulder rotation cable or band",
+        "normalizedName": "front raise dumbbell",
         "rawNames": [
-            "External Shoulder Rotation (Cable or Band)"
+            "Front Raise (Dumbbell)"
         ],
-        "timesSeen": 12,
-        "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
-        "aiStatus": "not_requested"
-    },
-    {
-        "id": "exercise:leg extension machine",
-        "sourceType": "exercise",
-        "normalizedName": "leg extension machine",
-        "rawNames": [
-            "Leg Extension (Machine)"
-        ],
-        "timesSeen": 10,
-        "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "timesSeen": 8,
+        "firstSeenAt": "2026-04-30T08:59:56+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
         "aiStatus": "not_requested"
     },
     {
@@ -104,7 +80,19 @@
         ],
         "timesSeen": 1,
         "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
+        "aiStatus": "not_requested"
+    },
+    {
+        "id": "exercise:rear delt reverse fly machine",
+        "sourceType": "exercise",
+        "normalizedName": "rear delt reverse fly machine",
+        "rawNames": [
+            "Rear Delt Reverse Fly (Machine)"
+        ],
+        "timesSeen": 3,
+        "firstSeenAt": "2026-04-30T08:59:56+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
         "aiStatus": "not_requested"
     },
     {
@@ -116,7 +104,7 @@
         ],
         "timesSeen": 2,
         "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
         "aiStatus": "not_requested"
     },
     {
@@ -128,43 +116,7 @@
         ],
         "timesSeen": 1,
         "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
-        "aiStatus": "not_requested"
-    },
-    {
-        "id": "exercise:single leg extensions",
-        "sourceType": "exercise",
-        "normalizedName": "single leg extensions",
-        "rawNames": [
-            "Single Leg Extensions"
-        ],
-        "timesSeen": 4,
-        "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
-        "aiStatus": "not_requested"
-    },
-    {
-        "id": "exercise:spinning",
-        "sourceType": "exercise",
-        "normalizedName": "spinning",
-        "rawNames": [
-            "Spinning"
-        ],
-        "timesSeen": 20,
-        "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
-        "aiStatus": "not_requested"
-    },
-    {
-        "id": "exercise:stretching",
-        "sourceType": "exercise",
-        "normalizedName": "stretching",
-        "rawNames": [
-            "Stretching"
-        ],
-        "timesSeen": 33,
-        "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
         "aiStatus": "not_requested"
     },
     {
@@ -174,9 +126,9 @@
         "rawNames": [
             "Thor's Harness (Dual Cable Rotational Half-Kneeling Pull-Press)"
         ],
-        "timesSeen": 8,
+        "timesSeen": 9,
         "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
         "aiStatus": "not_requested"
     },
     {
@@ -186,9 +138,9 @@
         "rawNames": [
             "Torso Rotation"
         ],
-        "timesSeen": 13,
+        "timesSeen": 16,
         "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
         "aiStatus": "not_requested"
     },
     {
@@ -200,7 +152,7 @@
         ],
         "timesSeen": 1,
         "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
         "aiStatus": "not_requested"
     },
     {
@@ -212,7 +164,7 @@
         ],
         "timesSeen": 2,
         "firstSeenAt": "2026-04-20T17:01:24+00:00",
-        "lastSeenAt": "2026-04-23T08:52:57+00:00",
+        "lastSeenAt": "2026-05-29T08:55:48+00:00",
         "aiStatus": "not_requested"
     }
 ]

@@ -5,6 +5,7 @@
 
   Mattrics.DATA_URL = config.DATA_URL || (isHttp ? "api/data.php" : "");
   Mattrics.EXERCISE_CONFIG_URL = config.EXERCISE_CONFIG_URL || (isHttp ? "api/exercises.php" : "");
+  Mattrics.CONNECTORS_URL = config.CONNECTORS_URL || (isHttp ? "api/connectors.php" : "");
   Mattrics.AI_PROXY_URL = config.AI_PROXY_URL || (isHttp ? "api/ai.php" : "");
   Mattrics.SHEET_URL = config.SHEET_URL || "";
   Mattrics.SHEET_TOKEN = config.SHEET_TOKEN || "";
@@ -96,9 +97,48 @@
     estimatedBodyweightKg: 75,
     bodyweightLoadFactor: 0.4,
     defaultRpe: 7.5,
+    relativeFactorMin: 0.55,
+    relativeFactorMax: 1.35,
     smallThresholdRatio: 0.02,
     recoveryThresholdRatio: 0.25,
+    trainableThresholdRatio: 0.5,
     strengthLoadUnitDivisor: 1500,
+    systemicBaseHalfLifeHours: 24,
+    systemicNormalizationLoad: 2.5,
+    systemicPenaltyWeight: 0.25,
+    localHalfLifeScaleMin: 0.85,
+    localHalfLifeScaleMax: 1.35,
+    systemicHalfLifeScaleMin: 0.9,
+    systemicHalfLifeScaleMax: 1.5,
+    minimumReferenceSetCount: 3,
+    experienceStrengthScale: {
+      Beginner: 0.85,
+      Intermediate: 1.15,
+      Advanced: 1.3,
+    },
+    fatigueArchetypeShares: {
+      isolation: { localShare: 0.9, systemicShare: 0.1 },
+      machine_compound: { localShare: 0.8, systemicShare: 0.2 },
+      freeweight_compound: { localShare: 0.7, systemicShare: 0.3 },
+      hinge_squat: { localShare: 0.6, systemicShare: 0.4 },
+      conditioning_hybrid: { localShare: 0.55, systemicShare: 0.45 },
+    },
+    exerciseFamilyReferenceLoadKg: {
+      horizontal_press: 60,
+      vertical_press: 35,
+      horizontal_pull: 55,
+      vertical_pull: 50,
+      squat: 80,
+      hinge: 90,
+      hip_dominant: 70,
+      knee_isolation: 40,
+      hip_isolation: 35,
+      arm_isolation: 20,
+      shoulder_isolation: 12,
+      calf: 45,
+      core: 25,
+      conditioning_lower: 75,
+    },
     halfLifeHours: {
       chest: 72,
       deltoids: 60,

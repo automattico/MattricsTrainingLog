@@ -1,9 +1,38 @@
 (function () {
   const M = window.Mattrics;
   const SET_TYPE_OPTIONS = [
-    { value: "weight_reps", label: "Weight + reps" },
-    { value: "bodyweight_reps", label: "Bodyweight + reps" },
-    { value: "time_based_ignore", label: "Ignore time-based sets" },
+    { value: "weight_reps", label: "Strength / reps" },
+    { value: "time_duration", label: "Time / cardio" },
+  ];
+  const EXERCISE_FAMILY_OPTIONS = [
+    { value: "", label: "Auto / unset" },
+    { value: "horizontal_press", label: "Horizontal press" },
+    { value: "vertical_press", label: "Vertical press" },
+    { value: "horizontal_pull", label: "Horizontal pull" },
+    { value: "vertical_pull", label: "Vertical pull" },
+    { value: "squat", label: "Squat" },
+    { value: "hinge", label: "Hinge" },
+    { value: "hip_dominant", label: "Hip dominant" },
+    { value: "knee_isolation", label: "Knee isolation" },
+    { value: "hip_isolation", label: "Hip isolation" },
+    { value: "arm_isolation", label: "Arm isolation" },
+    { value: "shoulder_isolation", label: "Shoulder isolation" },
+    { value: "calf", label: "Calf" },
+    { value: "core", label: "Core" },
+    { value: "conditioning_lower", label: "Conditioning lower" },
+  ];
+  const FATIGUE_ARCHETYPE_OPTIONS = [
+    { value: "", label: "Auto / unset" },
+    { value: "isolation", label: "Isolation" },
+    { value: "machine_compound", label: "Machine compound" },
+    { value: "freeweight_compound", label: "Freeweight compound" },
+    { value: "hinge_squat", label: "Hinge / squat" },
+    { value: "conditioning_hybrid", label: "Conditioning hybrid" },
+  ];
+  const LIST_FILTER_OPTIONS = [
+    { value: "all", label: "All configs" },
+    { value: "exercise", label: "Exercises" },
+    { value: "activityType", label: "Activity types" },
   ];
   const AI_STATUS_LABELS = {
     not_requested: "No suggestion yet",
@@ -57,6 +86,7 @@
           open: false,
           type: "",
           key: "",
+          kind: "",
         },
         formDraft: null,
         formErrors: null,
@@ -84,6 +114,11 @@
 
   function normalizeQuery(value) {
     return M.normalizeExerciseConfigName(String(value == null ? "" : value));
+  }
+
+  function normalizeSetTypeHandling(value) {
+    const raw = String(value || "").trim();
+    return raw === "time_duration" ? "time_duration" : "weight_reps";
   }
 
   function parseListInput(value) {
@@ -200,7 +235,9 @@
           return { activity, matches: [] };
         }
 
-        const exercises = M.parseHevyDescription(activity.Description);
+        const exercises = typeof M.getActivityWorkoutBlocks === "function"
+          ? M.getActivityWorkoutBlocks(activity)
+          : M.parseHevyDescription(activity.Description);
         if (!Array.isArray(exercises) || !exercises.length) return null;
         const matches = exercises.filter((exercise) => normalizeQuery(exercise && exercise.name) === normalizedName);
         if (!matches.length) return null;
@@ -248,6 +285,10 @@
     return toArray(M.state.exerciseConfigs).find((record) => record && record.id === id) || null;
   }
 
+  function getActivityTypeRecordById(id) {
+    return toArray(M.state.activityTypeConfigs).find((record) => record && record.id === id) || null;
+  }
+
   function getUnknownRecordById(id) {
     return toArray(M.state.unknownExercises).find((record) => record && record.id === id) || null;
   }
@@ -258,15 +299,80 @@
 
     if (selectedKey.startsWith("exercise:")) {
       const record = getExerciseRecordById(selectedKey.slice("exercise:".length));
-      return record ? { key: selectedKey, type: "exercise", record } : null;
+      return record ? { key: selectedKey, type: "configured", kind: "exercise", record } : null;
+    }
+
+    if (selectedKey.startsWith("activityType:")) {
+      const record = getActivityTypeRecordById(selectedKey.slice("activityType:".length));
+      return record ? { key: selectedKey, type: "configured", kind: "activityType", record } : null;
     }
 
     if (selectedKey.startsWith("unknown:")) {
       const record = getUnknownRecordById(selectedKey.slice("unknown:".length));
-      return record ? { key: selectedKey, type: "unknown", record } : null;
+      if (!record) return null;
+      return {
+        key: selectedKey,
+        type: "unknown",
+        kind: record.sourceType === "activityType" ? "unknownActivityType" : "unknownExercise",
+        record,
+      };
     }
 
     return null;
+  }
+
+  function getExerciseBaselineFormValues(record) {
+    return {
+      canonicalName: record.canonicalName || "",
+      aliasesText: toArray(record.aliases).join("\n"),
+      matchTermsText: toArray(record.matchTerms).join("\n"),
+      fatigueImpact: record.fatigueImpact || "normal",
+      bodyweightEligible: Boolean(record.bodyweightEligible),
+      setTypeHandling: normalizeSetTypeHandling(record.setTypeHandling || "weight_reps"),
+      exerciseFamily: record.exerciseFamily || "",
+      fatigueArchetype: record.fatigueArchetype || "",
+      muscleWeights: { ...(record.muscleWeights || {}) },
+      source: record.source || "manual",
+    };
+  }
+
+  function getUnknownBaselineFormValues(record) {
+    const aliases = toArray(record.rawNames);
+    const matchTerms = [];
+    if (record.normalizedName) matchTerms.push(record.normalizedName);
+    aliases.forEach((name) => {
+      if (!matchTerms.includes(name)) {
+        matchTerms.push(name);
+      }
+    });
+
+    return {
+      canonicalName: aliases[0] || record.normalizedName || "",
+      aliasesText: aliases.join("\n"),
+      matchTermsText: record.sourceType === "exercise" ? matchTerms.join("\n") : "",
+      fatigueImpact: "normal",
+      bodyweightEligible: false,
+      setTypeHandling: normalizeSetTypeHandling("weight_reps"),
+      exerciseFamily: "",
+      fatigueArchetype: "",
+      muscleWeights: {},
+      source: "manual",
+    };
+  }
+
+  function getActivityTypeBaselineFormValues(record) {
+    return {
+      canonicalName: record.canonicalName || "",
+      aliasesText: toArray(record.aliases).join("\n"),
+      matchTermsText: "",
+      fatigueImpact: "normal",
+      bodyweightEligible: false,
+      setTypeHandling: "",
+      exerciseFamily: record.exerciseFamily || "",
+      fatigueArchetype: record.fatigueArchetype || "",
+      muscleWeights: { ...(record.muscleWeights || {}) },
+      source: record.source || "manual",
+    };
   }
 
   function getExerciseFormValues(record) {
@@ -280,16 +386,7 @@
       return state.formDraft.values;
     }
 
-    return {
-      canonicalName: record.canonicalName || "",
-      aliasesText: toArray(record.aliases).join("\n"),
-      matchTermsText: toArray(record.matchTerms).join("\n"),
-      fatigueMultiplier: String(record.fatigueMultiplier == null ? "1" : record.fatigueMultiplier),
-      bodyweightEligible: Boolean(record.bodyweightEligible),
-      setTypeHandling: record.setTypeHandling || "weight_reps",
-      muscleWeights: { ...(record.muscleWeights || {}) },
-      source: record.source || "manual",
-    };
+    return getExerciseBaselineFormValues(record);
   }
 
   function getUnknownFormValues(record) {
@@ -303,32 +400,28 @@
       return state.formDraft.values;
     }
 
-    const aliases = toArray(record.rawNames);
-    const matchTerms = [];
-    if (record.normalizedName) matchTerms.push(record.normalizedName);
-    aliases.forEach((name) => {
-      if (!matchTerms.includes(name)) {
-        matchTerms.push(name);
-      }
-    });
+    return getUnknownBaselineFormValues(record);
+  }
 
-    return {
-      canonicalName: aliases[0] || record.normalizedName || "",
-      aliasesText: aliases.join("\n"),
-      matchTermsText: matchTerms.join("\n"),
-      fatigueMultiplier: "1",
-      bodyweightEligible: false,
-      setTypeHandling: "weight_reps",
-      muscleWeights: {},
-      source: "manual",
-    };
+  function getActivityTypeFormValues(record) {
+    const state = getAdminState();
+    if (
+      state.formDraft
+      && state.formDraft.key === `activityType:${record.id}`
+      && state.formDraft.values
+      && typeof state.formDraft.values === "object"
+    ) {
+      return state.formDraft.values;
+    }
+
+    return getActivityTypeBaselineFormValues(record);
   }
 
   function getSelectedFormValues(selected) {
     if (!selected) return null;
-    return selected.type === "unknown"
-      ? getUnknownFormValues(selected.record)
-      : getExerciseFormValues(selected.record);
+    if (selected.kind === "activityType") return getActivityTypeFormValues(selected.record);
+    if (selected.type === "unknown") return getUnknownFormValues(selected.record);
+    return getExerciseFormValues(selected.record);
   }
 
   function updateExerciseDraftValues(record, patch) {
@@ -357,8 +450,22 @@
     return state.formDraft.values;
   }
 
+  function updateActivityTypeDraftValues(record, patch) {
+    const state = getAdminState();
+    state.formDraft = {
+      key: `activityType:${record.id}`,
+      values: {
+        ...getActivityTypeFormValues(record),
+        ...patch,
+      },
+    };
+    state.formErrors = null;
+    return state.formDraft.values;
+  }
+
   function updateSelectedDraftValues(selected, patch) {
     if (!selected) return null;
+    if (selected.kind === "activityType") return updateActivityTypeDraftValues(selected.record, patch);
     return selected.type === "unknown"
       ? updateUnknownDraftValues(selected.record, patch)
       : updateExerciseDraftValues(selected.record, patch);
@@ -379,12 +486,24 @@
     };
   }
 
+  function isExerciseKind(selected) {
+    return Boolean(selected && (selected.kind === "exercise" || selected.kind === "unknownExercise"));
+  }
+
+  function isActivityTypeKind(selected) {
+    return Boolean(selected && (selected.kind === "activityType" || selected.kind === "unknownActivityType"));
+  }
+
   function getFilteredExercises(query, filter) {
-    return M.filterExerciseAdminList(toArray(M.state.exerciseConfigs), query, filter);
+    return M.filterExerciseAdminList(toArray(M.state.exerciseConfigs), query, filter, "exercise");
+  }
+
+  function getFilteredActivityTypes(query, filter) {
+    return M.filterExerciseAdminList(toArray(M.state.activityTypeConfigs), query, filter, "activityType");
   }
 
   function getMergeTargetOptions(selected) {
-    const selectedExerciseId = selected && selected.type === "exercise" ? selected.record.id : "";
+    const selectedExerciseId = selected && selected.kind === "exercise" ? selected.record.id : "";
     return toArray(M.state.exerciseConfigs)
       .filter((record) => record && record.id !== selectedExerciseId)
       .sort((left, right) => String(left.canonicalName || "").localeCompare(String(right.canonicalName || "")));
@@ -406,15 +525,20 @@
     return state.mergeTargetId;
   }
 
-  function countUnknownExercises() {
-    return toArray(M.state.unknownExercises).filter((record) => record && record.sourceType === "exercise").length;
+  function countUnknownItems() {
+    return toArray(M.state.unknownExercises).filter(Boolean).length;
   }
 
-  M.filterExerciseAdminList = function filterExerciseAdminList(records, query, filter) {
+  M.filterExerciseAdminList = function filterExerciseAdminList(records, query, filter, sourceType = "exercise") {
     const normalizedQuery = normalizeQuery(query);
 
     return toArray(records)
       .filter((record) => Boolean(record))
+      .filter((record) => {
+        if (filter === "exercise") return sourceType === "exercise";
+        if (filter === "activityType") return sourceType === "activityType";
+        return true;
+      })
       .filter((record) => {
         if (!normalizedQuery) return true;
         const haystack = [
@@ -437,7 +561,12 @@
     };
 
     const unknownItems = toArray(M.state.unknownExercises)
-      .filter((record) => record && record.sourceType === "exercise")
+      .filter((record) => Boolean(record))
+      .filter((record) => {
+        if (filter === "exercise") return record.sourceType === "exercise";
+        if (filter === "activityType") return record.sourceType === "activityType";
+        return true;
+      })
       .filter((record) => matchesQuery([
         record.normalizedName,
         ...(toArray(record.rawNames)),
@@ -446,17 +575,27 @@
       .map((record) => ({
         key: `unknown:${record.id}`,
         type: "unknown",
+        kind: record.sourceType === "activityType" ? "unknownActivityType" : "unknownExercise",
         record,
       }));
 
     const exerciseItems = M.filterExerciseAdminList(toArray(M.state.exerciseConfigs), query, filter)
       .map((record) => ({
         key: `exercise:${record.id}`,
-        type: "exercise",
+        type: "configured",
+        kind: "exercise",
         record,
       }));
 
-    return unknownItems.concat(exerciseItems);
+    const activityTypeItems = M.filterExerciseAdminList(toArray(M.state.activityTypeConfigs), query, filter, "activityType")
+      .map((record) => ({
+        key: `activityType:${record.id}`,
+        type: "configured",
+        kind: "activityType",
+        record,
+      }));
+
+    return unknownItems.concat(exerciseItems, activityTypeItems);
   };
 
   function ensureSelection(options = {}) {
@@ -489,7 +628,7 @@
       return `<button type="button" class="exercise-admin-list-item exercise-admin-list-item--unknown${selected ? " is-selected" : ""}" data-exercise-admin-select="${escAttr(item.key)}">
         <div class="exercise-admin-list-row">
           <strong>${esc(title)}</strong>
-          <span class="exercise-admin-list-badges">${buildBadge("Unconfigured", "danger")}</span>
+          <span class="exercise-admin-list-badges">${buildBadge(item.kind === "unknownActivityType" ? "Activity type" : "Exercise")}${buildBadge("Unconfigured", "danger")}</span>
         </div>
       </button>`;
     }
@@ -498,6 +637,7 @@
     return `<button type="button" class="exercise-admin-list-item${selected ? " is-selected" : ""}" data-exercise-admin-select="${escAttr(item.key)}">
       <div class="exercise-admin-list-row">
         <strong>${esc(record.canonicalName)}</strong>
+        <span class="exercise-admin-list-badges">${buildBadge(item.kind === "activityType" ? "Activity type" : "Exercise")}</span>
       </div>
       <div class="exercise-admin-list-meta">${esc(toArray(record.aliases).slice(0, 3).join(", ") || "No aliases yet")}</div>
     </button>`;
@@ -512,10 +652,11 @@
     return Number(value || 0).toFixed(2);
   }
 
-  function getMuscleValidationMessage(muscleWeights) {
+  function getMuscleValidationMessage(muscleWeights, fatigueImpact = "normal") {
     const values = Object.values(muscleWeights || {});
     const hasInvalidWeight = values.some((value) => !Number.isFinite(value) || value < 0);
     if (hasInvalidWeight) return "Muscle weights must be zero or positive numbers.";
+    if (fatigueImpact === "none") return "";
     if (!values.some((value) => Number.isFinite(value) && value > 0)) {
       return "At least one muscle group must be primary.";
     }
@@ -541,53 +682,95 @@
       canonicalName: String(input.canonicalName || "").trim(),
       aliasesText: parseListInput(input.aliasesText || "").join("\n"),
       matchTermsText: parseListInput(input.matchTermsText || "").join("\n"),
-      fatigueMultiplier: String(input.fatigueMultiplier == null ? "" : input.fatigueMultiplier).trim(),
+      fatigueImpact: String(input.fatigueImpact || "normal"),
       bodyweightEligible: Boolean(input.bodyweightEligible),
-      setTypeHandling: String(input.setTypeHandling || ""),
+      setTypeHandling: normalizeSetTypeHandling(input.setTypeHandling || ""),
+      exerciseFamily: String(input.exerciseFamily || ""),
+      fatigueArchetype: String(input.fatigueArchetype || ""),
       muscleWeights,
       source: String(input.source || "manual"),
     };
   }
 
+  function getPersistedFormValues(selected) {
+    if (!selected) return null;
+    if (selected.kind === "activityType") return getActivityTypeBaselineFormValues(selected.record);
+    if (selected.type === "unknown") return getUnknownBaselineFormValues(selected.record);
+    return getExerciseBaselineFormValues(selected.record);
+  }
+
   function hasSaveableChanges(selected) {
     if (!selected) return false;
     const currentValues = normalizeFormValuesForComparison(getSelectedFormValues(selected));
-    const persistedValues = normalizeFormValuesForComparison(
-      selected.type === "unknown"
-        ? getUnknownFormValues({ ...selected.record, id: "__baseline__", rawNames: selected.record.rawNames, normalizedName: selected.record.normalizedName })
-        : {
-            canonicalName: selected.record.canonicalName || "",
-            aliasesText: toArray(selected.record.aliases).join("\n"),
-            matchTermsText: toArray(selected.record.matchTerms).join("\n"),
-            fatigueMultiplier: String(selected.record.fatigueMultiplier == null ? "1" : selected.record.fatigueMultiplier),
-            bodyweightEligible: Boolean(selected.record.bodyweightEligible),
-            setTypeHandling: selected.record.setTypeHandling || "weight_reps",
-            muscleWeights: { ...(selected.record.muscleWeights || {}) },
-            source: selected.record.source || "manual",
-          }
-    );
+    const persistedValues = normalizeFormValuesForComparison(getPersistedFormValues(selected));
 
     return JSON.stringify(currentValues) !== JSON.stringify(persistedValues);
   }
 
-  function getFormValidationErrors(values) {
+  function getPrimarySaveLabel(selected) {
+    if (!selected) return "Save";
+    if (selected.type === "unknown") {
+      return isActivityTypeKind(selected) ? "Create activity type" : "Create exercise";
+    }
+    return isActivityTypeKind(selected) ? "Save activity type" : "Save exercise";
+  }
+
+  function getSaveActionState(selected, pendingAction = "") {
+    if (!selected) {
+      return {
+        buttonLabel: "Save",
+        statusTone: "idle",
+        statusText: "No item selected.",
+        hasChanges: false,
+        validationErrors: null,
+        hasValidationErrors: false,
+        canSave: false,
+      };
+    }
+
+    const hasChanges = hasSaveableChanges(selected);
+    const validationErrors = hasChanges ? getFormValidationErrors(getSelectedFormValues(selected), selected) : null;
+    const hasValidationErrors = Boolean(validationErrors && Object.keys(validationErrors).length);
+    const pendingSave = pendingAction === "save";
+
+    let statusTone = "idle";
+    let statusText = "No changes.";
+
+    if (pendingSave) {
+      statusTone = "busy";
+      statusText = "Saving changes.";
+    } else if (hasValidationErrors) {
+      statusTone = "warning";
+      statusText = "Unsaved changes need attention.";
+    } else if (hasChanges) {
+      statusTone = "ready";
+      statusText = "Unsaved changes.";
+    }
+
+    return {
+      buttonLabel: getPrimarySaveLabel(selected),
+      statusTone,
+      statusText,
+      hasChanges,
+      validationErrors,
+      hasValidationErrors,
+      canSave: hasChanges && !hasValidationErrors && !pendingSave,
+    };
+  }
+
+  function getFormValidationErrors(values, selected) {
     const normalizedValues = normalizeFormValuesForComparison(values);
     const errors = {};
+    const isExercise = isExerciseKind(selected);
 
     if (!normalizedValues.canonicalName) {
       errors.canonicalName = "Canonical name is required.";
     }
-    if (
-      normalizedValues.fatigueMultiplier === ""
-      || !Number.isFinite(Number(normalizedValues.fatigueMultiplier))
-    ) {
-      errors.fatigueMultiplier = "Fatigue multiplier must be numeric.";
-    }
-    if (!SET_TYPE_OPTIONS.some((option) => option.value === normalizedValues.setTypeHandling)) {
+    if (isExercise && !SET_TYPE_OPTIONS.some((option) => option.value === normalizedValues.setTypeHandling)) {
       errors.setTypeHandling = "Choose how sets should be interpreted.";
     }
 
-    const muscleError = getMuscleValidationMessage(normalizedValues.muscleWeights);
+    const muscleError = getMuscleValidationMessage(normalizedValues.muscleWeights, normalizedValues.fatigueImpact);
     if (muscleError) {
       errors.muscleWeights = muscleError;
     }
@@ -595,8 +778,8 @@
     return errors;
   }
 
-  function renderMuscleErrorMessage(errors, muscleWeights) {
-    const message = (errors && errors.muscleWeights) || getMuscleValidationMessage(muscleWeights);
+  function renderMuscleErrorMessage(errors, muscleWeights, fatigueImpact = "normal") {
+    const message = (errors && errors.muscleWeights) || getMuscleValidationMessage(muscleWeights, fatigueImpact);
     return `<div class="settings-error${message ? "" : " exercise-admin-inline-error--hidden"}" data-exercise-admin-muscle-error>${esc(message || "")}</div>`;
   }
 
@@ -738,7 +921,7 @@
     return `<div class="settings-field">
       <div class="exercise-admin-section-head">
         <label class="settings-label" for="exerciseRecognitionNames">
-          Synonyms
+          Also match these names
           ${tooltip("Other names that should map to this exercise.")}
         </label>
         ${isEditing
@@ -764,6 +947,7 @@
   }
 
   function renderMergeAction(selected, state, options = {}) {
+    if (!isExerciseKind(selected)) return "";
     const mergeOptions = getMergeTargetOptions(selected);
     const mergeTargetId = getMergeTargetId(selected);
     const isExpanded = state.mergePanelKey === selected.key;
@@ -790,19 +974,83 @@
     </div>`;
   }
 
+  function renderSaveAssistant(selected, state, record, editorLabel, saveState, pendingAction) {
+    const isUnknown = selected.type === "unknown";
+    const isExercise = isExerciseKind(selected);
+    const canCancel = saveState.hasChanges || state.titleEditOpen || state.namesEditOpen;
+
+    return `<div class="exercise-admin-savebar">
+      <div class="exercise-admin-savebar-actions">
+        ${isUnknown && isExercise
+          ? `<button type="button" class="gen-btn" data-exercise-admin-suggest="${escAttr(record.id)}"${state.pendingUnknownId === record.id ? " disabled" : ""}>✨ Generate suggestion</button>`
+          : (!isUnknown && isExercise
+            ? `<button type="button" class="gen-btn" data-exercise-admin-regenerate="${escAttr(record.id)}"${pendingAction === "suggest" ? " disabled" : ""}>✨ Regenerate suggestion</button>`
+            : "")}
+        <div class="exercise-admin-savebar-save-group">
+          <button type="button" class="settings-save-btn exercise-admin-savebar-primary" data-exercise-admin-save${saveState.canSave ? "" : " disabled"}>${esc(saveState.buttonLabel)}</button>
+          <div class="exercise-admin-savebar-status exercise-admin-savebar-status--${escAttr(saveState.statusTone)}" data-exercise-admin-save-status role="status" aria-live="polite">${esc(saveState.statusText)}</div>
+        </div>
+        <button type="button" class="passkey-add-btn exercise-admin-secondary-btn" data-exercise-admin-cancel-changes${canCancel ? "" : " disabled"}>Cancel</button>
+      </div>
+    </div>`;
+  }
+
+  function renderAdvancedPanel(selected, state, values, editorLabel, pendingAction, metaBits) {
+    const isExercise = isExerciseKind(selected);
+    const isActivityType = isActivityTypeKind(selected);
+    const mergeAction = renderMergeAction(selected, state, {
+      emptyMessage: "Create at least one exercise config before merging unknowns as aliases.",
+    });
+    const deleteAction = selected.type === "unknown"
+      ? ""
+      : `<button type="button" class="settings-save-btn exercise-admin-delete-btn" data-exercise-admin-delete-open${pendingAction === "delete" ? " disabled" : ""}>Delete ${esc(editorLabel.toLowerCase())}</button>`;
+    const isOpen = state.mergePanelKey === selected.key;
+
+    return `<details class="exercise-admin-advanced" ${isOpen ? "open" : ""}>
+      <summary class="exercise-admin-advanced-summary">Advanced</summary>
+      <div class="exercise-admin-advanced-body">
+        ${metaBits.length ? `<div class="exercise-admin-editor-meta exercise-admin-editor-meta--advanced">${metaBits.map((bit) => `<span>${bit}</span>`).join("")}</div>` : ""}
+        <div class="exercise-admin-form-grid">
+          <div class="settings-field">
+            <label class="settings-label" for="exerciseFamily">
+              Exercise family
+              ${tooltip("Optional internal classification used by the fatigue model for load references and heuristics. Leave unset to keep automatic inference.")}
+            </label>
+            <select class="settings-input settings-select" id="exerciseFamily" name="exerciseFamily">
+              ${EXERCISE_FAMILY_OPTIONS.map((option) => `<option value="${escAttr(option.value)}"${values.exerciseFamily === option.value ? " selected" : ""}>${esc(option.label)}</option>`).join("")}
+            </select>
+          </div>
+
+          <div class="settings-field">
+            <label class="settings-label" for="fatigueArchetype">
+              Fatigue archetype
+              ${tooltip("Optional internal split between local and systemic fatigue. Leave unset to keep automatic inference from the selected family and movement style.")}
+            </label>
+            <select class="settings-input settings-select" id="fatigueArchetype" name="fatigueArchetype">
+              ${FATIGUE_ARCHETYPE_OPTIONS.map((option) => `<option value="${escAttr(option.value)}"${values.fatigueArchetype === option.value ? " selected" : ""}>${esc(option.label)}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        ${isExercise && (mergeAction || deleteAction) ? `<div class="exercise-admin-advanced-actions">${mergeAction}${deleteAction}</div>` : ""}
+        ${isActivityType && deleteAction ? `<div class="exercise-admin-advanced-actions">${deleteAction}</div>` : ""}
+      </div>
+    </details>`;
+  }
+
   function renderConfigEditor(selected, state) {
     const record = selected.record;
     const values = getSelectedFormValues(selected);
     const errors = state.formErrors && state.formErrors.key === selected.key ? state.formErrors.fields : null;
     const pendingAction = state.pendingKey === selected.key ? state.pendingAction : "";
     const isUnknown = selected.type === "unknown";
-    const hasChanges = hasSaveableChanges(selected);
-    const validationErrors = hasChanges ? getFormValidationErrors(values) : null;
-    const hasValidationErrors = Boolean(validationErrors && Object.keys(validationErrors).length);
-    const canSave = hasChanges && !hasValidationErrors && pendingAction !== "save";
+    const isExercise = isExerciseKind(selected);
+    const isActivityType = isActivityTypeKind(selected);
+    const isTimeBasedExercise = values.setTypeHandling === "time_duration";
+    const saveState = getSaveActionState(selected, pendingAction);
     const isTitleEditing = state.titleEditOpen;
     const titleValue = isTitleEditing ? state.titleDraft : values.canonicalName;
-    const suggestionNote = isUnknown ? formatUnknownSuggestionNote(record.aiStatus) : "";
+    const suggestionNote = isUnknown && isExercise ? formatUnknownSuggestionNote(record.aiStatus) : "";
+    const editorLabel = isActivityType ? "Activity type" : "Exercise";
     const metaBits = isUnknown
       ? []
       : [
@@ -813,7 +1061,6 @@
     return `<section class="exercise-admin-editor-shell">
       <div class="exercise-admin-editor-head">
         <div class="exercise-admin-editor-main">
-          ${isUnknown ? "" : '<div class="settings-kicker">Exercise editor</div>'}
           ${isTitleEditing
             ? `<div class="exercise-admin-title-edit">
                 <input class="settings-input exercise-admin-title-input" id="exerciseTitleInput" type="text" value="${escAttr(titleValue)}" data-exercise-admin-title-input>
@@ -826,81 +1073,77 @@
                 <h2 class="exercise-admin-editor-title">${esc(values.canonicalName || (isUnknown ? ((record.rawNames && record.rawNames[0]) || record.normalizedName) : record.canonicalName))}</h2>
                 ${renderIconButton(
                   'data-exercise-admin-title-edit-start',
-                  'Edit exercise name',
+                  `Edit ${editorLabel.toLowerCase()} name`,
                   `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10.9 2.6a1.5 1.5 0 1 1 2.1 2.1L5.4 12.3 2 13l.7-3.4 8.2-7z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`
                 )}
               </div>`}
           ${renderFieldError(errors, "canonicalName")}
-          ${isUnknown ? "" : '<p class="exercise-admin-editor-copy">Update the fatigue mapping directly here, then save the configured exercise.</p>'}
         </div>
-        ${isUnknown ? `<div class="exercise-admin-badges">${buildBadge("Unconfigured", "danger")}</div>` : ""}
       </div>
-      ${metaBits.length ? `<div class="exercise-admin-editor-meta">${metaBits.map((bit) => `<span>${bit}</span>`).join("")}</div>` : ""}
+      <div class="exercise-admin-editor-kind">${esc(editorLabel)}${isUnknown ? " · Unconfigured" : ""}</div>
       ${isUnknown ? renderUnknownRecentWorkouts(record) : ""}
       ${isUnknown && suggestionNote && suggestionNote !== AI_STATUS_LABELS.not_requested
         ? `<div class="exercise-admin-feedback exercise-admin-feedback--subtle">${esc(suggestionNote)}</div>`
         : ""}
       ${errors && errors.general ? `<div class="exercise-admin-feedback exercise-admin-feedback--error">${esc(errors.general)}</div>` : ""}
       <form id="exerciseAdminForm" class="exercise-admin-form" novalidate>
-        <div class="exercise-admin-editor-actions exercise-admin-editor-actions--top">
-          <button type="button" class="settings-save-btn" data-exercise-admin-save${canSave ? "" : " disabled"}>Save</button>
-          ${isUnknown
-            ? `<button type="button" class="gen-btn" data-exercise-admin-suggest="${escAttr(record.id)}"${state.pendingUnknownId === record.id ? " disabled" : ""}>✨ Generate suggestion</button>`
-            : `<button type="button" class="gen-btn" data-exercise-admin-regenerate="${escAttr(record.id)}"${pendingAction === "suggest" ? " disabled" : ""}>✨ Regenerate suggestion</button>`}
-        </div>
+        ${renderSaveAssistant(selected, state, record, editorLabel, saveState, pendingAction)}
 
-        <div class="exercise-admin-secondary-actions exercise-admin-secondary-actions--top">
-          ${renderMergeAction(selected, state, {
-            emptyMessage: "Create at least one exercise config before merging unknowns as aliases.",
-          })}
-          ${isUnknown
-            ? ""
-            : `<button type="button" class="settings-save-btn exercise-admin-delete-btn" data-exercise-admin-delete-open${pendingAction === "delete" ? " disabled" : ""}>Delete exercise</button>`}
-        </div>
+        <section class="exercise-admin-form-section">
+          <div class="exercise-admin-form-section-headline">
+            <h3 class="exercise-admin-form-section-title">Names</h3>
+          </div>
+          ${renderRecognitionNamesSection(record, values, state)}
+        </section>
 
-        ${renderRecognitionNamesSection(record, values, state)}
-
-        <div class="exercise-admin-form-grid">
-          <div class="settings-field">
-            <label class="settings-label" for="exerciseSetTypeHandling">
-              Set type handling
-              ${tooltip("Controls how exercise sets are interpreted before scaled load is computed. Use bodyweight mode when rep-only sets should use bodyweight, or ignore time-based sets when the movement should not contribute load from durations.")}
-            </label>
-            <select class="settings-input settings-select" id="exerciseSetTypeHandling" name="setTypeHandling">
-              ${SET_TYPE_OPTIONS.map((option) => `<option value="${escAttr(option.value)}"${values.setTypeHandling === option.value ? " selected" : ""}>${esc(option.label)}</option>`).join("")}
-            </select>
-            ${renderFieldError(errors, "setTypeHandling")}
+        ${isExercise ? `<section class="exercise-admin-form-section">
+          <div class="exercise-admin-form-section-headline">
+            <h3 class="exercise-admin-form-section-title">How this should count</h3>
           </div>
 
           <div class="settings-field">
-            <label class="settings-label" for="exerciseFatigueMultiplier">
-              Fatigue multiplier
-              ${tooltip("Intensity adjustment applied after scaled load is estimated. Values above 1.0 amplify fatigue stimulus, while values below 1.0 soften it for lighter or less taxing movements.")}
+            <label class="settings-label exercise-admin-switch-row" for="exerciseFatigueIncluded">
+              <span>Include in fatigue calculations ${tooltip("Turn this off for mobility, stretching, Yin Yoga, or other logged movements that should be recognized without adding fatigue.")}</span>
+              <span class="exercise-admin-switch">
+                <input type="checkbox" id="exerciseFatigueIncluded" name="fatigueImpactIncluded"${values.fatigueImpact !== "none" ? " checked" : ""}>
+                <span class="exercise-admin-switch-ui" aria-hidden="true"></span>
+              </span>
             </label>
-            <input class="settings-input settings-input--narrow" id="exerciseFatigueMultiplier" name="fatigueMultiplier" type="number" min="0" step="0.05" value="${escAttr(values.fatigueMultiplier)}">
-            ${renderFieldError(errors, "fatigueMultiplier")}
           </div>
-        </div>
 
-        <div class="settings-field">
-          <label class="settings-label exercise-admin-checkbox">
-            <input type="checkbox" name="bodyweightEligible"${values.bodyweightEligible ? " checked" : ""}>
-            <span>Bodyweight eligible</span>
-          </label>
-        </div>
+          <div class="exercise-admin-form-grid">
+            <div class="settings-field">
+              <label class="settings-label" for="exerciseSetTypeHandling">
+                Exercise format
+                ${tooltip("Choose strength for normal gym sets with reps. Choose time/cardio only when this exercise is logged by duration, like bike warmups or cooldowns.")}
+              </label>
+              <select class="settings-input settings-select" id="exerciseSetTypeHandling" name="setTypeHandling">
+                ${SET_TYPE_OPTIONS.map((option) => `<option value="${escAttr(option.value)}"${values.setTypeHandling === option.value ? " selected" : ""}>${esc(option.label)}</option>`).join("")}
+              </select>
+              ${renderFieldError(errors, "setTypeHandling")}
+            </div>
+          </div>
 
-        <div class="settings-field">
-          <label class="settings-label">
-            Muscle involvement
-            ${tooltip("Each level is a relative multiplier used to distribute scaled load across the fatigue model. These values are not percentages and do not need to add up to 100.")}
-          </label>
-          <div class="settings-error">At least one muscle group must be primary.</div>
+          ${isTimeBasedExercise ? "" : `<div class="settings-field">
+            <label class="settings-label exercise-admin-checkbox">
+              <input type="checkbox" name="bodyweightEligible"${values.bodyweightEligible ? " checked" : ""}>
+              <span>Use bodyweight when reps are logged without a weight ${tooltip("Turn this on for movements like push-ups, pull-ups, dips, or air squats if the log often records only reps and no added weight.")}</span>
+            </label>
+          </div>`}
+        </section>` : ""}
+
+        <section class="exercise-admin-form-section exercise-admin-form-section--muscles">
+          <div class="exercise-admin-form-section-headline">
+            <h3 class="exercise-admin-form-section-title">Muscles worked</h3>
+            <p class="exercise-admin-form-section-copy">Set the relative load spread across muscle groups. These values are relative, not percentages.</p>
+          </div>
+          ${values.fatigueImpact === "none" ? '<div class="settings-help">No muscle selection is required while this exercise is tracked without fatigue.</div>' : ""}
           <div class="exercise-admin-muscle-workspace">
             <div class="exercise-admin-muscle-panel">
               <div class="exercise-admin-muscle-grid">
                 ${renderMuscleWeightInputs(values, errors)}
               </div>
-              ${renderMuscleErrorMessage(errors, values.muscleWeights)}
+              ${renderMuscleErrorMessage(errors, values.muscleWeights, values.fatigueImpact)}
             </div>
             <aside class="exercise-admin-muscle-preview-panel">
               <div class="exercise-admin-muscle-preview-head">Live body map</div>
@@ -909,30 +1152,44 @@
               </div>
             </aside>
           </div>
-        </div>
+        </section>
+        ${renderAdvancedPanel(selected, state, values, editorLabel, pendingAction, metaBits)}
       </form>
     </section>`;
   }
 
   function renderUnknownEditor(record, state) {
-    return renderConfigEditor({ key: `unknown:${record.id}`, type: "unknown", record }, state);
+    return renderConfigEditor({
+      key: `unknown:${record.id}`,
+      type: "unknown",
+      kind: record.sourceType === "activityType" ? "unknownActivityType" : "unknownExercise",
+      record,
+    }, state);
   }
 
   function renderExerciseEditor(record, state) {
-    return renderConfigEditor({ key: `exercise:${record.id}`, type: "exercise", record }, state);
+    return renderConfigEditor({ key: `exercise:${record.id}`, type: "configured", kind: "exercise", record }, state);
+  }
+
+  function renderActivityTypeEditor(record, state) {
+    return renderConfigEditor({ key: `activityType:${record.id}`, type: "configured", kind: "activityType", record }, state);
   }
 
   function renderEditor(selected, state) {
     if (!selected) {
       return `<section class="exercise-admin-editor-shell exercise-admin-editor-shell--empty">
-        <div class="settings-kicker">Exercise editor</div>
-        <h2 class="exercise-admin-editor-title">No exercise selected</h2>
-        <p class="exercise-admin-editor-copy">Choose an unknown exercise or an existing config to inspect and edit it.</p>
+        <div class="settings-kicker">Config editor</div>
+        <h2 class="exercise-admin-editor-title">No item selected</h2>
+        <p class="exercise-admin-editor-copy">Choose an unknown item, exercise, or activity type to inspect and edit it.</p>
       </section>`;
     }
 
     if (selected.type === "unknown") {
       return renderUnknownEditor(selected.record, state);
+    }
+
+    if (selected.kind === "activityType") {
+      return renderActivityTypeEditor(selected.record, state);
     }
 
     return renderExerciseEditor(selected.record, state);
@@ -942,7 +1199,7 @@
     const listItems = M.getExerciseAdminListItems(state.query, state.filter);
     return listItems.length
       ? listItems.map((item) => renderListItem(item, state)).join("")
-      : `<div class="exercise-admin-empty">No exercises match the current search.</div>`;
+      : `<div class="exercise-admin-empty">No exercises or activity types match the current search.</div>`;
   }
 
   function renderConfirmDialog() {
@@ -955,16 +1212,16 @@
       <div class="detail-modal exercise-admin-dialog" role="dialog" aria-modal="true" aria-labelledby="exerciseAdminDeleteTitle">
         <div class="exercise-admin-dialog-head">
           <div>
-            <div class="settings-kicker">Delete exercise</div>
+            <div class="settings-kicker">Delete ${esc(state.confirmDialog.kind === "activityType" ? "activity type" : "exercise")}</div>
             <h2 class="exercise-admin-dialog-title" id="exerciseAdminDeleteTitle">Confirm deletion</h2>
           </div>
           <button type="button" class="detail-close" aria-label="Close dialog" data-exercise-admin-dialog-close>&times;</button>
         </div>
         <div class="exercise-admin-dialog-body">
-          <p class="exercise-admin-dialog-copy">${esc(DELETE_CONFIRMATION_COPY)}</p>
+          <p class="exercise-admin-dialog-copy">${esc(state.confirmDialog.kind === "activityType" ? "Are you sure you want to permanently delete this activity type? Once deleted it cannot be recovered!" : DELETE_CONFIRMATION_COPY)}</p>
           <p class="exercise-admin-dialog-note">Delete removes this config from the live resolver. If matching data still exists, it can reappear as unknown after the review snapshot refreshes.</p>
           <div class="exercise-admin-editor-actions">
-            <button type="button" class="settings-save-btn exercise-admin-delete-btn" data-exercise-admin-delete-confirm>Delete exercise</button>
+            <button type="button" class="settings-save-btn exercise-admin-delete-btn" data-exercise-admin-delete-confirm>Delete ${esc(state.confirmDialog.kind === "activityType" ? "activity type" : "exercise")}</button>
             <button type="button" class="passkey-add-btn exercise-admin-secondary-btn" data-exercise-admin-dialog-close>Cancel</button>
           </div>
         </div>
@@ -987,11 +1244,17 @@
               <h2 class="exercise-admin-panel-title">Exercises</h2>
             </div>
             <div class="exercise-admin-metrics" aria-label="Exercise summary">
-              ${buildBadge(`${countUnknownExercises()} unconfigured`, "danger")}
+              ${buildBadge(`${countUnknownItems()} unconfigured`, "danger")}
             </div>
           </div>
           <div class="exercise-admin-list-tools">
-            <input class="settings-input exercise-admin-search" type="search" placeholder="Search exercises, aliases, or match terms" value="${escAttr(state.query)}" data-exercise-admin-query>
+            <input class="settings-input exercise-admin-search" type="search" placeholder="Search exercises, activity types, aliases, or match terms" value="${escAttr(state.query)}" data-exercise-admin-query>
+            <div class="exercise-admin-filter-row" aria-label="Config type filter">
+              ${LIST_FILTER_OPTIONS.map((option) => {
+                const selectedFilter = state.filter === option.value;
+                return `<button type="button" class="filter-pill${selectedFilter ? " active" : ""}" data-exercise-admin-filter="${escAttr(option.value)}" aria-pressed="${selectedFilter ? "true" : "false"}">${esc(option.label)}</button>`;
+              }).join("")}
+            </div>
           </div>
           <div class="exercise-admin-list">${renderListContent(state)}</div>
         </section>
@@ -1045,6 +1308,7 @@
       open: false,
       type: "",
       key: "",
+      kind: "",
     };
   }
 
@@ -1174,9 +1438,34 @@
 
     const errorMount = form.querySelector("[data-exercise-admin-muscle-error]");
     if (errorMount) {
-      const message = getMuscleValidationMessage(readMuscleWeightsFromForm(form));
+      const fatigueImpact = Boolean((form.elements.fatigueImpactIncluded || {}).checked) ? "normal" : "none";
+      const message = getMuscleValidationMessage(readMuscleWeightsFromForm(form), fatigueImpact);
       errorMount.textContent = message;
       errorMount.classList.toggle("exercise-admin-inline-error--hidden", !message);
+    }
+  }
+
+  function updateSaveActionUi(form, selected) {
+    if (!form || !selected) return;
+    const state = getAdminState();
+    const pendingAction = state.pendingKey === selected.key ? state.pendingAction : "";
+    const saveState = getSaveActionState(selected, pendingAction);
+    const saveButton = form.querySelector("[data-exercise-admin-save]");
+    const cancelButton = form.querySelector("[data-exercise-admin-cancel-changes]");
+    const status = form.querySelector("[data-exercise-admin-save-status]");
+
+    if (saveButton) {
+      saveButton.disabled = !saveState.canSave;
+      saveButton.textContent = saveState.buttonLabel;
+    }
+
+    if (cancelButton) {
+      cancelButton.disabled = !saveState.hasChanges;
+    }
+
+    if (status) {
+      status.textContent = saveState.statusText;
+      status.className = `exercise-admin-savebar-status exercise-admin-savebar-status--${saveState.statusTone}`;
     }
   }
 
@@ -1194,6 +1483,7 @@
       values: parsed.values,
     };
     state.formErrors = null;
+    updateSaveActionUi(form, selected);
   }
 
   function readExerciseFormPayload() {
@@ -1202,38 +1492,50 @@
     if (!form || !selected) return null;
 
     const draftValues = getSelectedFormValues(selected);
+    const isExercise = isExerciseKind(selected);
     const canonicalName = String(draftValues.canonicalName || "").trim();
     const aliases = parseListInput(draftValues.aliasesText || "");
-    const matchTerms = parseListInput(draftValues.matchTermsText || "");
-    const fatigueMultiplierRaw = String((form.elements.fatigueMultiplier || {}).value || "").trim();
-    const setTypeHandling = String((form.elements.setTypeHandling || {}).value || "");
-    const bodyweightEligible = Boolean((form.elements.bodyweightEligible || {}).checked);
+    const matchTerms = isExercise ? parseListInput(draftValues.matchTermsText || "") : [];
+    const fatigueImpact = isExercise && Boolean((form.elements.fatigueImpactIncluded || {}).checked) ? "normal" : "none";
+    const setTypeHandling = isExercise ? normalizeSetTypeHandling(String((form.elements.setTypeHandling || {}).value || "")) : "";
+    const bodyweightEligible = isExercise && setTypeHandling !== "time_duration"
+      ? Boolean((form.elements.bodyweightEligible || {}).checked)
+      : false;
+    const exerciseFamily = String((form.elements.exerciseFamily || {}).value || "").trim();
+    const fatigueArchetype = String((form.elements.fatigueArchetype || {}).value || "").trim();
     const muscleWeights = readMuscleWeightsFromForm(form);
 
     const values = {
       canonicalName,
       aliasesText: aliases.join("\n"),
-      matchTermsText: matchTerms.join("\n"),
-      fatigueMultiplier: fatigueMultiplierRaw,
+      matchTermsText: isExercise ? matchTerms.join("\n") : "",
+      fatigueImpact,
       bodyweightEligible,
       setTypeHandling,
+      exerciseFamily,
+      fatigueArchetype,
       muscleWeights,
       source: draftValues.source || "manual",
     };
 
-    const errors = getFormValidationErrors(values);
+    const errors = getFormValidationErrors(values, selected);
 
     return {
       values,
       errors,
       payload: {
+        configType: isActivityTypeKind(selected) ? "activityType" : "exercise",
         canonicalName,
         aliases,
-        matchTerms,
+        ...(isExercise ? { matchTerms } : {}),
         muscleWeights,
-        fatigueMultiplier: Number(fatigueMultiplierRaw),
-        bodyweightEligible,
-        setTypeHandling,
+        ...(isExercise ? {
+          bodyweightEligible,
+          setTypeHandling,
+          fatigueImpact,
+        } : {}),
+        exerciseFamily: exerciseFamily || null,
+        fatigueArchetype: fatigueArchetype || null,
         source: draftValues.source || "manual",
       },
     };
@@ -1325,12 +1627,13 @@
 
   function openDeleteDialog() {
     const selected = getSelectedItem();
-    if (!selected || selected.type !== "exercise") return;
+    if (!selected || selected.type !== "configured") return;
     const state = getAdminState();
     state.confirmDialog = {
       open: true,
       type: "delete",
       key: selected.key,
+      kind: selected.kind === "activityType" ? "activityType" : "exercise",
     };
     M.renderExerciseAdminView();
   }
@@ -1341,7 +1644,15 @@
       open: false,
       type: "",
       key: "",
+      kind: "",
     };
+    M.renderExerciseAdminView();
+  }
+
+  function cancelEditorChanges() {
+    clearInlineEditorState();
+    clearFormState();
+    setFeedback(null, "");
     M.renderExerciseAdminView();
   }
 
@@ -1351,9 +1662,11 @@
       canonicalName: suggestion.canonicalName || "",
       aliasesText: toArray(suggestion.aliases).join("\n"),
       matchTermsText: toArray(suggestion.matchTerms).join("\n"),
-      fatigueMultiplier: String(suggestion.fatigueMultiplier == null ? "1" : suggestion.fatigueMultiplier),
+      fatigueImpact: suggestion.fatigueImpact || "normal",
       bodyweightEligible: Boolean(suggestion.bodyweightEligible),
       setTypeHandling: suggestion.setTypeHandling || "weight_reps",
+      exerciseFamily: suggestion.exerciseFamily || "",
+      fatigueArchetype: suggestion.fatigueArchetype || "",
       muscleWeights: { ...(suggestion.muscleWeights || {}) },
       source: suggestion.source || "manual",
     });
@@ -1495,8 +1808,15 @@
       }
 
       clearSelectionUiState();
-      state.selectedKey = json.exercise && json.exercise.id ? `exercise:${json.exercise.id}` : selected.key;
-      setFeedback("ok", selected.type === "unknown" ? "Exercise created and applied." : "Exercise saved.");
+      if (json.activityType && json.activityType.id) {
+        state.selectedKey = `activityType:${json.activityType.id}`;
+      } else if (json.exercise && json.exercise.id) {
+        state.selectedKey = `exercise:${json.exercise.id}`;
+      } else {
+        state.selectedKey = selected.key;
+      }
+      const savedLabel = isActivityTypeKind(selected) ? "Activity type" : "Exercise";
+      setFeedback("ok", selected.type === "unknown" ? `${savedLabel} created and applied.` : `${savedLabel} saved.`);
       M.renderAll();
     } catch (error) {
       state.formErrors = {
@@ -1516,7 +1836,7 @@
   async function handleMergeAlias() {
     const state = getAdminState();
     const selected = getSelectedItem();
-    if (!selected || state.pendingAction) return;
+    if (!selected || state.pendingAction || !isExerciseKind(selected)) return;
 
     let targetExerciseId = "";
     try {
@@ -1573,7 +1893,8 @@
   async function handleExerciseDelete() {
     const state = getAdminState();
     const selected = getSelectedItem();
-    if (!selected || selected.type !== "exercise" || state.pendingAction) return;
+    if (!selected || selected.type !== "configured" || state.pendingAction) return;
+    const deletedLabel = selected.kind === "activityType" ? "Activity type" : "Exercise";
 
     state.pendingAction = "delete";
     state.pendingKey = selected.key;
@@ -1608,8 +1929,8 @@
       setFeedback(
         "ok",
         unknownRefreshWarning
-          ? `Exercise deleted and fatigue recalculated. The unknown review snapshot was rebuilt locally because the server sync failed: ${unknownRefreshWarning}`
-          : "Exercise deleted. Fatigue and review queue refreshed."
+          ? `${deletedLabel} deleted and fatigue recalculated. The unknown review snapshot was rebuilt locally because the server sync failed: ${unknownRefreshWarning}`
+          : `${deletedLabel} deleted. Fatigue and review queue refreshed.`
       );
       M.renderAll();
     } catch (error) {
@@ -1636,6 +1957,15 @@
       if (event.target.closest("[data-exercise-admin-dialog-close]")) {
         event.preventDefault();
         closeConfirmDialog();
+        return;
+      }
+
+      const filterButton = event.target.closest("[data-exercise-admin-filter]");
+      if (filterButton) {
+        event.preventDefault();
+        const state = getAdminState();
+        state.filter = String(filterButton.getAttribute("data-exercise-admin-filter") || "all");
+        updateListAndEditor({ preferVisibleSelection: true });
         return;
       }
 
@@ -1710,6 +2040,12 @@
         return;
       }
 
+      if (event.target.closest("[data-exercise-admin-cancel-changes]")) {
+        event.preventDefault();
+        cancelEditorChanges();
+        return;
+      }
+
       if (event.target.closest("[data-exercise-admin-regenerate]")) {
         event.preventDefault();
         handleRegenerateSuggestion(String(event.target.closest("[data-exercise-admin-regenerate]").getAttribute("data-exercise-admin-regenerate") || ""));
@@ -1781,6 +2117,12 @@
         return;
       }
 
+      if (event.target.matches('input[name="fatigueImpactIncluded"]')) {
+        syncExerciseFormDraftFromDom();
+        M.renderExerciseAdminView();
+        return;
+      }
+
       const mergeTarget = event.target.closest("[data-exercise-admin-merge-target]");
       if (mergeTarget) {
         getAdminState().mergeTargetId = String(mergeTarget.value || "");
@@ -1805,6 +2147,23 @@
     };
     try {
       return renderExerciseEditor(record, M.state.exerciseAdmin);
+    } finally {
+      M.state.exerciseAdmin = previous;
+    }
+  };
+
+  M.renderActivityTypeAdminEditorHtmlForTest = function renderActivityTypeAdminEditorHtmlForTest(record, statePatch = {}) {
+    const previous = M.state.exerciseAdmin;
+    M.state.exerciseAdmin = {
+      ...getAdminState(),
+      ...statePatch,
+      confirmDialog: {
+        ...getAdminState().confirmDialog,
+        ...((statePatch && statePatch.confirmDialog) || {}),
+      },
+    };
+    try {
+      return renderActivityTypeEditor(record, M.state.exerciseAdmin);
     } finally {
       M.state.exerciseAdmin = previous;
     }

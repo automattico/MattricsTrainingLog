@@ -3,6 +3,8 @@
 
   M.state = {
     allData: [],
+    activityChildren: [],
+    activityChildrenById: {},
     dataMeta: {
       source: "",
       stale: false,
@@ -23,6 +25,9 @@
     exerciseConfigMeta: {
       loadedAt: "",
       seedVersion: 0,
+      source: "",
+      warning: "",
+      lastSuccessfulSyncAt: "",
     },
     exerciseConfigIndex: null,
     unknownExercises: [],
@@ -30,6 +35,18 @@
       loadedAt: "",
       syncedAt: "",
       lastSyncError: "",
+    },
+    connectors: {
+      loading: false,
+      loaded: false,
+      error: "",
+      feedback: null,
+      pendingAction: "",
+      draft: {
+        enabled: false,
+        apiKey: "",
+      },
+      data: null,
     },
     exerciseAdmin: {
       query: "",

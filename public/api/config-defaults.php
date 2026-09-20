@@ -6,6 +6,8 @@ return [
     'auth_require_https' => true,
     'session_idle_seconds' => 2592000,
     'session_absolute_seconds' => 2592000,
+    'foundation_database_url' => '',
+    'foundation_user_key' => 'legacy-local-user',
     // Optional override. When blank, origin is derived from the current request.
     'webauthn_rp_id' => '',
 ];

@@ -59,7 +59,6 @@ Resolver becomes the single source of truth.
 - source: manual | ai_suggested | external_dataset | merged
 - aliases[]
 - muscleWeights
-- fatigueMultiplier
 - bodyweightEligible
 - setTypeHandling
 - lastUpdatedAt
@@ -132,7 +131,6 @@ Manual only via button:
   "canonicalName": string,
   "aliases": string[],
   "muscleWeights": { [muscle]: number },
-  "fatigueMultiplier": number,
   "bodyweightEligible": boolean,
   "setTypeHandling": "weight_reps" | "bodyweight_reps" | "time_based_ignore",
   "confidence": number,
@@ -177,7 +175,6 @@ Editable fields:
 - canonical name
 - aliases
 - muscle weights
-- fatigueMultiplier
 
 ---
 
@@ -185,7 +182,6 @@ Editable fields:
 Explain:
 - muscleWeights (relative distribution)
 - scaled load meaning (how stimulus accumulates)
-- fatigueMultiplier (intensity adjustment)
 - setTypeHandling (how load is interpreted)
 
 ---

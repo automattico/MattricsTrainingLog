@@ -3,130 +3,272 @@
     "id": "run",
     "canonicalName": "Run",
     "normalizedName": "run",
-    "aliases": [],
-    "muscleWeights": { "quadriceps": 1, "hamstrings": 1, "calves": 0.85, "gluteal": 0.65, "abs": 0.2, "obliques": 0.08 },
-    "fatigueMultiplier": 1,
+    "aliases": [
+      "Running",
+      "Treadmill Running",
+      "Trail Running",
+      "Virtual Running"
+    ],
+    "muscleWeights": {
+      "quadriceps": 1,
+      "hamstrings": 1,
+      "calves": 0.85,
+      "gluteal": 0.65,
+      "abs": 0.2,
+      "obliques": 0.08
+    },
     "status": "approved",
     "reviewNeeded": false,
     "source": "manual",
     "lastUpdatedAt": "2026-04-20T00:00:00Z",
-    "lastUpdatedType": "manual"
+    "lastUpdatedType": "manual",
+    "exerciseFamily": "conditioning_lower",
+    "fatigueArchetype": "conditioning_hybrid",
+    "fatigueMultiplier": 1
   },
   {
     "id": "walk",
     "canonicalName": "Walk",
     "normalizedName": "walk",
-    "aliases": [],
-    "muscleWeights": { "quadriceps": 0.42, "hamstrings": 0.31, "calves": 0.41, "gluteal": 0.15, "abs": 0.08 },
-    "fatigueMultiplier": 1,
+    "aliases": [
+      "Walking"
+    ],
+    "muscleWeights": {
+      "quadriceps": 0.42,
+      "hamstrings": 0.31,
+      "calves": 0.41,
+      "gluteal": 0.15,
+      "abs": 0.08
+    },
     "status": "approved",
     "reviewNeeded": false,
     "source": "manual",
     "lastUpdatedAt": "2026-04-20T00:00:00Z",
-    "lastUpdatedType": "manual"
+    "lastUpdatedType": "manual",
+    "exerciseFamily": "conditioning_lower",
+    "fatigueArchetype": "isolation",
+    "fatigueMultiplier": 1
   },
   {
     "id": "hike",
     "canonicalName": "Hike",
     "normalizedName": "hike",
-    "aliases": [],
-    "muscleWeights": { "quadriceps": 1.24, "hamstrings": 1.06, "calves": 0.85, "gluteal": 0.79, "adductors": 0.26, "abs": 0.29 },
-    "fatigueMultiplier": 1,
+    "aliases": [
+      "Hiking"
+    ],
+    "muscleWeights": {
+      "quadriceps": 1.24,
+      "hamstrings": 1.06,
+      "calves": 0.85,
+      "gluteal": 0.79,
+      "adductors": 0.26,
+      "abs": 0.29
+    },
     "status": "approved",
     "reviewNeeded": false,
     "source": "manual",
     "lastUpdatedAt": "2026-04-20T00:00:00Z",
-    "lastUpdatedType": "manual"
+    "lastUpdatedType": "manual",
+    "exerciseFamily": "conditioning_lower",
+    "fatigueArchetype": "conditioning_hybrid",
+    "fatigueMultiplier": 1
   },
   {
     "id": "ride",
     "canonicalName": "Ride",
     "normalizedName": "ride",
-    "aliases": [],
-    "muscleWeights": { "quadriceps": 1.4, "hamstrings": 0.5, "calves": 0.27, "gluteal": 0.59, "abs": 0.18 },
-    "fatigueMultiplier": 1,
+    "aliases": [
+      "Cycling",
+      "Indoor Cycling",
+      "Virtual Cycling",
+      "Road Biking",
+      "Mountain Biking"
+    ],
+    "muscleWeights": {
+      "quadriceps": 1.4,
+      "hamstrings": 0.5,
+      "calves": 0.27,
+      "gluteal": 0.59,
+      "abs": 0.18
+    },
     "status": "approved",
     "reviewNeeded": false,
     "source": "manual",
     "lastUpdatedAt": "2026-04-20T00:00:00Z",
-    "lastUpdatedType": "manual"
+    "lastUpdatedType": "manual",
+    "exerciseFamily": "conditioning_lower",
+    "fatigueArchetype": "conditioning_hybrid",
+    "fatigueMultiplier": 1
   },
   {
     "id": "canoeing",
     "canonicalName": "Canoeing",
     "normalizedName": "canoeing",
-    "aliases": ["Canoe"],
-    "muscleWeights": { "upperBack": 1.69, "trapezius": 0.92, "deltoids": 1.29, "biceps": 0.7, "triceps": 0.23, "abs": 0.47, "obliques": 0.35, "lowerBack": 0.32 },
-    "fatigueMultiplier": 1,
+    "aliases": [
+      "Canoe"
+    ],
+    "muscleWeights": {
+      "upperBack": 1.69,
+      "trapezius": 0.92,
+      "deltoids": 1.29,
+      "biceps": 0.7,
+      "triceps": 0.23,
+      "abs": 0.47,
+      "obliques": 0.35,
+      "lowerBack": 0.32
+    },
     "status": "approved",
     "reviewNeeded": false,
     "source": "manual",
     "lastUpdatedAt": "2026-04-20T00:00:00Z",
-    "lastUpdatedType": "manual"
+    "lastUpdatedType": "manual",
+    "exerciseFamily": "horizontal_pull",
+    "fatigueArchetype": "conditioning_hybrid",
+    "fatigueMultiplier": 1
   },
   {
     "id": "watersport",
     "canonicalName": "WaterSport",
     "normalizedName": "water sport",
-    "aliases": ["Water Sport"],
-    "muscleWeights": { "upperBack": 1.44, "trapezius": 0.85, "deltoids": 1.21, "biceps": 0.7, "triceps": 0.23, "abs": 0.47, "obliques": 0.3, "lowerBack": 0.28 },
-    "fatigueMultiplier": 1,
+    "aliases": [
+      "Water Sport"
+    ],
+    "muscleWeights": {
+      "upperBack": 1.44,
+      "trapezius": 0.85,
+      "deltoids": 1.21,
+      "biceps": 0.7,
+      "triceps": 0.23,
+      "abs": 0.47,
+      "obliques": 0.3,
+      "lowerBack": 0.28
+    },
     "status": "approved",
     "reviewNeeded": false,
     "source": "manual",
     "lastUpdatedAt": "2026-04-20T00:00:00Z",
-    "lastUpdatedType": "manual"
+    "lastUpdatedType": "manual",
+    "exerciseFamily": "horizontal_pull",
+    "fatigueArchetype": "conditioning_hybrid",
+    "fatigueMultiplier": 1
   },
   {
     "id": "rowing",
     "canonicalName": "Rowing",
     "normalizedName": "rowing",
-    "aliases": [],
-    "muscleWeights": { "upperBack": 1.35, "trapezius": 0.59, "deltoids": 0.53, "biceps": 0.64, "abs": 0.59, "obliques": 0.25, "lowerBack": 0.77, "quadriceps": 0.93, "hamstrings": 0.64, "gluteal": 0.5, "calves": 0.24 },
-    "fatigueMultiplier": 1,
+    "aliases": [
+      "Erg",
+      "Indoor Rowing",
+      "Row Erg"
+    ],
+    "muscleWeights": {
+      "upperBack": 1.35,
+      "trapezius": 0.59,
+      "deltoids": 0.53,
+      "biceps": 0.64,
+      "abs": 0.59,
+      "obliques": 0.25,
+      "lowerBack": 0.77,
+      "quadriceps": 0.93,
+      "hamstrings": 0.64,
+      "gluteal": 0.5,
+      "calves": 0.24
+    },
     "status": "approved",
     "reviewNeeded": false,
     "source": "manual",
     "lastUpdatedAt": "2026-04-20T00:00:00Z",
-    "lastUpdatedType": "manual"
+    "lastUpdatedType": "manual",
+    "exerciseFamily": "horizontal_pull",
+    "fatigueArchetype": "conditioning_hybrid",
+    "fatigueMultiplier": 1
   },
   {
     "id": "yoga",
     "canonicalName": "Yoga",
     "normalizedName": "yoga",
     "aliases": [],
-    "muscleWeights": { "abs": 0.53, "obliques": 0.35, "deltoids": 0.33, "upperBack": 0.37, "lowerBack": 0.32, "quadriceps": 0.44, "hamstrings": 0.4, "gluteal": 0.26, "calves": 0.11 },
-    "fatigueMultiplier": 1,
+    "muscleWeights": {
+      "abs": 0.53,
+      "obliques": 0.35,
+      "deltoids": 0.33,
+      "upperBack": 0.37,
+      "lowerBack": 0.32,
+      "quadriceps": 0.44,
+      "hamstrings": 0.4,
+      "gluteal": 0.26,
+      "calves": 0.11
+    },
     "status": "approved",
     "reviewNeeded": false,
     "source": "manual",
     "lastUpdatedAt": "2026-04-20T00:00:00Z",
-    "lastUpdatedType": "manual"
+    "lastUpdatedType": "manual",
+    "exerciseFamily": "core",
+    "fatigueArchetype": "isolation",
+    "fatigueMultiplier": 1
   },
   {
     "id": "surfing",
     "canonicalName": "Surfing",
     "normalizedName": "surfing",
     "aliases": [],
-    "muscleWeights": { "abs": 0.7, "obliques": 0.4, "deltoids": 1.06, "upperBack": 1.1, "trapezius": 0.52, "biceps": 0.51, "triceps": 0.34, "lowerBack": 0.36, "quadriceps": 0.34, "hamstrings": 0.28, "gluteal": 0.26 },
-    "fatigueMultiplier": 1,
+    "muscleWeights": {
+      "abs": 0.7,
+      "obliques": 0.4,
+      "deltoids": 1.06,
+      "upperBack": 1.1,
+      "trapezius": 0.52,
+      "biceps": 0.51,
+      "triceps": 0.34,
+      "lowerBack": 0.36,
+      "quadriceps": 0.34,
+      "hamstrings": 0.28,
+      "gluteal": 0.26
+    },
     "status": "approved",
     "reviewNeeded": false,
     "source": "manual",
     "lastUpdatedAt": "2026-04-20T00:00:00Z",
-    "lastUpdatedType": "manual"
+    "lastUpdatedType": "manual",
+    "exerciseFamily": "horizontal_pull",
+    "fatigueArchetype": "conditioning_hybrid",
+    "fatigueMultiplier": 1
   },
   {
     "id": "weighttraining",
     "canonicalName": "WeightTraining",
     "normalizedName": "weight training",
-    "aliases": ["Workout", "Weight Training"],
-    "muscleWeights": { "chest": 0.28, "deltoids": 0.24, "trapezius": 0.16, "upperBack": 0.22, "triceps": 0.16, "biceps": 0.16, "abs": 0.16, "obliques": 0.08, "lowerBack": 0.12, "gluteal": 0.14, "adductors": 0.08, "quadriceps": 0.16, "hamstrings": 0.12, "calves": 0.08 },
-    "fatigueMultiplier": 1,
+    "aliases": [
+      "Workout",
+      "Weight Training",
+      "Strength Training",
+      "Strength",
+      "Strength Workout"
+    ],
+    "muscleWeights": {
+      "chest": 0.28,
+      "deltoids": 0.24,
+      "trapezius": 0.16,
+      "upperBack": 0.22,
+      "triceps": 0.16,
+      "biceps": 0.16,
+      "abs": 0.16,
+      "obliques": 0.08,
+      "lowerBack": 0.12,
+      "gluteal": 0.14,
+      "adductors": 0.08,
+      "quadriceps": 0.16,
+      "hamstrings": 0.12,
+      "calves": 0.08
+    },
     "status": "approved",
     "reviewNeeded": false,
     "source": "manual",
     "lastUpdatedAt": "2026-04-20T00:00:00Z",
-    "lastUpdatedType": "manual"
+    "lastUpdatedType": "manual",
+    "exerciseFamily": "horizontal_press",
+    "fatigueArchetype": "freeweight_compound",
+    "fatigueMultiplier": 1
   }
 ]

@@ -1,20 +1,47 @@
 (function () {
   const M = window.Mattrics;
 
+  function resolveStatusTimestamp() {
+    return M.resolveHeaderTimestamp(M.state.dataMeta || {}) || M.resolveHeaderTimestamp(M.state.exerciseConfigMeta || {});
+  }
+
+  function formatSourceLabel(source) {
+    switch (String(source || "").trim()) {
+      case "canonical": return "Canonical";
+      case "cache": return "Cached snapshot";
+      case "live": return "Live sheet";
+      case "legacy": return "Legacy JSON";
+      default: return source ? String(source) : "Unavailable";
+    }
+  }
+
+  function buildWarningLine(label, warning, timestamp) {
+    const cleanWarning = String(warning || "").trim();
+    if (!cleanWarning) return "";
+    const suffix = timestamp ? ` Last good sync: ${M.fmtDateTime(timestamp)}.` : "";
+    return `${label}: ${cleanWarning}${suffix}`;
+  }
+
   function updateDataSyncStamp() {
     const meta = M.state.dataMeta || {};
+    const exerciseConfigMeta = M.state.exerciseConfigMeta || {};
     const stamp = document.getElementById("dataSyncStamp");
     if (!stamp) return;
 
-    const timestamp = M.resolveHeaderTimestamp(meta);
+    const timestamp = resolveStatusTimestamp();
+    const lines = [
+      `Activities: ${formatSourceLabel(meta.source)}`,
+      `Config: ${formatSourceLabel(exerciseConfigMeta.source)}`,
+    ];
     if (!timestamp) {
-      stamp.textContent = "Last updated unavailable";
+      lines.push("Last updated unavailable");
+      stamp.innerHTML = lines.map((line) => `<div>${M.esc(line)}</div>`).join("");
       return;
     }
 
-    const line1 = `Last updated: ${M.fmtRelativeAge(timestamp, Date.now())}`;
-    const line2 = `${M.fmtBerlinDate(timestamp)}, ${M.fmtBerlinTime(timestamp)}`;
-    stamp.innerHTML = `<div>${M.esc(line1)}</div><div>${M.esc(line2)}</div>`;
+    lines.push(`Last updated: ${M.fmtRelativeAge(timestamp, Date.now())}`);
+    lines.push(`${M.fmtBerlinDate(timestamp)}, ${M.fmtBerlinTime(timestamp)}`);
+    stamp.innerHTML = lines.map((line) => `<div>${M.esc(line)}</div>`).join("");
   }
 
   M.showLoading = function showLoading() {
@@ -41,6 +68,7 @@
 
   M.renderDataStatus = function renderDataStatus() {
     const meta = M.state.dataMeta || {};
+    const exerciseConfigMeta = M.state.exerciseConfigMeta || {};
     const banner = document.getElementById("dataStatusBanner");
 
     updateDataSyncStamp();
@@ -50,14 +78,29 @@
       M.dataSyncStampTicker = null;
     }
 
-    if (M.resolveHeaderTimestamp(meta)) {
+    if (resolveStatusTimestamp()) {
       M.dataSyncStampTicker = window.setInterval(updateDataSyncStamp, 1000);
     }
 
     if (!banner) return;
 
-    if (meta.stale && meta.warning) {
-      banner.textContent = `${meta.warning}${meta.lastSuccessfulSyncAt ? ` Last good sync: ${M.fmtDateTime(meta.lastSuccessfulSyncAt)}.` : ""}`;
+    const warnings = [
+      buildWarningLine("Activities", meta.warning, meta.lastSuccessfulSyncAt),
+      buildWarningLine("Config", exerciseConfigMeta.warning, exerciseConfigMeta.lastSuccessfulSyncAt),
+    ].filter(Boolean);
+
+    if (
+      meta.source
+      && exerciseConfigMeta.source
+      && (meta.source === "canonical") !== (exerciseConfigMeta.source === "canonical")
+    ) {
+      warnings.push(
+        `Read-source mismatch: activities are ${formatSourceLabel(meta.source)} while config is ${formatSourceLabel(exerciseConfigMeta.source)}. This can happen during migration or fallback.`
+      );
+    }
+
+    if (warnings.length) {
+      banner.textContent = warnings.join(" ");
       banner.hidden = false;
       return;
     }

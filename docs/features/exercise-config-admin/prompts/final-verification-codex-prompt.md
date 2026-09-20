@@ -74,7 +74,7 @@ Check:
 Check:
 - review queue UX is clear
 - parameter tooltips/help exist for important fields
-- meaning of weights / scaled load / fatigueMultiplier / setTypeHandling is explained
+- meaning of weights / scaled load / setTypeHandling is explained
 - loading/error states are good enough
 - button labels are correct
 - important states are visible without digging

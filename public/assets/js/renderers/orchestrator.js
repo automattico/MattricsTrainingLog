@@ -1,6 +1,6 @@
 (function () {
   const M = window.Mattrics;
-  const VIEW_IDS = ["dashboard", "fatigue", "sessions", "exercises", "ai", "docs", "settings"];
+  const VIEW_IDS = ["dashboard", "fatigue", "sessions", "exercises", "connectors", "ai", "docs", "settings"];
 
   function isValidView(id) {
     return VIEW_IDS.includes(id) && Boolean(document.getElementById(`view-${id}`));
@@ -74,6 +74,16 @@
     document.head.appendChild(script);
   }
 
+  function isInternalPhpDataUrl(sourceUrl) {
+    if (!sourceUrl) return false;
+    try {
+      const url = new URL(sourceUrl, window.location.href);
+      return /\/api\/data\.php$/i.test(url.pathname);
+    } catch {
+      return false;
+    }
+  }
+
   M.fetchData = async function fetchData(options = {}) {
     M.showLoading();
     const forceRefresh = Boolean(options.forceRefresh);
@@ -96,6 +106,9 @@
     try {
       if (M.DATA_URL) {
         const url = new URL(sourceUrl, window.location.href);
+        if (isInternalPhpDataUrl(sourceUrl)) {
+          url.searchParams.set("includeChildren", "1");
+        }
         if (forceRefresh) {
           url.searchParams.set("refresh", "1");
         }
@@ -131,6 +144,9 @@
         lastLiveAttemptAt: json.meta && json.meta.lastLiveAttemptAt ? json.meta.lastLiveAttemptAt : "",
         lastFetchAt: new Date().toISOString(),
       };
+      if (typeof M.setActivityChildren === "function") {
+        M.setActivityChildren(Array.isArray(json.activityChildren) ? json.activityChildren : []);
+      }
       M.state.allData = json.rows
         .filter((row) => row.Date && row.Type)
         .map((row) => ({
@@ -277,6 +293,9 @@
     }
     if (id === "exercises" && typeof M.renderExerciseAdminView === "function") {
       M.renderExerciseAdminView();
+    }
+    if (id === "connectors" && typeof M.renderConnectorsView === "function") {
+      M.renderConnectorsView();
     }
     if (id === "settings") {
       M.renderSettingsView();

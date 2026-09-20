@@ -99,6 +99,18 @@
     </div>`;
   };
 
+  M.renderSystemicFatigueStatus = function renderSystemicFatigueStatus(fatigue) {
+    const systemic = fatigue && fatigue.systemic;
+    if (!systemic || !systemic.hasOwnProperty("fatigueScore")) return "";
+    const tier = systemic.rawLoad ? systemic.tier : "Fresh";
+    const state = systemic.rawLoad ? M.getFatigueVisualState({ ...systemic, hasFatigueSignal: true }) : "none";
+    return `<div class="overview-systemic-fatigue" data-fatigue-state="${state}">
+      <span class="overview-fatigue-swatch"></span>
+      <span class="overview-systemic-fatigue-label">Systemic fatigue</span>
+      <span class="overview-systemic-fatigue-value">${M.esc(tier)} (${Math.max(0, Math.min(100, Math.round(systemic.fatigueScore || 0)))}%)</span>
+    </div>`;
+  };
+
   M.getFatigueReadinessBucket = function getFatigueReadinessBucket(region) {
     if (!region || !region.recoveryHours) return "today";
     if (region.recoveryHours <= 24) return "tomorrow";
@@ -136,12 +148,12 @@
     const groups = {
       today: {
         title: "Train today",
-        subtitle: "Ready now or no meaningful recent load",
+        subtitle: "Trainable now or only light remaining fatigue",
         items: [],
       },
       tomorrow: {
         title: "Train tomorrow",
-        subtitle: "Close to ready, but still recovering",
+        subtitle: "Almost ready for another solid session",
         items: [],
       },
       later: {
@@ -214,6 +226,7 @@
         <div class="overview-meta">Current recovery state based on recent training. Read the map, then scan what can be trained now or soon.</div>
         <div class="overview-heatmap-shell">
           ${M.renderFatigueUnresolvedWarning(summary.fatigue)}
+          ${M.renderSystemicFatigueStatus(summary.fatigue)}
           <div class="overview-fatigue-top">
             ${M.renderFatigueBodyFigure(summary.fatigue, "front")}
             ${M.renderFatigueLegendPanel()}

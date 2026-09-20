@@ -9,7 +9,7 @@
   };
 
   M.getFatigueVisualState = function getFatigueVisualState(region) {
-    if (!region || !region.rawLoad) return "none";
+    if (!region || !region.hasFatigueSignal) return "none";
     if (region.fatigueScore >= 75) return "high";
     if (region.fatigueScore >= 50) return "fatigued";
     if (region.fatigueScore >= 25) return "recovering";
@@ -17,7 +17,7 @@
   };
 
   M.getFatigueDisplayTier = function getFatigueDisplayTier(region) {
-    return region && region.rawLoad ? region.tier : "No recent load";
+    return region && region.hasFatigueSignal ? region.tier : "No recent load";
   };
 
   M.getFatigueTierMeaning = function getFatigueTierMeaning(region) {

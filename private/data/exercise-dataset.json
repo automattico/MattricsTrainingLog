@@ -1,16 +1,17 @@
 [
-    {
-        "canonicalName": "Lateral Raise",
-        "aliases": [
-            "Machine Lateral Raise",
-            "Cable Lateral Raise"
-        ],
-        "muscleWeights": {
-            "deltoids": 1,
-            "trapezius": 0.18
-        },
-        "fatigueMultiplier": 0.82,
-        "bodyweightEligible": false,
-        "setTypeHandling": "weight_reps"
-    }
+  {
+    "canonicalName": "Lateral Raise",
+    "aliases": [
+      "Machine Lateral Raise",
+      "Cable Lateral Raise"
+    ],
+    "muscleWeights": {
+      "deltoids": 1,
+      "trapezius": 0.18
+    },
+    "bodyweightEligible": false,
+    "setTypeHandling": "weight_reps",
+    "fatigueImpact": "normal",
+    "fatigueMultiplier": 1
+  }
 ]

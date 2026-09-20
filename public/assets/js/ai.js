@@ -50,7 +50,7 @@
       const km = parseFloat(activity["Distance (km)"]) || 0;
       const min = parseFloat(activity["Duration (min)"]) || 0;
       const elev = parseFloat(activity["Elevation Gain (m)"]) || 0;
-      const desc = (activity.Description || "").replace(/Logged with Hevy/g, "").slice(0, 200).trim();
+      const desc = M.stripHevyHeader(activity.Description || "").slice(0, 200).trim();
       return `• ${M.fmtShort(activity.Date)}: [${activity.Type}] ${activity.Name}${km ? ` — ${km.toFixed(1)}km` : ""}${min ? ` — ${M.fmt(min)}` : ""}${elev ? ` — ${elev}m elev` : ""}${desc ? `\n  ${desc}` : ""}`;
     }).join("\n");
     const fatigueSummary = fatigue ? `${fatigue.summary} ${fatigue.detail}` : "";

@@ -1,0 +1,67 @@
+name: mattrics-postgres-foundation
+
+services:
+  foundation-app:
+    profiles:
+      - foundation
+    build:
+      context: .
+      dockerfile: docker/runtime/Dockerfile
+    working_dir: /srv/mattrics
+    environment:
+      MATTRICS_RUNTIME_MODE: foundation
+      MATTRICS_PRIVATE_RUNTIME_DIR: /srv/mattrics/private-runtime
+      MATTRICS_CONFIG: /srv/mattrics/private-runtime/config.php
+      MATTRICS_SITE_ORIGIN: http://localhost:8081
+      MATTRICS_AUTH_REQUIRE_HTTPS: "0"
+      MATTRICS_FOUNDATION_DATABASE_URL: postgres://mattrics:mattrics-local-only-change-me@postgres:5432/mattrics
+      MATTRICS_FOUNDATION_USER_KEY: legacy-local-user
+      DATABASE_URL: postgres://mattrics:mattrics-local-only-change-me@postgres:5432/mattrics
+      MATTRICS_FOUNDATION_DISPLAY_NAME: Legacy Local User
+      MATTRICS_FOUNDATION_TIMEZONE: Europe/Berlin
+    volumes:
+      - .:/srv/mattrics:ro
+      - ./private:/srv/mattrics/private-legacy:ro
+      - mattrics_foundation_private_runtime:/srv/mattrics/private-runtime
+      - mattrics_foundation_php_sessions:/tmp/php-sessions
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8080"
+    command:
+      - sh
+      - -lc
+      - /srv/mattrics/scripts/foundation-runtime-entrypoint.sh
+    healthcheck:
+      test: ["CMD-SHELL", "php -r '$$r = @file_get_contents(\"http://127.0.0.1:8080/api/runtime-status.php\"); if ($$r === false) { exit(1); } $$d = json_decode($$r, true); exit(is_array($$d) && (($$d[\"runtimeMode\"] ?? \"\") === \"foundation\") ? 0 : 1);'"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  postgres:
+    profiles:
+      - foundation
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: mattrics
+      POSTGRES_USER: mattrics
+      POSTGRES_PASSWORD: mattrics-local-only-change-me
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d:ro
+      - mattrics_foundation_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  mattrics_foundation_postgres_data:
+  mattrics_foundation_private_runtime:
+  mattrics_foundation_php_sessions:

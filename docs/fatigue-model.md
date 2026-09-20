@@ -1,6 +1,6 @@
 # Fatigue Model
 
-The muscle fatigue system uses a **decay-based load accumulation model**. Every activity adds a per-muscle stimulus. That stimulus fades exponentially over time based on each muscle's half-life. The fatigue score represents how much accumulated load remains relative to a calibrated "fully loaded" reference.
+The muscle fatigue system uses a **decay-based load accumulation model**. Activities add local per-muscle stimulus and may also add a separate systemic fatigue stimulus. Both channels decay over time. Final muscle readiness is mostly local fatigue, with a modest systemic penalty.
 
 **Implemented in:** `public/assets/js/core/fatigue-engine.js`
 **Configuration:** `public/assets/js/core/constants.js` → `MUSCLE_FATIGUE_CONFIG`
@@ -10,11 +10,13 @@ The muscle fatigue system uses a **decay-based load accumulation model**. Every 
 
 ## Fatigue Score (0–100)
 
-Looks back **10 days** from now. Each activity contributes a per-muscle stimulus. Remaining load after exponential decay is summed, then divided by a normalization load to produce a 0–100 score.
+Looks back **10 days** from now. Each activity contributes local per-muscle stimulus. Remaining local load after exponential decay is summed, divided by a normalization load, and then adjusted by a small systemic penalty.
 
 ```
-score    = rawLoad / normalizationLoad × 100
-rawLoad  = Σ ( stimulus × 0.5^(hoursAgo / halfLife) )
+localScore       = rawLocalLoad / normalizationLoad × 100
+systemicPenalty  = systemicScore × 0.25
+finalMuscleScore = clamp(localScore + systemicPenalty, 0, 100)
+rawLocalLoad     = Σ ( localStimulus × 0.5^(hoursAgo / adjustedHalfLife) )
 ```
 
 | Parameter | Value |
@@ -31,25 +33,27 @@ After one half-life, 50% of the stimulus remains. After two, 25%.
 
 | Half-life | Muscles |
 |---|---|
-| 72 h | Chest, upper back, lower back, quadriceps, hamstrings, gluteal, adductors |
+| 72 h | Chest, upper back |
 | 60 h | Deltoids, trapezius, calves |
-| 48 h | Triceps, biceps, abs, obliques |
+| 48 h | Triceps, biceps, abs, obliques, gluteal, quadriceps, hamstrings |
 
 ---
 
-## Recovery Threshold
+## Recovery Thresholds
 
-Recovery is considered complete when `rawLoad ≤ threshold`. Below that, the muscle is **Fresh**.
+The model now keeps two separate thresholds:
+- `trainableThreshold`: used for the board's `When` ETA
+- `freshThreshold`: used for "fully fresh" timing
 
 ```
-threshold     = normalizationLoad × 0.25
-recoveryHours = halfLife × log₂(rawLoad / threshold)
-                (only calculated when rawLoad > threshold)
+trainableThreshold = normalizationLoad × 0.50
+freshThreshold     = normalizationLoad × 0.25
 ```
 
 | Setting | Value |
 |---|---|
-| Threshold ratio | 0.25 — aligns with Fresh tier boundary |
+| Trainable threshold ratio | 0.50 — used for the readiness ETA |
+| Fresh threshold ratio | 0.25 — aligns with the Fresh tier boundary |
 
 ---
 
@@ -57,9 +61,9 @@ recoveryHours = halfLife × log₂(rawLoad / threshold)
 
 | Tier | Score range | Body map state | Readiness bucket |
 |---|---|---|---|
-| No recent load | n/a (rawLoad = 0) | `none` | Train today |
+| No recent load | n/a (rawLocalLoad = 0 and no systemic penalty) | `none` | Train today |
 | Fresh | 0–24% | `fresh` | Train today |
-| Recovering | 25–49% | `recovering` | Train tomorrow |
+| Recovering | 25–49% | `recovering` | Train today / soon |
 | Fatigued | 50–74% | `fatigued` | Needs more recovery |
 | Highly fatigued | 75–100% | `high` | Needs more recovery |
 
@@ -71,20 +75,20 @@ The per-muscle "fully loaded" reference values (used to scale rawLoad to a 0–1
 
 | Muscle | Normalization load |
 |---|---|
-| Upper back | 2.45 |
-| Chest | 2.40 |
-| Gluteal | 2.30 |
-| Quadriceps | 2.25 |
-| Deltoids | 2.20 |
-| Hamstrings | 2.05 |
-| Lower back | 1.85 |
-| Abs | 1.70 |
-| Trapezius | 1.90 |
-| Triceps | 1.65 |
-| Biceps | 1.55 |
+| Chest | 3.50 |
+| Upper back | 3.50 |
+| Gluteal | 7.50 |
+| Quadriceps | 5.50 |
+| Deltoids | 2.80 |
+| Hamstrings | 4.00 |
+| Lower back | 2.50 |
+| Abs | 5.00 |
+| Trapezius | 2.30 |
+| Triceps | 2.50 |
+| Biceps | 2.50 |
 | Calves | 1.55 |
-| Adductors | 1.50 |
-| Obliques | 1.45 |
+| Adductors | 3.20 |
+| Obliques | 3.50 |
 
 ---
 
@@ -108,6 +112,7 @@ Why categories replace raw decimals:
 
 Editing rules:
 - At least one involved muscle must be marked Primary.
+- Exercises with `fatigueImpact: "none"` are resolved but excluded from local and systemic fatigue. They may have empty or all-zero `muscleWeights`.
 - Multiple muscles may be Primary in the same exercise.
 - Legacy decimal weights are mapped on load with these thresholds:
   `0 or missing → unchecked`, `>0 to <=0.14 → Stabilizer`, `>0.14 to <=0.32 → Minor`,
@@ -117,27 +122,55 @@ Editing rules:
 
 Preview and scoring:
 - The editor shows a live front/back body-map preview that updates as weights change.
-- Saved numeric weights affect fatigue as per-muscle multipliers on the same scaled set load.
-- Final per-muscle stimulus is `scaledSetLoad × fatigueMultiplier × muscleWeight`.
+- Saved numeric weights affect local fatigue as per-muscle multipliers on the local share of parsed set stimulus.
+- Total stimulus comes from parsed set load or fallback duration/set-count logic, then fatigue archetype shares split it into local and systemic channels.
+- `fatigueImpact: "none"` is intended for stretching, mobility, Yin Yoga, or other recovery work that should clear unknown warnings without adding fake fatigue.
 
 ---
 
 ## Hevy Workout Parsing
 
-Triggered when `activity.Description` starts with `"Logged with Hevy"`.
+Triggered when `activity.Description` starts with `"Logged with Hevy"` or `"Logged with HevyApp.com"`.
+
+When canonical mode is active and the current activity has canonical child rows, the fatigue engine does **not** treat the rebuilt display strings as the source of truth. It consumes canonical `activityChildren[].exercises[].sets[]` fields first:
+
+- `parsedKind: "parsed"` uses typed `weightKg`, `reps`, and `effortFactor`
+- `parsedKind: "time"` uses typed `durationMinutes` and `distanceKm`
+- `parsedKind: "unknown"` or missing typed numeric fields mark the block as ambiguous and fall back to the existing duration-plus-set-count heuristic
+
+The rebuilt set text remains for UI display and detail views only. Description parsing stays in place strictly for legacy rows or canonical activities that do not have child rows.
 
 ### Set Load Formula
 
 ```
-load         = weight(kg) × reps × effortFactor
-effortFactor = 0.5 + RPE/10     (default RPE = 7 → effortFactor = 1.20)
-bodyweight   = 75 kg × 0.4      (when no weight is logged)
-scaledLoad   = load / 1500      (unit divisor)
+baseLoad       = weight(kg) × reps
+effortFactor   = 0.5 + RPE/10     (default RPE = 7.5 unless user fallback is configured)
+relativeFactor = clamp(weightKg / personalReferenceLoadKg, 0.55, 1.35)
+setStimulus    = (baseLoad / 1500) × effortFactor × relativeFactor
 ```
 
 RPE → effort factor: 6→1.10 · 7→1.20 · 8→1.30 · 9→1.40 · 10→1.50
 
-Time-based sets (e.g. "3 min", "45 sec") are skipped — no load calculated.
+`personalReferenceLoadKg` uses same-exercise history, then same-family history, then a bodyweight and experience heuristic. Experience uses the existing settings only: Beginner, Intermediate, Advanced. Missing or invalid experience falls back to neutral scale `1.00`.
+
+Parsed set stimulus is split by internal fatigue archetype:
+
+| Archetype | Local | Systemic |
+|---|---:|---:|
+| isolation | 0.90 | 0.10 |
+| machine_compound | 0.80 | 0.20 |
+| freeweight_compound | 0.70 | 0.30 |
+| hinge_squat | 0.60 | 0.40 |
+| conditioning_hybrid | 0.55 | 0.45 |
+
+Time-based sets (e.g. "3 min", "45 sec") are skipped by default. Exercises with `setTypeHandling: "time_duration"` use the logged set minutes as a light duration-scaled stimulus, which is useful for cycling/spinning warmups and cooldowns.
+
+Canonical child-row precedence:
+
+- direct Hevy-import activities and bootstrapped legacy Hevy activities both flow through the same canonical child-row structure once selected by the compatibility API
+- direct Hevy rows still win over matching legacy snapshot rows before the fatigue engine sees them
+- if the selected activity has canonical child rows, those typed child rows beat any conflicting or stale `Description` text on the activity
+- if no child rows are available, the existing description parser remains the fallback
 
 ### Exercise Pattern Matching
 
@@ -150,7 +183,9 @@ Exercise name is normalized and resolved from `api/exercises.php`, using canonic
 | row / face pull | Upper back |
 | pulldown / pull-up / pullup / chin-up / chinup | Upper back (width) |
 | deadlift / rdl / romanian deadlift | Hamstrings + glutes |
-| shoulder press / overhead press / arnold press / lateral raise / front raise / rear delt | Deltoids |
+| shoulder press / overhead press / arnold press | Deltoids |
+| lateral raise / single arm lateral raise | Deltoids isolation |
+| external shoulder rotation / cable external rotation | Light rotator cuff / delt support |
 | curl / hammer | Biceps |
 | triceps / pushdown / skull crusher | Triceps |
 | plank / crunch / twist / dead bug / hollow / sit up / leg raise / russian twist | Abs |
@@ -161,6 +196,8 @@ Exercise name is normalized and resolved from `api/exercises.php`, using canonic
 **To add a new exercise:** edit `private/data/exercise-configs.json`. The resolver loaded from `api/exercises.php` now owns canonical names, aliases, and legacy substring `matchTerms`.
 
 **Unmatched exercises** contribute zero muscle-specific stimulus. If *no* exercise in the session matches, the whole session falls back to the generic `WeightTraining` type mapping.
+
+**Configured no-fatigue exercises** are different from unknowns: they resolve normally, clear warning state, and intentionally add zero fatigue.
 
 Unknown Hevy exercises and unknown non-Hevy activity types are also persisted to `private/data/exercise-unknowns.json` via `api/exercises.php` so they are never silently ignored.
 

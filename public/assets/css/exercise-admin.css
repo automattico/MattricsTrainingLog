@@ -111,6 +111,14 @@
   margin-top: var(--space-3);
 }
 
+.exercise-admin-editor-kind {
+  margin-top: 8px;
+  color: var(--muted);
+  font: 600 0.78rem/1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .exercise-admin-list-item {
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -261,6 +269,109 @@
   margin-top: var(--space-4);
 }
 
+.exercise-admin-form-section,
+.exercise-admin-advanced {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.exercise-admin-savebar {
+  position: sticky;
+  top: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.exercise-admin-savebar-copy {
+  min-width: 0;
+}
+
+.exercise-admin-savebar-title,
+.exercise-admin-form-section-title {
+  margin: 6px 0 0;
+  color: var(--text);
+  font: 700 1.08rem/1.2 "Barlow Condensed", sans-serif;
+}
+
+.exercise-admin-savebar-status {
+  margin-top: 5px;
+  color: var(--muted-strong);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.exercise-admin-savebar-status--ready {
+  color: #8ff0c9;
+}
+
+.exercise-admin-savebar-status--warning {
+  color: #ffd0b1;
+}
+
+.exercise-admin-savebar-status--busy {
+  color: #bde6ff;
+}
+
+.exercise-admin-savebar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.exercise-admin-savebar-actions > .gen-btn,
+.exercise-admin-savebar-actions > .passkey-add-btn,
+.exercise-admin-savebar-save-group > .settings-save-btn {
+  min-height: 54px;
+  height: 54px;
+  padding-top: 0;
+  padding-bottom: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exercise-admin-savebar-primary {
+  min-width: 188px;
+}
+
+.exercise-admin-savebar-save-group {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.exercise-admin-form-section,
+.exercise-admin-advanced {
+  padding: 18px;
+}
+
+.exercise-admin-form-section-copy {
+  margin: 8px 0 0;
+  color: var(--muted-strong);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.exercise-admin-form-section-headline {
+  margin-bottom: 14px;
+}
+
+.exercise-admin-form-section--muscles .exercise-admin-form-section-copy {
+  max-width: 56ch;
+}
+
 .exercise-admin-section-head {
   display: flex;
   align-items: center;
@@ -289,6 +400,59 @@
 
 .exercise-admin-synonyms-empty {
   color: var(--muted);
+}
+
+.exercise-admin-advanced {
+  padding: 0;
+}
+
+.exercise-admin-advanced-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  color: var(--text);
+  font: 700 1.08rem/1.2 "Barlow Condensed", sans-serif;
+  cursor: pointer;
+  list-style: none;
+}
+
+.exercise-admin-advanced-summary::-webkit-details-marker {
+  display: none;
+}
+
+.exercise-admin-advanced-summary::after {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  opacity: 0.65;
+  transform: rotate(45deg);
+  transition: transform 0.18s ease;
+}
+
+.exercise-admin-advanced[open] .exercise-admin-advanced-summary::after {
+  transform: rotate(225deg);
+}
+
+.exercise-admin-advanced-body {
+  display: grid;
+  gap: var(--space-4);
+  padding: 0 18px 18px;
+}
+
+.exercise-admin-editor-meta--advanced {
+  margin-top: 0;
+}
+
+.exercise-admin-advanced-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-top: var(--space-2);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .exercise-admin-recent-workouts {
@@ -368,6 +532,72 @@
   width: 18px;
   height: 18px;
   accent-color: rgb(0, 130, 201);
+}
+
+.exercise-admin-switch-row {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.exercise-admin-switch-row > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.exercise-admin-switch {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.exercise-admin-switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.exercise-admin-switch-ui {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.1);
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.exercise-admin-switch-ui::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #f4f7fb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  transition: transform 0.18s ease;
+}
+
+.exercise-admin-switch input:checked + .exercise-admin-switch-ui {
+  background: rgba(0, 130, 201, 0.34);
+  border-color: rgba(0, 130, 201, 0.56);
+}
+
+.exercise-admin-switch input:checked + .exercise-admin-switch-ui::after {
+  transform: translateX(20px);
+}
+
+.exercise-admin-switch input:focus-visible + .exercise-admin-switch-ui {
+  outline: 2px solid rgba(0, 130, 201, 0.55);
+  outline-offset: 2px;
 }
 
 .exercise-admin-muscle-workspace {
@@ -870,6 +1100,15 @@
   .exercise-admin-muscle-workspace {
     grid-template-columns: 1fr;
   }
+
+  .exercise-admin-savebar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .exercise-admin-savebar-actions {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 720px) {
@@ -916,8 +1155,29 @@
     grid-template-columns: 1fr;
   }
 
+  .exercise-admin-savebar {
+    top: 8px;
+  }
+
+  .exercise-admin-savebar-actions {
+    width: 100%;
+  }
+
+  .exercise-admin-savebar-actions .settings-save-btn,
+  .exercise-admin-savebar-actions .gen-btn,
+  .exercise-admin-savebar-actions .passkey-add-btn,
+  .exercise-admin-savebar-save-group {
+    width: 100%;
+  }
+
+  .exercise-admin-savebar-primary {
+    min-width: 0;
+  }
+
   .exercise-admin-secondary-actions,
-  .exercise-admin-inline-action {
+  .exercise-admin-inline-action,
+  .exercise-admin-advanced-actions {
+    flex-direction: column;
     align-items: stretch;
   }
 

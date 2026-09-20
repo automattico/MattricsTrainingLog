@@ -204,3 +204,13 @@ When editing or rebuilding the sync later, preserve these rules:
 - keep duplicate protection on `Activity ID raw`
 - keep `public/config.js` local and gitignored
 - do not assume manual activities will always sync automatically
+
+## Migration note
+
+In the current production workflow, Strava remains the editable source where activity title and activity type may be corrected before data reaches Mattrics through Make.com and Google Sheets.
+
+That matters for the migration roadmap:
+
+- future direct Hevy and Garmin Connect connectors are now higher priority than Concept2 import
+- duplicate handling between direct Hevy/Garmin rows and Strava/Google Sheet rows is expected
+- until a richer field-level provenance model exists, Strava-derived title and activity type should win when duplicate rows represent the same underlying activity

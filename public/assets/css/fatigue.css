@@ -35,6 +35,29 @@
   color: var(--text);
 }
 
+.overview-systemic-fatigue {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-card-sm);
+  border: 1px solid rgba(237, 242, 250, 0.075);
+  background: rgba(255, 255, 255, 0.018);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.overview-systemic-fatigue-label {
+  color: var(--text);
+  font-weight: 750;
+}
+
+.overview-systemic-fatigue-value {
+  white-space: nowrap;
+}
+
 .overview-fatigue-top {
   display: grid;
   grid-template-areas: "front back legend";
@@ -373,12 +396,16 @@
 }
 
 .overview-fatigue-legend-item[data-fatigue-state="fresh"] .overview-fatigue-swatch,
+.overview-systemic-fatigue[data-fatigue-state="fresh"] .overview-fatigue-swatch,
 .overview-fatigue-table tbody tr[data-fatigue-state="fresh"] .overview-fatigue-swatch { background: var(--fatigue-color-fresh); }
 .overview-fatigue-legend-item[data-fatigue-state="recovering"] .overview-fatigue-swatch,
+.overview-systemic-fatigue[data-fatigue-state="recovering"] .overview-fatigue-swatch,
 .overview-fatigue-table tbody tr[data-fatigue-state="recovering"] .overview-fatigue-swatch { background: var(--fatigue-color-recovering); }
 .overview-fatigue-legend-item[data-fatigue-state="fatigued"] .overview-fatigue-swatch,
+.overview-systemic-fatigue[data-fatigue-state="fatigued"] .overview-fatigue-swatch,
 .overview-fatigue-table tbody tr[data-fatigue-state="fatigued"] .overview-fatigue-swatch { background: var(--fatigue-color-fatigued); }
 .overview-fatigue-legend-item[data-fatigue-state="high"] .overview-fatigue-swatch,
+.overview-systemic-fatigue[data-fatigue-state="high"] .overview-fatigue-swatch,
 .overview-fatigue-table tbody tr[data-fatigue-state="high"] .overview-fatigue-swatch { background: var(--fatigue-color-high); }
 
 .overview-fatigue-legend-item[data-fatigue-state="fresh"],

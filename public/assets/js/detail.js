@@ -10,9 +10,9 @@
     const cfg = M.tc(activity.Type);
     const facts = M.detailFacts(activity);
     const notes = (activity.Description || "").trim();
-    const hevy = M.parseHevyDescription(notes);
-    const exerciseCount = hevy ? hevy.length : 0;
-    const setCount = hevy ? hevy.reduce((sum, exercise) => sum + exercise.sets.length, 0) : 0;
+    const workoutBlocks = M.getActivityWorkoutBlocks(activity);
+    const exerciseCount = workoutBlocks ? workoutBlocks.length : 0;
+    const setCount = workoutBlocks ? workoutBlocks.reduce((sum, exercise) => sum + exercise.sets.length, 0) : 0;
     const deviceName = (activity["Device Name"] || "").trim();
     const metricFacts = facts.filter((fact) => fact.lab !== "Device");
     const summaryItems = [];
@@ -41,8 +41,8 @@
     document.getElementById("detailMeta").textContent = deviceName ? `Tracked with ${deviceName}` : "";
     document.getElementById("detailMeta").style.display = deviceName ? "block" : "none";
 
-    if (hevy && hevy.length) {
-      document.getElementById("detailWorkoutList").innerHTML = hevy.map((exercise) => `
+    if (workoutBlocks && workoutBlocks.length) {
+      document.getElementById("detailWorkoutList").innerHTML = workoutBlocks.map((exercise) => `
         <div class="hevy-exercise">
           <div class="hevy-ex-name">${M.esc(exercise.name)}</div>
           <div class="hevy-set-list">
@@ -55,7 +55,7 @@
       document.getElementById("detailWorkoutSection").style.display = "none";
     }
 
-    const cleanNotes = hevy ? "" : notes;
+    const cleanNotes = workoutBlocks && workoutBlocks.length ? "" : notes;
     if (cleanNotes) {
       document.getElementById("detailNotes").textContent = cleanNotes;
       document.getElementById("detailNotesSection").style.display = "block";

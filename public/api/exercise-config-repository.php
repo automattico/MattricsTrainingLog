@@ -29,6 +29,34 @@ const MATTRICS_EXERCISE_CONFIG_ALLOWED_SET_TYPES = [
     'weight_reps',
     'bodyweight_reps',
     'time_based_ignore',
+    'time_duration',
+];
+const MATTRICS_EXERCISE_CONFIG_ALLOWED_FATIGUE_IMPACT = [
+    'normal',
+    'none',
+];
+const MATTRICS_EXERCISE_CONFIG_ALLOWED_FAMILIES = [
+    'horizontal_press',
+    'vertical_press',
+    'horizontal_pull',
+    'vertical_pull',
+    'squat',
+    'hinge',
+    'hip_dominant',
+    'knee_isolation',
+    'hip_isolation',
+    'arm_isolation',
+    'shoulder_isolation',
+    'calf',
+    'core',
+    'conditioning_lower',
+];
+const MATTRICS_EXERCISE_CONFIG_ALLOWED_ARCHETYPES = [
+    'isolation',
+    'machine_compound',
+    'freeweight_compound',
+    'hinge_squat',
+    'conditioning_hybrid',
 ];
 const MATTRICS_EXERCISE_CONFIG_ALLOWED_STATUS = [
     'draft_active',
@@ -83,6 +111,7 @@ function mattrics_exercise_external_dataset_path(): string
 function mattrics_normalize_config_name(string $name): string
 {
     $value = trim($name);
+    $value = preg_replace('/([A-Z]+)([A-Z][a-z])/', '$1 $2', $value) ?? $value;
     $value = preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', $value) ?? $value;
     $value = function_exists('mb_strtolower') ? mb_strtolower($value, 'UTF-8') : strtolower($value);
     $value = preg_replace('/[^a-z0-9]+/i', ' ', $value) ?? '';
@@ -144,6 +173,19 @@ function mattrics_ensure_allowed_string(array $record, string $field, string $ki
     return $value;
 }
 
+function mattrics_optional_allowed_string(array $record, string $field, string $kind, array $allowed): ?string
+{
+    if (!array_key_exists($field, $record) || $record[$field] === null || $record[$field] === '') {
+        return null;
+    }
+
+    if (!is_string($record[$field]) || !in_array($record[$field], $allowed, true)) {
+        throw new RuntimeException($kind . ' config has invalid ' . $field . ': ' . (string) $record[$field]);
+    }
+
+    return $record[$field];
+}
+
 function mattrics_ensure_bool(array $record, string $field, string $kind): bool
 {
     if (!array_key_exists($field, $record) || !is_bool($record[$field])) {
@@ -160,10 +202,10 @@ function mattrics_ensure_number(array $record, string $field, string $kind): flo
     return (float) $record[$field];
 }
 
-function mattrics_validate_muscle_weights(array $record, string $kind): array
+function mattrics_validate_muscle_weights_with_options(array $record, string $kind, bool $allowZero): array
 {
     $weights = $record['muscleWeights'] ?? null;
-    if (!is_array($weights) || $weights === []) {
+    if (!is_array($weights) || (!$allowZero && $weights === [])) {
         throw new RuntimeException($kind . ' config must contain muscleWeights.');
     }
 
@@ -186,11 +228,16 @@ function mattrics_validate_muscle_weights(array $record, string $kind): array
         $clean[$muscle] = $weight;
     }
 
-    if (!$hasPositive) {
+    if (!$allowZero && !$hasPositive) {
         throw new RuntimeException($kind . ' config must have at least one positive muscle weight.');
     }
 
     return $clean;
+}
+
+function mattrics_validate_muscle_weights(array $record, string $kind): array
+{
+    return mattrics_validate_muscle_weights_with_options($record, $kind, false);
 }
 
 function mattrics_normalize_semantic_muscle_weight(float $weight): float
@@ -213,10 +260,10 @@ function mattrics_normalize_semantic_muscle_weight(float $weight): float
     return round($best, 2);
 }
 
-function mattrics_normalize_semantic_muscle_weights(array $record, string $kind): array
+function mattrics_normalize_semantic_muscle_weights_with_options(array $record, string $kind, bool $allowZero): array
 {
     $weights = $record['muscleWeights'] ?? null;
-    if (!is_array($weights) || $weights === []) {
+    if (!is_array($weights) || (!$allowZero && $weights === [])) {
         throw new RuntimeException($kind . ' config must contain muscleWeights.');
     }
 
@@ -240,11 +287,42 @@ function mattrics_normalize_semantic_muscle_weights(array $record, string $kind)
         $clean[$muscle] = $normalizedWeight;
     }
 
-    if (!$hasPositive) {
+    if (!$allowZero && !$hasPositive) {
         throw new RuntimeException($kind . ' config must have at least one positive muscle weight.');
     }
 
     return $clean;
+}
+
+function mattrics_normalize_semantic_muscle_weights(array $record, string $kind): array
+{
+    return mattrics_normalize_semantic_muscle_weights_with_options($record, $kind, false);
+}
+
+function mattrics_normalize_fatigue_impact(array $record, string $kind): string
+{
+    if (!array_key_exists('fatigueImpact', $record) || $record['fatigueImpact'] === null || $record['fatigueImpact'] === '') {
+        return 'normal';
+    }
+
+    return mattrics_ensure_allowed_string($record, 'fatigueImpact', $kind, MATTRICS_EXERCISE_CONFIG_ALLOWED_FATIGUE_IMPACT);
+}
+
+function mattrics_normalize_fatigue_multiplier(array $record, string $kind): float
+{
+    if (!array_key_exists('fatigueMultiplier', $record) || $record['fatigueMultiplier'] === null || $record['fatigueMultiplier'] === '') {
+        return 1.0;
+    }
+    if (!is_numeric($record['fatigueMultiplier'])) {
+        throw new RuntimeException($kind . ' config missing required numeric field: fatigueMultiplier');
+    }
+
+    $value = (float) $record['fatigueMultiplier'];
+    if (!is_finite($value) || $value < 0) {
+        throw new RuntimeException($kind . ' config fatigueMultiplier must be zero or greater.');
+    }
+
+    return $value;
 }
 
 function mattrics_validate_exercise_config_record(array $record): array
@@ -260,21 +338,35 @@ function mattrics_validate_exercise_config_record(array $record): array
     if (array_key_exists('source', $record) && $record['source'] !== null && $record['source'] !== '') {
         $source = mattrics_ensure_allowed_string($record, 'source', 'Exercise', MATTRICS_EXERCISE_CONFIG_ALLOWED_SOURCES);
     }
+    $fatigueImpact = mattrics_normalize_fatigue_impact($record, 'Exercise');
 
-    return [
+    $validated = [
         'id' => mattrics_ensure_required_string($record, 'id', 'Exercise'),
         'canonicalName' => $canonicalName,
         'normalizedName' => $normalizedName,
         'aliases' => mattrics_ensure_string_array($record, 'aliases', 'Exercise', false),
         'matchTerms' => mattrics_ensure_string_array($record, 'matchTerms', 'Exercise', false),
-        'muscleWeights' => mattrics_validate_muscle_weights($record, 'Exercise'),
-        'fatigueMultiplier' => mattrics_ensure_number($record, 'fatigueMultiplier', 'Exercise'),
+        'muscleWeights' => mattrics_validate_muscle_weights_with_options($record, 'Exercise', $fatigueImpact === 'none'),
+        'fatigueImpact' => $fatigueImpact,
+        'fatigueMultiplier' => mattrics_normalize_fatigue_multiplier($record, 'Exercise'),
         'bodyweightEligible' => mattrics_ensure_bool($record, 'bodyweightEligible', 'Exercise'),
         'setTypeHandling' => mattrics_ensure_allowed_string($record, 'setTypeHandling', 'Exercise', MATTRICS_EXERCISE_CONFIG_ALLOWED_SET_TYPES),
         'source' => $source,
         'lastUpdatedAt' => mattrics_ensure_required_string($record, 'lastUpdatedAt', 'Exercise'),
         'lastUpdatedType' => mattrics_ensure_allowed_string($record, 'lastUpdatedType', 'Exercise', MATTRICS_EXERCISE_CONFIG_ALLOWED_UPDATE_TYPES),
     ];
+
+    $family = mattrics_optional_allowed_string($record, 'exerciseFamily', 'Exercise', MATTRICS_EXERCISE_CONFIG_ALLOWED_FAMILIES);
+    if ($family !== null) {
+        $validated['exerciseFamily'] = $family;
+    }
+
+    $archetype = mattrics_optional_allowed_string($record, 'fatigueArchetype', 'Exercise', MATTRICS_EXERCISE_CONFIG_ALLOWED_ARCHETYPES);
+    if ($archetype !== null) {
+        $validated['fatigueArchetype'] = $archetype;
+    }
+
+    return $validated;
 }
 
 function mattrics_validate_activity_type_config_record(array $record): array
@@ -286,19 +378,31 @@ function mattrics_validate_activity_type_config_record(array $record): array
         throw new RuntimeException('Activity type config normalizedName mismatch for ' . $canonicalName . '.');
     }
 
-    return [
+    $validated = [
         'id' => mattrics_ensure_required_string($record, 'id', 'Activity type'),
         'canonicalName' => $canonicalName,
         'normalizedName' => $normalizedName,
         'aliases' => mattrics_ensure_string_array($record, 'aliases', 'Activity type', false),
         'muscleWeights' => mattrics_validate_muscle_weights($record, 'Activity type'),
-        'fatigueMultiplier' => mattrics_ensure_number($record, 'fatigueMultiplier', 'Activity type'),
+        'fatigueMultiplier' => mattrics_normalize_fatigue_multiplier($record, 'Activity type'),
         'status' => mattrics_ensure_allowed_string($record, 'status', 'Activity type', MATTRICS_EXERCISE_CONFIG_ALLOWED_STATUS),
         'reviewNeeded' => mattrics_ensure_bool($record, 'reviewNeeded', 'Activity type'),
         'source' => mattrics_ensure_allowed_string($record, 'source', 'Activity type', MATTRICS_EXERCISE_CONFIG_ALLOWED_SOURCES),
         'lastUpdatedAt' => mattrics_ensure_required_string($record, 'lastUpdatedAt', 'Activity type'),
         'lastUpdatedType' => mattrics_ensure_allowed_string($record, 'lastUpdatedType', 'Activity type', MATTRICS_EXERCISE_CONFIG_ALLOWED_UPDATE_TYPES),
     ];
+
+    $family = mattrics_optional_allowed_string($record, 'exerciseFamily', 'Activity type', MATTRICS_EXERCISE_CONFIG_ALLOWED_FAMILIES);
+    if ($family !== null) {
+        $validated['exerciseFamily'] = $family;
+    }
+
+    $archetype = mattrics_optional_allowed_string($record, 'fatigueArchetype', 'Activity type', MATTRICS_EXERCISE_CONFIG_ALLOWED_ARCHETYPES);
+    if ($archetype !== null) {
+        $validated['fatigueArchetype'] = $archetype;
+    }
+
+    return $validated;
 }
 
 function mattrics_validate_unknown_exercise_record(array $record): array
@@ -355,12 +459,15 @@ function mattrics_validate_external_dataset_record(array $record): array
         throw new RuntimeException('Exercise dataset canonicalName could not be normalized.');
     }
 
-    return [
+    $fatigueImpact = mattrics_normalize_fatigue_impact($record, 'Exercise dataset');
+
+    $validated = [
         'canonicalName' => $canonicalName,
         'normalizedName' => $normalizedName,
         'aliases' => mattrics_ensure_string_array($record, 'aliases', 'Exercise dataset', false),
-        'muscleWeights' => mattrics_normalize_semantic_muscle_weights($record, 'Exercise dataset'),
-        'fatigueMultiplier' => mattrics_ensure_number($record, 'fatigueMultiplier', 'Exercise dataset'),
+        'muscleWeights' => mattrics_normalize_semantic_muscle_weights_with_options($record, 'Exercise dataset', $fatigueImpact === 'none'),
+        'fatigueImpact' => $fatigueImpact,
+        'fatigueMultiplier' => mattrics_normalize_fatigue_multiplier($record, 'Exercise dataset'),
         'bodyweightEligible' => mattrics_ensure_bool($record, 'bodyweightEligible', 'Exercise dataset'),
         'setTypeHandling' => mattrics_ensure_allowed_string(
             $record,
@@ -369,6 +476,18 @@ function mattrics_validate_external_dataset_record(array $record): array
             MATTRICS_EXERCISE_CONFIG_ALLOWED_SET_TYPES
         ),
     ];
+
+    $family = mattrics_optional_allowed_string($record, 'exerciseFamily', 'Exercise dataset', MATTRICS_EXERCISE_CONFIG_ALLOWED_FAMILIES);
+    if ($family !== null) {
+        $validated['exerciseFamily'] = $family;
+    }
+
+    $archetype = mattrics_optional_allowed_string($record, 'fatigueArchetype', 'Exercise dataset', MATTRICS_EXERCISE_CONFIG_ALLOWED_ARCHETYPES);
+    if ($archetype !== null) {
+        $validated['fatigueArchetype'] = $archetype;
+    }
+
+    return $validated;
 }
 
 function mattrics_read_config_collection(string $path, string $kind, callable $validator): array
@@ -677,6 +796,17 @@ function mattrics_find_activity_type_config_match(string $normalizedName): ?arra
     return null;
 }
 
+function mattrics_find_activity_type_config_by_id(string $id): ?array
+{
+    foreach (mattrics_read_activity_type_config_records() as $record) {
+        if (($record['id'] ?? '') === $id) {
+            return $record;
+        }
+    }
+
+    return null;
+}
+
 function mattrics_find_exercise_dataset_match(array $unknown): ?array
 {
     $candidateNames = [];
@@ -790,6 +920,43 @@ function mattrics_assert_exercise_config_name_collisions(
     }
 }
 
+function mattrics_assert_activity_type_config_name_collisions(
+    array $records,
+    string $activityTypeId,
+    string $normalizedName,
+    array $aliases
+): void {
+    $candidateTerms = [$normalizedName => 'canonical name'];
+    foreach ($aliases as $alias) {
+        $normalizedAlias = mattrics_normalize_config_name((string) $alias);
+        if ($normalizedAlias !== '') {
+            $candidateTerms[$normalizedAlias] = 'alias';
+        }
+    }
+
+    foreach ($records as $record) {
+        if (($record['id'] ?? '') === $activityTypeId) {
+            continue;
+        }
+
+        $otherCanonical = (string) ($record['normalizedName'] ?? '');
+        if ($otherCanonical !== '' && isset($candidateTerms[$otherCanonical])) {
+            throw new RuntimeException(
+                'Activity type config name collides with existing activity type "' . ($record['canonicalName'] ?? $record['id']) . '".'
+            );
+        }
+
+        foreach (($record['aliases'] ?? []) as $alias) {
+            $otherAlias = mattrics_normalize_config_name((string) $alias);
+            if ($otherAlias !== '' && isset($candidateTerms[$otherAlias])) {
+                throw new RuntimeException(
+                    'Activity type config alias collides with existing activity type "' . ($record['canonicalName'] ?? $record['id']) . '".'
+                );
+            }
+        }
+    }
+}
+
 function mattrics_prune_resolved_unknown_exercise_records(): array
 {
     $records = mattrics_read_unknown_exercise_records();
@@ -851,12 +1018,15 @@ function mattrics_build_merged_alias_exercise_record(
         'normalizedName' => $normalizedName,
         'aliases' => $aliases,
         'matchTerms' => $matchTerms,
-        'muscleWeights' => mattrics_normalize_semantic_muscle_weights([
+        'muscleWeights' => mattrics_normalize_semantic_muscle_weights_with_options([
             'muscleWeights' => $target['muscleWeights'] ?? [],
-        ], 'Exercise'),
-        'fatigueMultiplier' => (float) ($target['fatigueMultiplier'] ?? 1),
+        ], 'Exercise', (($target['fatigueImpact'] ?? 'normal') === 'none')),
+        'fatigueImpact' => (string) ($target['fatigueImpact'] ?? 'normal'),
+        'fatigueMultiplier' => mattrics_normalize_fatigue_multiplier($target, 'Exercise'),
         'bodyweightEligible' => (bool) ($target['bodyweightEligible'] ?? false),
         'setTypeHandling' => (string) ($target['setTypeHandling'] ?? 'weight_reps'),
+        'exerciseFamily' => $target['exerciseFamily'] ?? null,
+        'fatigueArchetype' => $target['fatigueArchetype'] ?? null,
         'source' => (string) ($target['source'] ?? 'manual'),
         'lastUpdatedAt' => gmdate('c'),
         'lastUpdatedType' => 'manual',
@@ -869,6 +1039,29 @@ function mattrics_make_exercise_config_id(string $canonicalName, array $existing
     $base = trim($base, '-');
     if ($base === '') {
         $base = 'exercise';
+    }
+
+    $existingIds = [];
+    foreach ($existingRecords as $record) {
+        $existingIds[(string) ($record['id'] ?? '')] = true;
+    }
+
+    $candidate = $base;
+    $suffix = 2;
+    while (isset($existingIds[$candidate])) {
+        $candidate = $base . '-' . $suffix;
+        $suffix++;
+    }
+
+    return $candidate;
+}
+
+function mattrics_make_activity_type_config_id(string $canonicalName, array $existingRecords): string
+{
+    $base = preg_replace('/[^a-z0-9]+/i', '-', mattrics_normalize_config_name($canonicalName)) ?? '';
+    $base = trim($base, '-');
+    if ($base === '') {
+        $base = 'activity-type';
     }
 
     $existingIds = [];
@@ -914,12 +1107,8 @@ function mattrics_create_exercise_config_record(array $input): array
     }
     $matchTerms = mattrics_normalize_unique_name_list($matchTerms);
 
-    $muscleWeights = mattrics_normalize_semantic_muscle_weights($input, 'Exercise create');
-
-    $fatigueMultiplier = $input['fatigueMultiplier'] ?? null;
-    if (!is_numeric($fatigueMultiplier)) {
-        throw new RuntimeException('fatigueMultiplier must be numeric.');
-    }
+    $fatigueImpact = mattrics_normalize_fatigue_impact($input, 'Exercise create');
+    $muscleWeights = mattrics_normalize_semantic_muscle_weights_with_options($input, 'Exercise create', $fatigueImpact === 'none');
 
     if (!array_key_exists('bodyweightEligible', $input) || !is_bool($input['bodyweightEligible'])) {
         throw new RuntimeException('bodyweightEligible must be boolean.');
@@ -939,9 +1128,12 @@ function mattrics_create_exercise_config_record(array $input): array
         'aliases' => $aliases,
         'matchTerms' => $matchTerms,
         'muscleWeights' => $muscleWeights,
-        'fatigueMultiplier' => (float) $fatigueMultiplier,
+        'fatigueImpact' => $fatigueImpact,
+        'fatigueMultiplier' => mattrics_normalize_fatigue_multiplier($input, 'Exercise create'),
         'bodyweightEligible' => (bool) $input['bodyweightEligible'],
         'setTypeHandling' => $setTypeHandling,
+        'exerciseFamily' => $input['exerciseFamily'] ?? null,
+        'fatigueArchetype' => $input['fatigueArchetype'] ?? null,
         'source' => mattrics_normalize_exercise_source($input['source'] ?? null),
         'lastUpdatedAt' => gmdate('c'),
         'lastUpdatedType' => 'manual',
@@ -950,6 +1142,55 @@ function mattrics_create_exercise_config_record(array $input): array
     $records[] = $created;
     mattrics_sort_exercise_config_records($records);
     mattrics_write_exercise_config_records($records);
+
+    return $created;
+}
+
+function mattrics_create_activity_type_config_record(array $input): array
+{
+    $records = mattrics_read_activity_type_config_records();
+    $canonicalName = trim((string) ($input['canonicalName'] ?? ''));
+    if ($canonicalName === '') {
+        throw new RuntimeException('canonicalName is required.');
+    }
+
+    $normalizedName = mattrics_normalize_config_name($canonicalName);
+    if ($normalizedName === '') {
+        throw new RuntimeException('canonicalName could not be normalized.');
+    }
+
+    $aliases = $input['aliases'] ?? null;
+    if (!is_array($aliases) || !array_is_list($aliases)) {
+        throw new RuntimeException('aliases must be a JSON array.');
+    }
+    $aliases = array_values(array_filter(
+        mattrics_normalize_unique_name_list($aliases),
+        static fn(string $alias): bool => mattrics_normalize_config_name($alias) !== $normalizedName
+    ));
+
+    $muscleWeights = mattrics_normalize_semantic_muscle_weights($input, 'Activity type create');
+
+    mattrics_assert_activity_type_config_name_collisions($records, '', $normalizedName, $aliases);
+
+    $created = mattrics_validate_activity_type_config_record([
+        'id' => mattrics_make_activity_type_config_id($canonicalName, $records),
+        'canonicalName' => $canonicalName,
+        'normalizedName' => $normalizedName,
+        'aliases' => $aliases,
+        'muscleWeights' => $muscleWeights,
+        'fatigueMultiplier' => mattrics_normalize_fatigue_multiplier($input, 'Activity type create'),
+        'exerciseFamily' => $input['exerciseFamily'] ?? null,
+        'fatigueArchetype' => $input['fatigueArchetype'] ?? null,
+        'status' => 'approved',
+        'reviewNeeded' => false,
+        'source' => mattrics_normalize_exercise_source($input['source'] ?? null),
+        'lastUpdatedAt' => gmdate('c'),
+        'lastUpdatedType' => 'manual',
+    ]);
+
+    $records[] = $created;
+    mattrics_sort_exercise_config_records($records);
+    mattrics_write_activity_type_config_records($records);
 
     return $created;
 }
@@ -997,12 +1238,8 @@ function mattrics_update_exercise_config_record(string $id, array $input): array
     }
     $matchTerms = mattrics_normalize_unique_name_list($matchTerms);
 
-    $muscleWeights = mattrics_normalize_semantic_muscle_weights($input, 'Exercise update');
-
-    $fatigueMultiplier = $input['fatigueMultiplier'] ?? null;
-    if (!is_numeric($fatigueMultiplier)) {
-        throw new RuntimeException('fatigueMultiplier must be numeric.');
-    }
+    $fatigueImpact = mattrics_normalize_fatigue_impact($input, 'Exercise update');
+    $muscleWeights = mattrics_normalize_semantic_muscle_weights_with_options($input, 'Exercise update', $fatigueImpact === 'none');
 
     if (!array_key_exists('bodyweightEligible', $input) || !is_bool($input['bodyweightEligible'])) {
         throw new RuntimeException('bodyweightEligible must be boolean.');
@@ -1022,9 +1259,12 @@ function mattrics_update_exercise_config_record(string $id, array $input): array
         'aliases' => $aliases,
         'matchTerms' => $matchTerms,
         'muscleWeights' => $muscleWeights,
-        'fatigueMultiplier' => (float) $fatigueMultiplier,
+        'fatigueImpact' => $fatigueImpact,
+        'fatigueMultiplier' => mattrics_normalize_fatigue_multiplier($input, 'Exercise update'),
         'bodyweightEligible' => (bool) $input['bodyweightEligible'],
         'setTypeHandling' => $setTypeHandling,
+        'exerciseFamily' => $input['exerciseFamily'] ?? ($existing['exerciseFamily'] ?? null),
+        'fatigueArchetype' => $input['fatigueArchetype'] ?? ($existing['fatigueArchetype'] ?? null),
         'source' => mattrics_normalize_exercise_source($input['source'] ?? null, (string) ($existing['source'] ?? 'manual')),
         'lastUpdatedAt' => gmdate('c'),
         'lastUpdatedType' => 'manual',
@@ -1033,6 +1273,70 @@ function mattrics_update_exercise_config_record(string $id, array $input): array
     $records[$existingIndex] = $updated;
     mattrics_sort_exercise_config_records($records);
     mattrics_write_exercise_config_records($records);
+
+    return $updated;
+}
+
+function mattrics_update_activity_type_config_record(string $id, array $input): array
+{
+    $records = mattrics_read_activity_type_config_records();
+    $existing = null;
+    $existingIndex = null;
+
+    foreach ($records as $index => $record) {
+        if (($record['id'] ?? '') === $id) {
+            $existing = $record;
+            $existingIndex = $index;
+            break;
+        }
+    }
+
+    if ($existing === null || $existingIndex === null) {
+        throw new RuntimeException('Activity type config not found.');
+    }
+
+    $canonicalName = trim((string) ($input['canonicalName'] ?? ''));
+    if ($canonicalName === '') {
+        throw new RuntimeException('canonicalName is required.');
+    }
+
+    $normalizedName = mattrics_normalize_config_name($canonicalName);
+    if ($normalizedName === '') {
+        throw new RuntimeException('canonicalName could not be normalized.');
+    }
+
+    $aliases = $input['aliases'] ?? null;
+    if (!is_array($aliases) || !array_is_list($aliases)) {
+        throw new RuntimeException('aliases must be a JSON array.');
+    }
+    $aliases = array_values(array_filter(
+        mattrics_normalize_unique_name_list($aliases),
+        static fn(string $alias): bool => mattrics_normalize_config_name($alias) !== $normalizedName
+    ));
+
+    $muscleWeights = mattrics_normalize_semantic_muscle_weights($input, 'Activity type update');
+
+    mattrics_assert_activity_type_config_name_collisions($records, $id, $normalizedName, $aliases);
+
+    $updated = mattrics_validate_activity_type_config_record([
+        'id' => $id,
+        'canonicalName' => $canonicalName,
+        'normalizedName' => $normalizedName,
+        'aliases' => $aliases,
+        'muscleWeights' => $muscleWeights,
+        'fatigueMultiplier' => mattrics_normalize_fatigue_multiplier($input, 'Activity type update'),
+        'exerciseFamily' => $input['exerciseFamily'] ?? ($existing['exerciseFamily'] ?? null),
+        'fatigueArchetype' => $input['fatigueArchetype'] ?? ($existing['fatigueArchetype'] ?? null),
+        'status' => (string) ($existing['status'] ?? 'approved'),
+        'reviewNeeded' => (bool) ($existing['reviewNeeded'] ?? false),
+        'source' => mattrics_normalize_exercise_source($input['source'] ?? null, (string) ($existing['source'] ?? 'manual')),
+        'lastUpdatedAt' => gmdate('c'),
+        'lastUpdatedType' => 'manual',
+    ]);
+
+    $records[$existingIndex] = $updated;
+    mattrics_sort_exercise_config_records($records);
+    mattrics_write_activity_type_config_records($records);
 
     return $updated;
 }
@@ -1181,6 +1485,30 @@ function mattrics_delete_exercise_config_record(string $id): array
     return $deleted;
 }
 
+function mattrics_delete_activity_type_config_record(string $id): array
+{
+    $records = mattrics_read_activity_type_config_records();
+    $deleted = null;
+    $remaining = [];
+
+    foreach ($records as $record) {
+        if (($record['id'] ?? '') === $id) {
+            $deleted = $record;
+            continue;
+        }
+        $remaining[] = $record;
+    }
+
+    if ($deleted === null) {
+        throw new RuntimeException('Activity type config not found.');
+    }
+
+    mattrics_sort_exercise_config_records($remaining);
+    mattrics_write_activity_type_config_records($remaining);
+
+    return $deleted;
+}
+
 function mattrics_create_ai_draft_exercise_config(array $unknown, array $suggestion): array
 {
     $records = mattrics_read_exercise_config_records();
@@ -1214,12 +1542,15 @@ function mattrics_create_ai_draft_exercise_config(array $unknown, array $suggest
         'matchTerms' => array_values(array_unique(array_filter([
             (string) ($unknown['normalizedName'] ?? ''),
         ]))),
-        'muscleWeights' => mattrics_normalize_semantic_muscle_weights([
+        'muscleWeights' => mattrics_normalize_semantic_muscle_weights_with_options([
             'muscleWeights' => $suggestion['muscleWeights'] ?? [],
-        ], 'AI suggestion'),
-        'fatigueMultiplier' => (float) $suggestion['fatigueMultiplier'],
+        ], 'AI suggestion', (($suggestion['fatigueImpact'] ?? 'normal') === 'none')),
+        'fatigueImpact' => (string) ($suggestion['fatigueImpact'] ?? 'normal'),
+        'fatigueMultiplier' => mattrics_normalize_fatigue_multiplier($suggestion, 'AI suggestion'),
         'bodyweightEligible' => (bool) $suggestion['bodyweightEligible'],
         'setTypeHandling' => (string) $suggestion['setTypeHandling'],
+        'exerciseFamily' => $suggestion['exerciseFamily'] ?? null,
+        'fatigueArchetype' => $suggestion['fatigueArchetype'] ?? null,
         'source' => 'ai_suggested',
         'lastUpdatedAt' => $timestamp,
         'lastUpdatedType' => 'ai',
@@ -1264,12 +1595,15 @@ function mattrics_create_external_dataset_draft_exercise_config(array $unknown, 
         'matchTerms' => mattrics_merge_unique_name_lists([
             (string) ($unknown['normalizedName'] ?? ''),
         ], $unknown['rawNames'] ?? []),
-        'muscleWeights' => mattrics_normalize_semantic_muscle_weights([
+        'muscleWeights' => mattrics_normalize_semantic_muscle_weights_with_options([
             'muscleWeights' => $datasetRecord['muscleWeights'] ?? [],
-        ], 'Exercise dataset'),
-        'fatigueMultiplier' => (float) ($datasetRecord['fatigueMultiplier'] ?? 1),
+        ], 'Exercise dataset', (($datasetRecord['fatigueImpact'] ?? 'normal') === 'none')),
+        'fatigueImpact' => (string) ($datasetRecord['fatigueImpact'] ?? 'normal'),
+        'fatigueMultiplier' => mattrics_normalize_fatigue_multiplier($datasetRecord, 'Exercise dataset'),
         'bodyweightEligible' => (bool) ($datasetRecord['bodyweightEligible'] ?? false),
         'setTypeHandling' => (string) ($datasetRecord['setTypeHandling'] ?? 'weight_reps'),
+        'exerciseFamily' => $datasetRecord['exerciseFamily'] ?? null,
+        'fatigueArchetype' => $datasetRecord['fatigueArchetype'] ?? null,
         'source' => 'external_dataset',
         'lastUpdatedAt' => $timestamp,
         'lastUpdatedType' => 'manual',

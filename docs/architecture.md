@@ -1,6 +1,22 @@
 # Architecture
 
-Mattrics Training Log is a static frontend with a small PHP API layer and an external data pipeline.
+Mattrics Training Log is the active application and the practical source of truth for product work. Today it runs as a static frontend with a small PHP API layer and an external data pipeline. The near-term migration direction is private server hosting with Docker Compose and Postgres, but the current production model remains the live system until that replacement is implemented and validated.
+
+## Architecture decisions
+
+- `MattricsTrainingLog` is the main app and the only active implementation target.
+- `MattricsNext` is reference/archive only. It may inform table design, import patterns, and migration ideas, but it is not the future UI shell and should not receive ongoing feature work unless a later architecture decision explicitly changes that.
+- The long-term direction is own-server deployment with Docker Compose, Postgres, and private access patterns such as Cloudflare Tunnel.
+- The current static/PHP hosting model remains the production architecture until the Docker/Postgres path explicitly replaces it.
+
+See [`docs/architecture-next.md`](./architecture-next.md) for the permanent forward-looking architecture brief that guides future implementation slices.
+
+## Runtime status
+
+- Current production runtime: static frontend under `public/` plus PHP endpoints under `public/api/`
+- Current primary data path: Google Sheets and Apps Script with a private cached snapshot
+- Target runtime direction: private server hosting with canonical Postgres storage and runtime/private state kept outside the public web root
+- Migration rule: preserve the deployed app and current deploy scripts until the replacement runtime is ready
 
 ## Components
 
@@ -14,6 +30,10 @@ Mattrics Training Log is a static frontend with a small PHP API layer and an ext
 - `private/cache/training-data.json` stores the last successful sanitized snapshot so the dashboard can open without hitting Google on every visit. The `private/cache/` directory is generated runtime state and stays gitignored.
 - [`apps-script/Code.gs`](/Users/mwieland/dev/MattricsTrainingLog/apps-script/Code.gs) runs in Google Apps Script and exposes the Google Sheet as JSON behind a shared secret.
 - [`docker-compose.yml`](/Users/mwieland/dev/MattricsTrainingLog/docker-compose.yml) runs the current PHP app locally in Docker without changing the deployed architecture.
+
+## Reference repository status
+
+`MattricsNext` is not part of the active production path for this repo. Keep it as a reference/archive source for migration ideas, canonical schema inspiration, adapter patterns, and import diagnostics. Do not treat it as the destination runtime, destination UI, or primary feature branch for Mattrics.
 
 ## Data flow
 
@@ -30,6 +50,14 @@ Auth flow:
 Recovery flow:
 
 `recovery.php -> one-time hashed recovery code -> register.php?recovery=1 -> replacement passkey registration`
+
+## Migration direction
+
+- Replace the Google Sheet-centered runtime over time with canonical Postgres-backed storage.
+- Introduce Docker Compose services for the private server deployment path without breaking the current static/PHP deploy path during migration.
+- Keep raw imports, credentials, logs, and private runtime state outside `public/`.
+- Prefer compatibility layers so the current UI can keep working while storage and ingestion move behind internal APIs.
+- Treat Hevy as the first direct ingestion priority and prioritize live Hevy API connectivity, bring in Garmin as another major device-native source and prioritize live Garmin Connect connectivity, and defer Concept2 direct import until after those live connector and duplicate-resolution needs are handled. Strava remains optional/fallback rather than the central source, but when duplicate activities are merged during migration its title and activity type should remain the preferred metadata.
 
 ## Auth storage
 
@@ -53,6 +81,7 @@ Recovery flow:
 - `public/config.js` is treated as local-only and excluded from deploy
 - validation and smoke testing are handled by scripts under [`scripts/`](/Users/mwieland/dev/MattricsTrainingLog/scripts)
 - production deployments must set `site_origin`, confirm HTTPS, and keep all private auth storage outside the web root
+- this remains the current production deploy model until the Docker/Postgres/private-server architecture explicitly replaces it
 
 ## Local container model
 
