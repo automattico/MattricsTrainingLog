@@ -33,7 +33,7 @@
         <div class="overview-label">Activity mix</div>
         ${summary.totalSessions ? `
           <div class="overview-chart-shell">
-            <div class="overview-donut" style="--donut-fill:${donutStyle}">
+            <div class="overview-donut" data-css-donut-fill="${M.escAttr(donutStyle)}">
               <div class="overview-donut-center">
                 <div class="overview-donut-kicker">${dominant ? dominant.label : "No mix"}</div>
                 <div class="overview-donut-value">${dominant ? dominant.percentLabel : "0%"}</div>
@@ -43,7 +43,7 @@
               ${summary.mix.segments.map((segment) => `
                 <div class="overview-legend-item">
                   <div class="overview-legend-main">
-                    <span class="overview-legend-dot" style="--legend-color:${segment.color}"></span>
+                    <span class="overview-legend-dot" data-css-legend-color="${M.escAttr(segment.color)}"></span>
                     <span>${segment.icon} ${segment.label}</span>
                   </div>
                   <div class="overview-legend-meta">${segment.count} · ${segment.percentLabel}</div>

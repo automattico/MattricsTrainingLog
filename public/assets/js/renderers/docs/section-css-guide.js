@@ -14,7 +14,7 @@
         ["Fatigue", "<code class=\"docs-code\">fatigue.css</code> for the body figure, readiness tables, and fatigue colors."],
         ["Sessions", "<code class=\"docs-code\">sessions.css</code> for activity cards, filters, and timeline grouping."],
         ["Docs", "<code class=\"docs-code\">docs.css</code> for the documentation hub and in-view docs callouts."],
-        ["Settings", "<code class=\"docs-code\">settings.css</code> for the profile form and passkey UI."],
+        ["Settings", "<code class=\"docs-code\">settings.css</code> for the athlete profile and mobile-navigation preferences."],
       ])}
     `,
   });

@@ -710,3 +710,6 @@ details.dev-doc[open] .dev-doc-summary-chevron {
   white-space: pre;
   margin: 0;
 }
+.docs-copy--spaced {
+  margin-top: 10px;
+}

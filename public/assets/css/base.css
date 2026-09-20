@@ -66,3 +66,6 @@ button { -webkit-tap-highlight-color: transparent; }
 
 .site-title,
 .ai-head em { color: var(--brand); font-style: normal; }
+ .is-hidden {
+  display: none !important;
+}

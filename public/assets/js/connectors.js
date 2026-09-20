@@ -98,8 +98,8 @@
       <div class="connectors-field-note">${hevy && hevy.hasCredential ? "A key is already stored privately." : "No key stored yet."}</div>
       <div class="connectors-actions">
         <button type="button" class="settings-save-btn" data-connectors-save ${canInteract ? "" : "disabled"}>Save</button>
-        <button type="button" class="passkey-add-btn exercise-admin-secondary-btn" data-connectors-test ${canInteract ? "" : "disabled"}>Test connection</button>
-        <button type="button" class="passkey-add-btn exercise-admin-secondary-btn connectors-danger-btn" data-connectors-clear ${canInteract ? "" : "disabled"}>Clear</button>
+        <button type="button" class="secondary-btn exercise-admin-secondary-btn" data-connectors-test ${canInteract ? "" : "disabled"}>Test connection</button>
+        <button type="button" class="secondary-btn exercise-admin-secondary-btn connectors-danger-btn" data-connectors-clear ${canInteract ? "" : "disabled"}>Clear</button>
       </div>
       ${renderDetailList(syncSummary(hevy))}
     </section>`;
@@ -160,7 +160,7 @@
     M.renderConnectorsView();
 
     try {
-      const response = await fetch(url, {
+      const response = await M.apiFetch(url, {
         credentials: "same-origin",
       });
       const json = await response.json();
@@ -219,12 +219,11 @@
     M.renderConnectorsView();
 
     try {
-      const response = await fetch(url, {
+      const response = await M.apiFetch(url, {
         method: "POST",
         credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": (window.MATTRICS_AUTH && window.MATTRICS_AUTH.csrfToken) || "",
         },
         body: JSON.stringify(Object.assign({
           connector: "hevy",

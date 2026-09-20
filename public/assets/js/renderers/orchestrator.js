@@ -31,8 +31,6 @@
   }
 
   function getInitialView() {
-    const serverView = window.__MATTRICS_INITIAL_VIEW__;
-    if (isValidView(serverView)) return serverView;
     return getUrlView();
   }
 
@@ -74,11 +72,11 @@
     document.head.appendChild(script);
   }
 
-  function isInternalPhpDataUrl(sourceUrl) {
+  function isInternalDataUrl(sourceUrl) {
     if (!sourceUrl) return false;
     try {
       const url = new URL(sourceUrl, window.location.href);
-      return /\/api\/data\.php$/i.test(url.pathname);
+      return /\/api\/data$/i.test(url.pathname);
     } catch {
       return false;
     }
@@ -87,18 +85,18 @@
   M.fetchData = async function fetchData(options = {}) {
     M.showLoading();
     const forceRefresh = Boolean(options.forceRefresh);
-    let sourceUrl = M.DATA_URL || M.SHEET_URL;
+    let sourceUrl = M.DATA_URL;
     const configUrl = M.EXERCISE_CONFIG_URL;
 
     if (!sourceUrl || sourceUrl === "PASTE_YOUR_WEB_APP_URL_HERE" || sourceUrl === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
       M.showError(
-        "No data source configured.\n\nFor secure hosting, use api/data.php with private/config.php on the server. For local fallback, set MATTRICS_CONFIG.SHEET_URL and MATTRICS_CONFIG.SHEET_TOKEN.\n\nSee README.md and the Hetzner deploy guide."
+        "No authenticated data endpoint is configured."
       );
       return;
     }
     if (!configUrl) {
       M.showError(
-        "No exercise config source configured.\n\nServe the app through PHP so api/exercises.php can read the private JSON seed files."
+        "No authenticated exercise endpoint is configured."
       );
       return;
     }
@@ -106,20 +104,16 @@
     try {
       if (M.DATA_URL) {
         const url = new URL(sourceUrl, window.location.href);
-        if (isInternalPhpDataUrl(sourceUrl)) {
+        if (isInternalDataUrl(sourceUrl)) {
           url.searchParams.set("includeChildren", "1");
         }
         if (forceRefresh) {
           url.searchParams.set("refresh", "1");
         }
         sourceUrl = url.toString();
-      } else if (M.SHEET_TOKEN) {
-        const url = new URL(sourceUrl);
-        url.searchParams.set("key", M.SHEET_TOKEN);
-        sourceUrl = url.toString();
       }
       const [res] = await Promise.all([
-        fetch(sourceUrl, {
+        M.apiFetch(sourceUrl, {
           redirect: "follow",
           credentials: "same-origin",
           headers: {},
@@ -164,7 +158,6 @@
       const initialView = getInitialView();
       if (initialView) {
         M.showView(initialView, null, { persist: false });
-        window.__MATTRICS_INITIAL_VIEW__ = "";
       }
     } catch (error) {
       const msg = String(error && error.message ? error.message : error);
@@ -176,7 +169,7 @@
 
       M.showError(
         isCors
-          ? "Browser blocked the request.\n\nYour Apps Script endpoint is live, but some browsers block fetches from a local file. Try opening this in Chrome, or serve the public folder on localhost instead of opening public/index.html via file://.\n\nIf needed, redeploy Apps Script as a Web App with Execute as: Me and Access: Anyone."
+          ? "The authenticated API request could not be completed."
           : `Could not load data.\n\n${msg}`
       );
     }
@@ -240,19 +233,24 @@
 
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
     const allOn = M.state.typeFilter === "All";
-    let html = `<button class="filter-pill ${allOn ? "on" : ""}" onclick="setFilter('All')">
+    let html = `<button class="filter-pill ${allOn ? "on" : ""}" data-filter="All">
       All <span class="filter-count">${data.length}</span></button>`;
 
     sorted.forEach(([type, count]) => {
       const cfg = M.tc(type);
       const on = M.state.typeFilter === type;
-      html += `<button class="filter-pill ${on ? "on" : ""}" onclick="setFilter('${type}')">
+      html += `<button class="filter-pill ${on ? "on" : ""}" data-filter="${M.escAttr(type)}">
         <span class="a-card-type-icon" aria-hidden="true">${cfg.icon}</span>
         ${cfg.label} <span class="filter-count">${count}</span></button>`;
     });
 
     document.getElementById("filterRow").innerHTML = html;
   };
+
+  document.addEventListener("click", (event) => {
+    const filter = event.target.closest("[data-filter]");
+    if (filter) M.setFilter(filter.dataset.filter);
+  });
 
   M.setFilter = function setFilter(filter) {
     M.state.typeFilter = filter;
@@ -284,9 +282,7 @@
     if (el && (el.classList.contains("nav-btn") || el.classList.contains("nav-bottom-btn") || el.classList.contains("nav-drawer-btn"))) {
       el.classList.add("active");
     }
-    // Also sync the other navs by matching onclick
-    const sel = `[onclick*="showView('${id}'"]`;
-    document.querySelectorAll(`.nav-btn${sel}, .nav-bottom-btn${sel}, .nav-drawer-btn${sel}`).forEach((b) => b.classList.add("active"));
+    document.querySelectorAll(`[data-view="${id}"]`).forEach((button) => button.classList.add("active"));
     if (options.persist !== false) updateViewUrl(id);
     if (id === "docs") {
       renderDocsView();

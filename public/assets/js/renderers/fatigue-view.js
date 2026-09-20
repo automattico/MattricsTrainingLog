@@ -59,7 +59,7 @@
         data-muscle-when="${M.escAttr(tooltipWhen)}"
         data-muscle-percent="${M.escAttr(tooltipPercent)}"
         data-muscle-summary="${M.escAttr(region ? region.recoveryLabel : "no recent load recorded")}"
-        style="--fatigue-fill:${palette[state]}; --fatigue-opacity:${opacity}">
+        data-css-fatigue-fill="${M.escAttr(palette[state])}" data-css-fatigue-opacity="${M.escAttr(String(opacity))}">
         ${part.pathArray.map((path) => `<path d="${M.escAttr(path)}"></path>`).join("")}
       </g>`;
     }).join("");

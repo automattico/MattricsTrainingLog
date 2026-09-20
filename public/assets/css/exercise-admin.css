@@ -331,7 +331,7 @@
 }
 
 .exercise-admin-savebar-actions > .gen-btn,
-.exercise-admin-savebar-actions > .passkey-add-btn,
+.exercise-admin-savebar-actions > .secondary-btn,
 .exercise-admin-savebar-save-group > .settings-save-btn {
   min-height: 54px;
   height: 54px;
@@ -1165,7 +1165,7 @@
 
   .exercise-admin-savebar-actions .settings-save-btn,
   .exercise-admin-savebar-actions .gen-btn,
-  .exercise-admin-savebar-actions .passkey-add-btn,
+  .exercise-admin-savebar-actions .secondary-btn,
   .exercise-admin-savebar-save-group {
     width: 100%;
   }

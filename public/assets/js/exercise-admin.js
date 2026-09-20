@@ -821,7 +821,7 @@
       return `<g
         class="exercise-admin-preview-region"
         data-preview-level="${escAttr(muscleState.levelKey || "none")}"
-        style="--preview-fill:${visual.fill}; --preview-opacity:${visual.opacity}">
+        data-css-preview-fill="${escAttr(visual.fill)}" data-css-preview-opacity="${escAttr(String(visual.opacity))}">
         <title>${esc(title)}</title>
         ${part.pathArray.map((path) => `<path d="${escAttr(path)}"></path>`).join("")}
       </g>`;
@@ -887,7 +887,7 @@
                 <div class="exercise-admin-muscle-slider-track-markers">
                   ${levels.map((level) => {
                     const tickValue = Number(level.index) + 1;
-                    return `<span class="exercise-admin-muscle-slider-marker${tickValue <= sliderValue ? " is-active" : ""}" style="--marker-index:${escAttr(String(tickValue))}" data-exercise-admin-muscle-tick data-tick-value="${escAttr(String(tickValue))}"></span>`;
+                    return `<span class="exercise-admin-muscle-slider-marker${tickValue <= sliderValue ? " is-active" : ""}" data-css-marker-index="${escAttr(String(tickValue))}" data-exercise-admin-muscle-tick data-tick-value="${escAttr(String(tickValue))}"></span>`;
                   }).join("")}
                 </div>
               </div>
@@ -900,7 +900,7 @@
                   max="${escAttr(String(Math.max(1, levels.length)))}"
                   step="1"
                   value="${escAttr(String(sliderValue))}"
-                  style="--slider-fill:${escAttr(`${sliderFill}%`)}"
+                  data-css-slider-fill="${escAttr(`${sliderFill}%`)}"
                   data-exercise-admin-muscle-slider
                   data-muscle-key="${escAttr(region.key)}"
                   aria-label="${escAttr(`${region.label} involvement level`)}"
@@ -936,7 +936,7 @@
         ? `<textarea class="settings-input exercise-admin-textarea" id="exerciseRecognitionNames" data-exercise-admin-names-text>${esc(draftText)}</textarea>
           <div class="exercise-admin-editor-actions exercise-admin-editor-actions--inline">
             <button type="button" class="settings-save-btn" data-exercise-admin-names-save>Save names</button>
-            <button type="button" class="passkey-add-btn exercise-admin-secondary-btn" data-exercise-admin-names-cancel>Cancel</button>
+            <button type="button" class="secondary-btn exercise-admin-secondary-btn" data-exercise-admin-names-cancel>Cancel</button>
           </div>`
         : `<div class="exercise-admin-synonyms-text" data-exercise-admin-synonyms-text>
             ${mergedNames.length
@@ -959,7 +959,7 @@
     }
 
     if (!isExpanded) {
-      return `<button type="button" class="passkey-add-btn exercise-admin-secondary-btn" data-exercise-admin-merge-open>Merge with other exercise</button>`;
+      return `<button type="button" class="secondary-btn exercise-admin-secondary-btn" data-exercise-admin-merge-open>Merge with other exercise</button>`;
     }
 
     return `<div class="exercise-admin-inline-action">
@@ -969,7 +969,7 @@
       </select>
       <div class="exercise-admin-editor-actions exercise-admin-editor-actions--inline">
         <button type="button" class="settings-save-btn" data-exercise-admin-merge${pendingAction === "merge" ? " disabled" : ""}>Merge</button>
-        <button type="button" class="passkey-add-btn exercise-admin-secondary-btn" data-exercise-admin-merge-cancel${pendingAction === "merge" ? " disabled" : ""}>Cancel</button>
+        <button type="button" class="secondary-btn exercise-admin-secondary-btn" data-exercise-admin-merge-cancel${pendingAction === "merge" ? " disabled" : ""}>Cancel</button>
       </div>
     </div>`;
   }
@@ -990,7 +990,7 @@
           <button type="button" class="settings-save-btn exercise-admin-savebar-primary" data-exercise-admin-save${saveState.canSave ? "" : " disabled"}>${esc(saveState.buttonLabel)}</button>
           <div class="exercise-admin-savebar-status exercise-admin-savebar-status--${escAttr(saveState.statusTone)}" data-exercise-admin-save-status role="status" aria-live="polite">${esc(saveState.statusText)}</div>
         </div>
-        <button type="button" class="passkey-add-btn exercise-admin-secondary-btn" data-exercise-admin-cancel-changes${canCancel ? "" : " disabled"}>Cancel</button>
+        <button type="button" class="secondary-btn exercise-admin-secondary-btn" data-exercise-admin-cancel-changes${canCancel ? "" : " disabled"}>Cancel</button>
       </div>
     </div>`;
   }
@@ -1066,7 +1066,7 @@
                 <input class="settings-input exercise-admin-title-input" id="exerciseTitleInput" type="text" value="${escAttr(titleValue)}" data-exercise-admin-title-input>
                 <div class="exercise-admin-editor-actions exercise-admin-editor-actions--inline">
                   <button type="button" class="settings-save-btn" data-exercise-admin-title-save>Save name</button>
-                  <button type="button" class="passkey-add-btn exercise-admin-secondary-btn" data-exercise-admin-title-cancel>Cancel</button>
+                  <button type="button" class="secondary-btn exercise-admin-secondary-btn" data-exercise-admin-title-cancel>Cancel</button>
                 </div>
               </div>`
             : `<div class="exercise-admin-title-row">
@@ -1222,7 +1222,7 @@
           <p class="exercise-admin-dialog-note">Delete removes this config from the live resolver. If matching data still exists, it can reappear as unknown after the review snapshot refreshes.</p>
           <div class="exercise-admin-editor-actions">
             <button type="button" class="settings-save-btn exercise-admin-delete-btn" data-exercise-admin-delete-confirm>Delete ${esc(state.confirmDialog.kind === "activityType" ? "activity type" : "exercise")}</button>
-            <button type="button" class="passkey-add-btn exercise-admin-secondary-btn" data-exercise-admin-dialog-close>Cancel</button>
+            <button type="button" class="secondary-btn exercise-admin-secondary-btn" data-exercise-admin-dialog-close>Cancel</button>
           </div>
         </div>
       </div>
@@ -1681,11 +1681,10 @@
     M.renderExerciseAdminView();
 
     try {
-      const response = await fetch(exerciseConfigEndpoint(`unknowns/${encodeURIComponent(unknownId)}/suggest`), {
+      const response = await M.apiFetch(exerciseConfigEndpoint(`unknowns/${encodeURIComponent(unknownId)}/suggest`), {
         method: "POST",
         credentials: "same-origin",
         headers: {
-          "X-CSRF-Token": (window.MATTRICS_AUTH && window.MATTRICS_AUTH.csrfToken) || "",
         },
       });
       const json = await response.json();
@@ -1720,11 +1719,10 @@
     M.renderExerciseAdminView();
 
     try {
-      const response = await fetch(exerciseConfigEndpoint(`${encodeURIComponent(exerciseId)}/suggest`), {
+      const response = await M.apiFetch(exerciseConfigEndpoint(`${encodeURIComponent(exerciseId)}/suggest`), {
         method: "POST",
         credentials: "same-origin",
         headers: {
-          "X-CSRF-Token": (window.MATTRICS_AUTH && window.MATTRICS_AUTH.csrfToken) || "",
         },
       });
       const json = await response.json();
@@ -1780,7 +1778,7 @@
     M.renderExerciseAdminView();
 
     try {
-      const response = await fetch(
+      const response = await M.apiFetch(
         selected.type === "unknown"
           ? exerciseConfigEndpoint("")
           : exerciseConfigEndpoint(encodeURIComponent(selected.record.id)),
@@ -1789,7 +1787,6 @@
         credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": (window.MATTRICS_AUTH && window.MATTRICS_AUTH.csrfToken) || "",
         },
         body: JSON.stringify(selected.type === "unknown"
           ? {
@@ -1859,12 +1856,11 @@
       const path = selected.type === "unknown"
         ? `unknowns/${encodeURIComponent(selected.record.id)}/merge-alias`
         : `${encodeURIComponent(selected.record.id)}/merge-alias`;
-      const response = await fetch(exerciseConfigEndpoint(path), {
+      const response = await M.apiFetch(exerciseConfigEndpoint(path), {
         method: "POST",
         credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": (window.MATTRICS_AUTH && window.MATTRICS_AUTH.csrfToken) || "",
         },
         body: JSON.stringify({ targetExerciseId }),
       });
@@ -1907,11 +1903,10 @@
     M.renderExerciseAdminView();
 
     try {
-      const response = await fetch(exerciseConfigEndpoint(encodeURIComponent(selected.record.id)), {
+      const response = await M.apiFetch(exerciseConfigEndpoint(encodeURIComponent(selected.record.id)), {
         method: "DELETE",
         credentials: "same-origin",
         headers: {
-          "X-CSRF-Token": (window.MATTRICS_AUTH && window.MATTRICS_AUTH.csrfToken) || "",
         },
       });
       const json = await response.json();

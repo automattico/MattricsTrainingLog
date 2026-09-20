@@ -21,7 +21,7 @@
       const cleanDesc = M.isHevyDescription(desc) ? "" : (desc.length > (compact ? 120 : 240) ? `${desc.slice(0, compact ? 120 : 240)}…` : desc);
       const activityId = M.escAttr(M.getActivityId(activity));
 
-      return `<article class="a-card ${compact ? "a-card-compact" : ""}" style="--card-accent:${cfg.color}">
+      return `<article class="a-card ${compact ? "a-card-compact" : ""}" data-css-card-accent="${M.escAttr(cfg.color)}">
         <button class="a-card-body a-card-btn" type="button" data-activity-id="${activityId}" aria-label="Open details for ${M.escAttr(activity.Name || cfg.label)}">
           <div class="a-card-top">
             <div class="a-card-main">
@@ -35,12 +35,12 @@
             </div>
             ${metrics.length ? `<div class="a-card-metrics">
               ${primary ? `<div class="metric primary">
-                <div class="metric-val" style="color:${primary.color}">${primary.val}</div>
+                <div class="metric-val" data-css-color="${M.escAttr(primary.color)}">${primary.val}</div>
                 <div class="metric-lab">${primary.lab}</div>
               </div>` : ""}
               ${secondary.map((metric) => `
               <div class="metric">
-                <div class="metric-val" style="color:${metric.color}">${metric.val}</div>
+                <div class="metric-val" data-css-color="${M.escAttr(metric.color)}">${metric.val}</div>
                 <div class="metric-lab">${metric.lab}</div></div>`).join("")}
             </div>` : ""}
           </div>

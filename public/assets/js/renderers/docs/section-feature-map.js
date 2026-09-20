@@ -12,7 +12,7 @@
         { title: "Muscle fatigue map", text: "Shows the body map, readiness table, and fatigue tiers derived from recent load." },
         { title: "Sessions list and timeline", text: "Switches between flat activity cards and grouped timeline views with type filters." },
         { title: "AI Workout coach mode", text: "Generates a recommended session from recent activity and current fatigue state." },
-        { title: "Settings profile and passkeys", text: "Edits the user profile and manages passkeys/recovery codes." },
+        { title: "Settings profile", text: "Edits athlete profile and display preferences. Account access is managed outside Mattrics by Mattwarden." },
         { title: "Documentation hub", text: "Central place for architecture, data flow, model notes, and operational boundaries." },
       ])}
     `,

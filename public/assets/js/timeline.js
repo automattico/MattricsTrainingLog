@@ -31,13 +31,13 @@
           const km2 = parseFloat(activity["Distance (km)"]) || 0;
           const min2 = parseFloat(activity["Duration (min)"]) || 0;
           const activityId = M.escAttr(M.getActivityId(activity));
-          return `<button class="tl-mini" type="button" data-activity-id="${activityId}" style="--card-accent:${cfg.color}" aria-label="Open details for ${M.escAttr(activity.Name || cfg.label)}">
+          return `<button class="tl-mini" type="button" data-activity-id="${activityId}" data-css-card-accent="${M.escAttr(cfg.color)}" aria-label="Open details for ${M.escAttr(activity.Name || cfg.label)}">
             <div class="tl-mini-type">
               <span class="a-card-type-icon" aria-hidden="true">${cfg.icon}</span>
               <span>${M.esc(cfg.label)}</span>
             </div>
             <div class="tl-mini-name">${M.esc(activity.Name.length > 40 ? `${activity.Name.slice(0, 40)}…` : activity.Name)}</div>
-            <div class="tl-mini-stat" style="color:${cfg.color}">${km2 > 0 ? `${km2.toFixed(1)} km` : M.fmt(min2)}</div>
+            <div class="tl-mini-stat" data-css-color="${M.escAttr(cfg.color)}">${km2 > 0 ? `${km2.toFixed(1)} km` : M.fmt(min2)}</div>
             <div class="tl-mini-date">${M.fmtShort(activity.Date)}</div>
           </button>`;
         }).join("");

@@ -13,7 +13,7 @@
         ["Muscle region", "A tracked body area in <code class=\"docs-code\">MUSCLE_REGIONS</code> with a key, label, color, and body-map placement."],
         ["Fatigue snapshot", "The computed readiness state for each muscle region over the current lookback window."],
         ["User settings", "Profile inputs used for personalization such as body weight, height, sex, birthday, and experience level."],
-        ["Passkey credential", "A stored WebAuthn credential plus metadata and recovery-code records."],
+        ["Gate session", "An authenticated Mattwarden context. Mattrics does not inspect or mutate the gate session."],
         ["Sync metadata", "Source, staleness, and timestamp information attached to imported data."],
       ])}
       <div class="docs-note">

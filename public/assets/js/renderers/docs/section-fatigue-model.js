@@ -44,7 +44,7 @@ finalMuscleScore = clamp(localScore + systemicPenalty, 0, 100)</div>
           { color: "var(--fatigue-color-fatigued)",   name: "Fatigued",         range: "50 – 74 %", desc: "Significant stimulus remaining",          action: "Needs recovery" },
           { color: "var(--fatigue-color-high)",       name: "Highly fatigued",  range: "75 – 100 %",desc: "Near or at normalization ceiling",        action: "Rest" },
         ])}
-        <p class="docs-copy" style="margin-top:10px">
+        <p class="docs-copy docs-copy--spaced">
           The Muscle Fatigue Map table sorts columns from soonest ready to latest ready, making it practical for
           choosing the next session rather than just inspecting raw percentages.
         </p>
@@ -157,7 +157,7 @@ freshThreshold     = normalizationLoad × 0.25</div>
         <p class="docs-copy">
           If an activity description starts with <code class="docs-code">Logged with Hevy</code> or
           <code class="docs-code">Logged with HevyApp.com</code>, the model parses
-          exercises and sets. Resolver matching now comes from <code class="docs-code">api/exercises.php</code>, which
+          exercises and sets. Resolver matching now comes from <code class="docs-code">/api/exercises</code>, which
           indexes canonical names, aliases, and legacy substring <code class="docs-code">matchTerms</code>.
         </p>
         <div class="docs-formula">baseLoad       = weightKg × reps
@@ -193,7 +193,7 @@ setStimulus    = (baseLoad / 1500) × effortFactor × relativeFactor</div>
         ])}
         <p class="docs-copy">
           Exercise mapping now lives in <code class="docs-code">private/data/exercise-configs.json</code>.
-          The resolver loaded from <code class="docs-code">api/exercises.php</code> uses canonical names, aliases, and legacy substring
+          The resolver loaded from <code class="docs-code">/api/exercises</code> uses canonical names, aliases, and legacy substring
           <code class="docs-code">matchTerms</code> to preserve the previous matching behavior.
         </p>
         <p class="docs-copy">

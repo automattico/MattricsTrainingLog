@@ -11,7 +11,7 @@
 
   function sectionButton(item, activeId) {
     const isActive = item.id === activeId;
-    return `<button class="docs-nav-btn${isActive ? " active" : ""}" type="button" onclick="Mattrics.showDocsSection('${esc(item.id)}')">
+    return `<button class="docs-nav-btn${isActive ? " active" : ""}" type="button" data-docs-section="${esc(item.id)}">
       <span class="docs-nav-label">${esc(item.label)}</span>
     </button>`;
   }
@@ -38,8 +38,7 @@
     const activeLabel = sections.find((s) => s.id === activeId)?.label || "";
     return `
       <div class="docs-nav-mobile-wrap">
-        <button class="docs-nav-mobile-btn" type="button"
-          onclick="Mattrics.toggleDocsMobileNav()"
+        <button class="docs-nav-mobile-btn" type="button" data-docs-nav-toggle
           aria-expanded="false" id="docs-nav-mobile-btn">
           <span class="docs-nav-mobile-label">${esc(activeLabel)}</span>
           <span class="docs-nav-mobile-chevron" aria-hidden="true">▾</span>
@@ -100,4 +99,13 @@
     `;
 
   };
+
+  document.addEventListener("click", (event) => {
+    const section = event.target.closest("[data-docs-section]");
+    if (section) {
+      M.showDocsSection(section.dataset.docsSection);
+      return;
+    }
+    if (event.target.closest("[data-docs-nav-toggle]")) M.toggleDocsMobileNav();
+  });
 }());

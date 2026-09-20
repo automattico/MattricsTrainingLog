@@ -1,8 +1,7 @@
 /**
  * settings-tests.js
  * Pure-JS test suite — no framework required.
- * Run in browser: open public/tests/index.html
- * Run in Node:    node public/tests/settings-tests.js
+ * Run in Node: node tests/js/settings-tests.js
  */
 
 (function () {

@@ -302,12 +302,11 @@
       timesSeen: Number(record.timesSeen || 0),
     }));
 
-    const res = await fetch(M.EXERCISE_CONFIG_URL, {
+    const res = await M.apiFetch(M.EXERCISE_CONFIG_URL, {
       method: "POST",
       credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRF-Token": (window.MATTRICS_AUTH && window.MATTRICS_AUTH.csrfToken) || "",
       },
       body: JSON.stringify({ unknowns: payload }),
     });
@@ -351,11 +350,11 @@
   M.loadExerciseConfigs = async function loadExerciseConfigs() {
     if (!M.EXERCISE_CONFIG_URL) {
       throw new Error(
-        "No exercise config source configured.\n\nUse api/exercises.php from a local or deployed PHP server so the private config seed files stay outside the public web root."
+        "No authenticated exercise endpoint is configured."
       );
     }
 
-    const res = await fetch(M.EXERCISE_CONFIG_URL, {
+    const res = await M.apiFetch(M.EXERCISE_CONFIG_URL, {
       credentials: "same-origin",
       headers: {},
       redirect: "follow",

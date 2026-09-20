@@ -29,10 +29,7 @@
   };
 
   M.generateWorkout = async function generateWorkout() {
-    const hasDirectKey = M.API_KEY && M.API_KEY !== "YOUR_API_KEY_HERE" && M.API_KEY !== "YOUR_ANTHROPIC_API_KEY_HERE";
-    const hasProxy = Boolean(M.AI_PROXY_URL);
-
-    if (!hasDirectKey && !hasProxy) {
+    if (!M.AI_PROXY_URL) {
       document.getElementById("aiText").textContent =
         "AI is not configured.\n\nFor secure hosting, configure private/config.php and use api/ai.php.";
       document.getElementById("aiOutput").style.display = "block";
@@ -70,10 +67,7 @@
       : [];
 
     try {
-      let output = "";
-
-      if (hasProxy) {
-        const res = await fetch(M.AI_PROXY_URL, {
+      const res = await M.apiFetch(M.AI_PROXY_URL, {
           method: "POST",
           credentials: "same-origin",
           headers: {
@@ -86,46 +80,9 @@
             fatigueRegions,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-        output = data.text || "No response.";
-      } else {
-        const prompt = `You are a smart training coach. This athlete has a varied active lifestyle: they canoe rivers for days at a time, do serious gym work (tracked in Hevy), run (including a half marathon), practice yoga regularly, hike, and row on a Concept2. They have a shoulder injury they're managing with targeted rehab (scapular pulls, external rotation, face pulls).
-
-Recent activity (last 10 days):
-${summary || "(no recent data — suggest a good general session)"}
-
-Current muscle fatigue estimate (fixed last 10 days):
-${fatigueSummary || "No meaningful recent muscle fatigue signal."}
-${fatigueRegions.length ? `\n${fatigueRegions.map((region) => `- ${region.label}: ${region.fatigueScore}/100 (${region.tier}, ${region.lastWorkedLabel}, ${region.recoveryLabel})`).join("\n")}` : ""}
-
-Suggest ONE specific workout for today. Avoid heavily loading muscle groups that are currently highly fatigued. Prefer fresher muscle groups, cardio, mobility, rehab, or recovery work when that fits better. Be concrete — if strength, give exercises with sets/reps/weights. If cardio, give distance/duration/intensity. Keep it brief.
-
-Format:
-**Why this:** (1 sentence based on what they've been doing)
-
-**Session:**
-(the workout, specific and actionable)
-
-**Shoulder note:** (only if relevant)`;
-
-        const res = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": M.API_KEY,
-            "anthropic-version": "2023-06-01",
-            "anthropic-dangerous-direct-browser-access": "true",
-          },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 900,
-            messages: [{ role: "user", content: prompt }],
-          }),
-        });
-        const data = await res.json();
-        output = (data.content || []).map((content) => content.text || "").join("") || "No response.";
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      const output = data.text || "No response.";
 
       document.getElementById("aiText").textContent = output;
       document.getElementById("aiOutput").style.display = "block";

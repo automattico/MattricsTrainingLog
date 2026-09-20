@@ -143,7 +143,7 @@
   function renderRpePicker(current) {
     const val = current != null ? Number(current) : 7.5;
     const btns = RPE_VALUES.map((v) =>
-      `<button type="button" class="rpe-btn${v === val ? " active" : ""}" data-value="${v}" onclick="settingsRpeSelect(${v})">${v}</button>`
+      `<button type="button" class="rpe-btn${v === val ? " active" : ""}" data-settings-rpe="${v}" data-value="${v}">${v}</button>`
     ).join("");
     const currentLabel = RPE_LABELS[val] || "";
     return `
@@ -162,15 +162,15 @@
       <div class="settings-birthday-row">
         <div class="birthday-field">
           <label class="birthday-label" for="bdDay">Day</label>
-          <input class="settings-input birthday-input" type="number" id="bdDay" min="1" max="31" placeholder="DD" value="${esc(day)}" oninput="settingsBirthdayChange()">
+          <input class="settings-input birthday-input" type="number" id="bdDay" min="1" max="31" placeholder="DD" value="${esc(day)}" data-settings-birthday>
         </div>
         <div class="birthday-field">
           <label class="birthday-label" for="bdMonth">Month</label>
-          <input class="settings-input birthday-input" type="number" id="bdMonth" min="1" max="12" placeholder="MM" value="${esc(month)}" oninput="settingsBirthdayChange()">
+          <input class="settings-input birthday-input" type="number" id="bdMonth" min="1" max="12" placeholder="MM" value="${esc(month)}" data-settings-birthday>
         </div>
         <div class="birthday-field">
           <label class="birthday-label" for="bdYear">Year</label>
-          <input class="settings-input birthday-input birthday-input--year" type="number" id="bdYear" min="1900" max="2100" placeholder="YYYY" value="${esc(year)}" oninput="settingsBirthdayChange()">
+          <input class="settings-input birthday-input birthday-input--year" type="number" id="bdYear" min="1900" max="2100" placeholder="YYYY" value="${esc(year)}" data-settings-birthday>
         </div>
         <div class="birthday-age" id="birthdayAgeDisplay">${ageHtml}</div>
       </div>
@@ -274,7 +274,7 @@
           <span class="settings-required">required</span>
           ${tooltip("Used to better personalize fatigue and training recommendations.")}
         </label>
-        <select class="settings-input settings-select" id="fieldExperienceLevel" onchange="updateExperienceExplanation()">
+        <select class="settings-input settings-select" id="fieldExperienceLevel" data-settings-experience>
           <option value=""${!saved.experienceLevel ? " selected" : ""}></option>
           ${experienceOpts}
         </select>
@@ -294,7 +294,6 @@
       </div>
     </div>
   </section>
-  <div id="passkeysSection"></div>
   </div>
 
   <section class="settings-group settings-group--mobile-nav">
@@ -310,14 +309,14 @@
         <button
           class="filter-pill${(document.body.dataset.navStyle || 'scroll') === key ? ' on' : ''}"
           title="${esc(desc)}"
-          onclick="setMobileNavStyle('${key}');this.closest('.mobile-nav-picker').querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('on'));this.classList.add('on')"
+          data-settings-nav-style="${key}"
         >${esc(label)}</button>
       `).join('')}
     </div>
   </section>
 
   <div class="settings-actions">
-    <button class="settings-save-btn" type="button" onclick="saveSettings()">Save settings</button>
+    <button class="settings-save-btn" type="button" data-settings-save>Save settings</button>
     <div class="settings-feedback" id="settingsFeedback" hidden></div>
   </div>
 </div>
@@ -331,7 +330,6 @@
     if (!el) return;
     el.innerHTML = renderForm(M.state.userSettings, errors || {});
     updateExperienceExplanation();
-    if (M.loadAndRenderPasskeys) M.loadAndRenderPasskeys();
   };
 
   // ── Public: loadUserSettings ──────────────────────────────────────────────────
@@ -339,7 +337,7 @@
   M.loadUserSettings = async function loadUserSettings() {
     if (!M.DATA_URL) return; // file:// mode — skip, use hardcoded defaults
     try {
-      const res = await fetch("api/settings.php", {
+      const res = await M.apiFetch("/api/settings", {
         credentials: "same-origin",
         headers: {},
       });
@@ -381,7 +379,6 @@
         // Preserve current saved values but show new errors
         el.innerHTML = renderForm(Object.assign({}, M.state.userSettings || {}, data), errors);
         updateExperienceExplanation();
-        if (M.loadAndRenderPasskeys) M.loadAndRenderPasskeys();
       }
       return;
     }
@@ -392,11 +389,10 @@
     if (saveBtn) saveBtn.disabled = true;
 
     try {
-      const res = await fetch("api/settings.php", {
+      const res = await M.apiFetch("/api/settings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": (window.MATTRICS_AUTH && window.MATTRICS_AUTH.csrfToken) || "",
         },
         credentials: "same-origin",
         body: JSON.stringify(data),
@@ -411,7 +407,6 @@
         if (el) {
           el.innerHTML = renderForm(Object.assign({}, M.state.userSettings || {}, data), serverErrors);
           updateExperienceExplanation();
-          if (M.loadAndRenderPasskeys) M.loadAndRenderPasskeys();
         }
         return;
       }
@@ -441,9 +436,7 @@
     }
   };
 
-  // ── Global handlers (called from inline onclick) ──────────────────────────────
-
-  window.settingsRpeSelect = function settingsRpeSelect(val) {
+  function settingsRpeSelect(val) {
     document.querySelectorAll(".rpe-btn").forEach((btn) => {
       btn.classList.toggle("active", Number(btn.dataset.value) === val);
     });
@@ -451,9 +444,9 @@
     if (hidden) hidden.value = val;
     const explanation = document.getElementById("rpeExplanation");
     if (explanation) explanation.textContent = RPE_LABELS[val] || "";
-  };
+  }
 
-  window.settingsBirthdayChange = function settingsBirthdayChange() {
+  function settingsBirthdayChange() {
     const day   = (document.getElementById("bdDay")   || {}).value || "";
     const month = (document.getElementById("bdMonth") || {}).value || "";
     const year  = (document.getElementById("bdYear")  || {}).value || "";
@@ -463,9 +456,9 @@
     if (display) {
       display.innerHTML = age != null ? `<span class="settings-age-display">Age: ${age}</span>` : "";
     }
-  };
+  }
 
-  window.updateExperienceExplanation = function updateExperienceExplanation() {
+  function updateExperienceExplanation() {
     const select = document.getElementById("fieldExperienceLevel");
     const explanation = document.getElementById("experienceExplanation");
     if (!select || !explanation) return;
@@ -473,5 +466,27 @@
     const selected = select.value;
     const option = EXPERIENCE_OPTIONS.find((o) => o.value === selected);
     explanation.textContent = option ? option.desc : "";
-  };
+  }
+
+  document.addEventListener("click", (event) => {
+    const rpe = event.target.closest("[data-settings-rpe]");
+    if (rpe) {
+      settingsRpeSelect(Number(rpe.dataset.settingsRpe));
+      return;
+    }
+    const navStyle = event.target.closest("[data-settings-nav-style]");
+    if (navStyle) {
+      window.setMobileNavStyle(navStyle.dataset.settingsNavStyle);
+      return;
+    }
+    if (event.target.closest("[data-settings-save]")) M.saveSettings();
+  });
+
+  document.addEventListener("input", (event) => {
+    if (event.target.matches("[data-settings-birthday]")) settingsBirthdayChange();
+  });
+
+  document.addEventListener("change", (event) => {
+    if (event.target.matches("[data-settings-experience]")) updateExperienceExplanation();
+  });
 }());

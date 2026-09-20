@@ -1,18 +1,39 @@
 (function () {
   const Mattrics = window.Mattrics || {};
-  const config = window.MATTRICS_CONFIG || {};
-  const isHttp = typeof window !== "undefined" && /^https?:$/i.test(window.location.protocol);
 
-  Mattrics.DATA_URL = config.DATA_URL || (isHttp ? "api/data.php" : "");
-  Mattrics.EXERCISE_CONFIG_URL = config.EXERCISE_CONFIG_URL || (isHttp ? "api/exercises.php" : "");
-  Mattrics.CONNECTORS_URL = config.CONNECTORS_URL || (isHttp ? "api/connectors.php" : "");
-  Mattrics.AI_PROXY_URL = config.AI_PROXY_URL || (isHttp ? "api/ai.php" : "");
-  Mattrics.SHEET_URL = config.SHEET_URL || "";
-  Mattrics.SHEET_TOKEN = config.SHEET_TOKEN || "";
-  Mattrics.API_KEY = config.API_KEY || "";
-  Mattrics.AI_ENABLED = typeof config.AI_ENABLED === "boolean"
-    ? config.AI_ENABLED
-    : Boolean(Mattrics.AI_PROXY_URL || Mattrics.API_KEY);
+  Mattrics.SESSION_URL = "/api/session";
+  Mattrics.DATA_URL = "/api/data";
+  Mattrics.EXERCISE_CONFIG_URL = "/api/exercises";
+  Mattrics.CONNECTORS_URL = "/api/connectors";
+  Mattrics.AI_PROXY_URL = "/api/ai";
+  Mattrics.AI_ENABLED = true;
+  Mattrics.csrfToken = "";
+
+  Mattrics.apiFetch = function apiFetch(url, options = {}) {
+    const request = { ...options, credentials: "same-origin" };
+    const method = String(request.method || "GET").toUpperCase();
+    const headers = new Headers(request.headers || {});
+    if (!['GET', 'HEAD'].includes(method)) {
+      if (!/^[a-f0-9]{64}$/i.test(Mattrics.csrfToken)) {
+        return Promise.reject(new Error("The authenticated session has not finished loading."));
+      }
+      headers.set("X-CSRF-Token", Mattrics.csrfToken);
+    }
+    request.headers = headers;
+    return fetch(url, request);
+  };
+
+  Mattrics.bootstrapSession = async function bootstrapSession() {
+    const response = await Mattrics.apiFetch(Mattrics.SESSION_URL);
+    if (!response.ok) throw new Error(`Session bootstrap failed. HTTP ${response.status}`);
+    const payload = await response.json();
+    if (!payload || !/^[a-f0-9]{64}$/i.test(String(payload.csrfToken || ""))) {
+      throw new Error("Session bootstrap returned an invalid CSRF token.");
+    }
+    Mattrics.csrfToken = payload.csrfToken;
+    Mattrics.appVersion = String(payload.appVersion || "");
+    return payload;
+  };
 
   Mattrics.TYPES = {
     Canoeing: { icon: "🛶", color: "var(--canoe)", label: "Canoeing" },

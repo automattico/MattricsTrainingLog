@@ -49,7 +49,7 @@
   M.docsTiers = function docsTiers(tiers) {
     return `<div class="docs-tier-list">
       ${tiers.map((t) => `<div class="docs-tier-item">
-        <span class="docs-tier-dot" style="background:${t.color}"></span>
+        <span class="docs-tier-dot" data-css-background="${M.escAttr(t.color)}"></span>
         <span class="docs-tier-name">${M.docsEsc(t.name)}</span>
         <span class="docs-tier-range">${M.docsEsc(t.range)}</span>
         <span class="docs-tier-desc">${M.docsEsc(t.desc)}</span>

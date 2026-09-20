@@ -35,7 +35,7 @@
     document.getElementById("detailDate").textContent = "";
     document.getElementById("detailMetrics").innerHTML = summaryItems.map((metric) => `
       <div class="metric">
-        <div class="metric-val" style="color:${metric.color}">${M.esc(metric.val)}</div>
+        <div class="metric-val" data-css-color="${M.escAttr(metric.color)}">${M.esc(metric.val)}</div>
         <div class="metric-lab">${metric.lab}</div>
       </div>`).join("");
     document.getElementById("detailMeta").textContent = deviceName ? `Tracked with ${deviceName}` : "";

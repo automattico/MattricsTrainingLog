@@ -8,7 +8,7 @@
     intro: "The app uses Anthropic's Claude model to generate personalized workout recommendations based on recent activity and current fatigue state.",
     body: `
       ${M.docsTable([
-        ["Model", "Anthropic Claude 3.5 Sonnet (latest available). Refer to <code class=\"docs-code\">public/api/ai.php</code> for the current model ID."],
+        ["Model", "The Anthropic model is configured server-side in <code class=\"docs-code\">private/config.php</code>."],
         ["Context window", "Sufficient to handle activity history, fatigue state, and user profile within a single request."],
         ["Temperature", "<code class=\"docs-code\">0.7</code> for balanced creativity and consistency in recommendations."],
         ["Max tokens", "<code class=\"docs-code\">1024</code> per response. Enough for a detailed workout plan without excessive length."],
@@ -35,7 +35,7 @@
 
       ${M.docsSubsection("API boundary and security", `
         <p class="docs-copy">
-          The client sends a fetch request to <code class="docs-code">public/api/ai.php</code> with the required context.
+          The client sends an authenticated, same-origin request to <code class="docs-code">/api/ai</code> with the required context.
           The server validates the session, constructs the full prompt, calls the Anthropic API, and streams the response
           back to the client. The API key never leaves the server. Rate limiting and usage quotas should be monitored.
         </p>

@@ -1,15 +1,34 @@
 (function () {
   const M = window.Mattrics;
 
-  M.logout = function logout() {
-    fetch('api/auth/logout.php', { method: 'POST' })
-      .then(() => {
-        window.location.href = 'login.php';
-      })
-      .catch(() => {
-        window.location.href = 'login.php';
-      });
+  const dynamicStyleMap = {
+    cssColor: "color",
+    cssBackground: "background",
+    cssCardAccent: "--card-accent",
+    cssFatigueFill: "--fatigue-fill",
+    cssFatigueOpacity: "--fatigue-opacity",
+    cssPreviewFill: "--preview-fill",
+    cssPreviewOpacity: "--preview-opacity",
+    cssMarkerIndex: "--marker-index",
+    cssSliderFill: "--slider-fill",
+    cssDonutFill: "--donut-fill",
+    cssLegendColor: "--legend-color",
   };
+
+  function applyDynamicStyles(root) {
+    if (!root || root.nodeType !== Node.ELEMENT_NODE) return;
+    const nodes = [root, ...root.querySelectorAll("[data-css-color], [data-css-background], [data-css-card-accent], [data-css-fatigue-fill], [data-css-fatigue-opacity], [data-css-preview-fill], [data-css-preview-opacity], [data-css-marker-index], [data-css-slider-fill], [data-css-donut-fill], [data-css-legend-color]")];
+    nodes.forEach((node) => {
+      Object.entries(dynamicStyleMap).forEach(([key, property]) => {
+        if (node.dataset[key] !== undefined) node.style.setProperty(property, node.dataset[key]);
+      });
+    });
+  }
+
+  new MutationObserver((records) => {
+    records.forEach((record) => record.addedNodes.forEach(applyDynamicStyles));
+  }).observe(document.body, { childList: true, subtree: true });
+  applyDynamicStyles(document.body);
 
   // Apply saved mobile nav style before first paint
   document.body.dataset.navStyle = localStorage.getItem("mobileNavStyle") || "scroll";
@@ -35,7 +54,6 @@
     closeDetail: M.closeDetail,
     fetchData: M.fetchData,
     generateWorkout: M.generateWorkout,
-    logout: M.logout,
     openDetail: M.openDetail,
     saveSettings: M.saveSettings,
     setDashboardWindow: M.setDashboardWindow,
@@ -64,8 +82,8 @@
 
   const nav = document.querySelector(".nav");
   if (nav) {
-    const docsBtn = nav.querySelector('[onclick*="showView(\'docs\'"]');
-    const settingsBtn = nav.querySelector('[onclick*="showView(\'settings\'"]');
+    const docsBtn = nav.querySelector('[data-view="docs"]');
+    const settingsBtn = nav.querySelector('[data-view="settings"]');
     if (docsBtn) {
       docsBtn.classList.add("nav-btn--docs");
     } else if (settingsBtn) {
@@ -73,12 +91,36 @@
       button.className = "nav-btn nav-btn--docs";
       button.type = "button";
       button.textContent = "Docs";
-      button.addEventListener("click", () => M.showView("docs", button));
+      button.dataset.view = "docs";
       nav.insertBefore(button, settingsBtn);
     }
   }
 
   document.addEventListener("click", (event) => {
+    const viewTrigger = event.target.closest("[data-view]");
+    if (viewTrigger) {
+      M.showView(viewTrigger.dataset.view, viewTrigger);
+      if (viewTrigger.hasAttribute("data-close-drawer")) M.toggleDrawer();
+      return;
+    }
+
+    const action = event.target.closest("[data-action]");
+    if (action) {
+      switch (action.dataset.action) {
+        case "retry": M.fetchData(); return;
+        case "refresh": M.fetchData({ forceRefresh: true }); return;
+        case "drawer": M.toggleDrawer(); return;
+        case "dashboard-window": M.setDashboardWindow(Number(action.dataset.days), action); return;
+        case "feed-mode": M.setFeedMode(action.dataset.mode, action); return;
+        case "generate-workout": M.generateWorkout(); return;
+        case "close-detail": M.closeDetail(); return;
+        case "close-detail-overlay":
+          if (event.target === action) M.closeDetail();
+          return;
+        default: break;
+      }
+    }
+
     const trigger = event.target.closest("[data-activity-id]");
     if (!trigger) return;
     M.openDetail(trigger.dataset.activityId);
@@ -108,5 +150,7 @@
     if (wrap) fixTooltipPosition(wrap);
   });
 
-  M.fetchData({ forceRefresh: true });
+  M.bootstrapSession()
+    .then(() => M.fetchData())
+    .catch((error) => M.showError(String(error && error.message ? error.message : error)));
 }());

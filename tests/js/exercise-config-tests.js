@@ -1,6 +1,6 @@
 /**
  * exercise-config-tests.js
- * Run in Node: node public/tests/exercise-config-tests.js
+ * Run in Node: node tests/js/exercise-config-tests.js
  */
 
 const fs = require("fs");
@@ -25,9 +25,8 @@ function loadScriptContext(files) {
   const window = {
     location: {
       protocol: "http:",
-      href: "http://localhost/",
+      href: "http://127.0.0.1/",
     },
-    MATTRICS_CONFIG: {},
     Mattrics: {},
   };
 
