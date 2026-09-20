@@ -1,66 +1,33 @@
-# Docker Local Development
+# Local development
 
-This repo can now run locally in Docker without installing the app runtime on the host.
+## Native server
 
-## What runs in the container
+```sh
+./scripts/dev-server.sh
+```
 
-- PHP built-in web server serving `public/`
-- PHP CLI for auth tests and linting
-- Node.js for `public/tests/settings-tests.js`
-- `lftp` for deploy script parity when needed
+The script builds a temporary `sites/mattrics`-style tree, copies local `private/config.php` when present (otherwise the example), sets private permissions, and starts PHP's built-in server at `http://127.0.0.1:8080`.
 
-The repo is bind-mounted into the container, so code edits on the host are reflected immediately.
+`scripts/dev-router.php` includes `tests/stubs/mattwarden.php`, applies the default Mattwarden headers/CSP, serves allowlisted static types, rejects dotfiles, and dispatches flat endpoints with `.php` aliases and `PATH_INFO`.
 
-## Data and secrets
+The stub is authenticated by default, uses an explicit non-request-derived origin matching the configured development port, and exposes a fixed 64-hex CSRF token. Set `MATTWARDEN_TEST_AUTHENTICATED=0` only when verifying the gate's 401 behavior.
 
-- `private/` stays on the host and is mounted into the container through the repo bind mount.
-- Existing local state such as passkeys, settings, auth audit logs, and cached training data are preserved.
-- `private/config.php`, `.env.local`, and `public/config.js` remain local-only and out of the image build context.
-
-## Local auth behavior
-
-- Docker dev uses `http://localhost:8080`.
-- `MATTRICS_SITE_ORIGIN=http://localhost:8080` is injected through `docker-compose.yml`.
-- `MATTRICS_AUTH_REQUIRE_HTTPS=0` disables the production HTTPS requirement for local container use.
-- Passkeys stay enabled. `localhost` remains a valid WebAuthn development origin in supported browsers.
-
-## Commands
-
-Start the app:
+## Docker
 
 ```sh
 docker compose up --build
-```
-
-Open:
-
-```sh
-http://localhost:8080/login.php
-```
-
-Run checks inside the container:
-
-```sh
-docker compose exec app php tests/auth-security-tests.php
-docker compose exec app node public/tests/settings-tests.js
-docker compose exec app ./scripts/predeploy-guard.sh --check
-```
-
-Stop:
-
-```sh
 docker compose down
 ```
 
-Reset container-only state:
+The default Compose service runs the same temporary router/stub, without application session volumes or auth-origin environment overrides.
+
+## Tests
 
 ```sh
-docker compose down -v
+./scripts/prod-gate.sh
+php tests/dev-router-tests.php
+node tests/js/settings-tests.js
+node tests/js/exercise-config-tests.js
 ```
 
-This removes the PHP session volume, but does not delete host-mounted `private/` data.
-
-## Notes
-
-- Local Docker uses PHP's built-in server, so Apache `.htaccess` rules are not mirrored in dev.
-- Production deploy flow remains unchanged in this pass.
+The router integration test opens a loopback port and may require sandbox permission in managed environments.

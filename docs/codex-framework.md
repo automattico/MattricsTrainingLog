@@ -21,7 +21,8 @@ Before changing files, Codex must:
 - Avoid unrelated refactors.
 - Do not rewrite the UI framework unless a later architecture decision explicitly authorizes it.
 - Do not expose secrets or private health data.
-- Keep runtime/private data outside `public/`.
+- Keep runtime/private data outside `public/` and root every path at `MATTWARDEN_SITE_DIR`.
+- Never add application authentication, sessions, cookies, or passkey management; those belong to Mattwarden.
 - Add or update tests when behavior changes.
 - Prefer compatibility layers during migration so the deployed app remains usable.
 - Keep `MattricsTrainingLog` as the main repo and use `MattricsNext` only as reference.
@@ -52,7 +53,7 @@ Before finishing a slice, Codex must:
 11. Hevy live connector.
 12. Garmin Connect live connector.
 13. Duplicate resolution and metadata precedence.
-14. Private server/Cloudflare Tunnel deployment.
+14. Post-cut-over runtime evaluation.
 15. Concept2 erg import.
 
 ## Slice Quality Bar
@@ -76,4 +77,4 @@ Every slice report must state:
 - whether public responses expose credential values
 - whether generated artifacts contain private data
 
-If a slice requires credentials, store them only in server-side private config or encrypted credential storage. UI and logs may show status only.
+If a slice requires provider credentials, store them only in server-side private config. UI and logs may show status only. Authentication credentials remain entirely outside this repository.

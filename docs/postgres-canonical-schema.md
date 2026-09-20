@@ -26,7 +26,7 @@ It is additive, local-only, and designed to support later import and compatibili
 - Foundation migration state is tracked in `mattrics.mattrics_schema_migrations`.
 - Fresh-volume bootstrap SQL and the forward-only migration path must converge on the same end-state schema.
 - Slice 4 adds `php scripts/bootstrap-foundation.php` as the local-only canonical seed/import runner.
-- Current endpoints such as [`public/api/data.php`](../public/api/data.php) and [`public/api/exercises.php`](../public/api/exercises.php) remain unchanged in this slice and will map to canonical storage in later slices.
+- Current endpoints such as [`api/data.php`](../api/data.php) and [`api/exercises.php`](../api/exercises.php) retain their browser payloads while optional canonical storage is configured.
 
 ## Schema Shape
 
@@ -137,7 +137,7 @@ Import behavior:
 
 - storing unresolved exercise/activity-type review queues in Postgres
 - compatibility read APIs over canonical tables
-- auth/session/credential migration into Postgres
+- authentication or Mattwarden session storage in Postgres
 - derived analytics or fatigue rollups inside the database
 
 ## Expected next slice

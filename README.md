@@ -1,59 +1,49 @@
 # Mattrics Training Log
 
-Mattrics Training Log is a private training dashboard for reviewing recent workouts, spotting trends, and generating AI-assisted workout suggestions from your activity history.
+Mattrics is a private PHP 8 and vanilla-JavaScript training dashboard. Mattwarden authenticates every production request, serves the static shell, dispatches the flat PHP API, owns the session and CSRF token, and provides logout.
 
-It combines a lightweight frontend with a small PHP proxy, a Google Apps Script data endpoint, a private cached snapshot for resilient loading, and Anthropic-backed coaching prompts.
+The application itself contains no authentication, passkey, session, cookie, or recovery implementation.
 
-## Local Development
+## Layout
 
-Docker-first local development is supported for the current architecture without a larger refactor.
+```text
+public/   static index.html, assets, icons, manifest, robots.txt
+api/      six flat authenticated endpoint scripts
+lib/      shared non-addressable PHP modules
+private/  config example and initial JSON seeds
+scripts/  local Mattwarden stub/router, imports, validation, deploy
+tests/    PHP, JavaScript, contract, router, and deploy-safety tests
+```
 
-Quick start:
+Production content is stored outside every document root under `/usr/home/mwiela/sites/mattrics`. The web document root contains only Mattwarden's shim and `.htaccess`.
+
+## Local development
+
+```sh
+./scripts/dev-server.sh
+```
+
+Open `http://127.0.0.1:8080/`. The temporary development site uses the Mattwarden contract stub, the same flat API dispatch rules, and the default HTML CSP.
+
+Docker can run the same development server:
 
 ```sh
 docker compose up --build
 ```
 
-Then open:
-
-```text
-http://localhost:8080/login.php
-```
-
-Useful commands:
+Run all deploy-blocking checks with:
 
 ```sh
-docker compose exec app php tests/auth-security-tests.php
-docker compose exec app node public/tests/settings-tests.js
-docker compose exec app ./scripts/predeploy-guard.sh --check
-docker compose down
-docker compose down -v
+./scripts/prod-gate.sh
 ```
 
-Notes:
+The optional Foundation/Postgres stack remains local-only and is documented in `docs/docker-postgres-foundation.md`.
 
-- `private/` remains local and writable, so cached data, settings, and passkey files persist across container restarts.
-- Local Docker sets the app origin to `http://localhost:8080` and disables the production-only HTTPS requirement.
-- Production deploy remains `./deploy.sh` and still targets only `public/`.
+## Operations
 
-See [`docs/docker-local-dev.md`](/Users/mwieland/dev/MattricsTrainingLog/docs/docker-local-dev.md) for details.
+- Deployment: `DEPLOY.md`
+- Architecture: `docs/architecture.md`
+- Mattwarden migration and fixed cut-over order: `docs/mattwarden-migration.md`
+- Local development: `docs/docker-local-dev.md`
 
-## Live Site
-
-[mattrics.mwieland.com](https://mattrics.mwieland.com/)
-
-## Features
-
-- Recent training feed with rolling time ranges such as 7 days, 14 days, 1 month, and all time
-- Activity insights pulled from a Google Sheet through a token-protected endpoint with private server-side snapshot caching
-- Optional AI workout suggestions without exposing the API key in the browser
-
-## Screenshots
-
-<p>
-  <img src="docs/images/homepage-desktop.png" alt="Mattrics Training Log desktop dashboard" width="700" />
-</p>
-
-<p>
-  <img src="docs/images/homepage-mobile.png" alt="Mattrics Training Log mobile dashboard" width="240" />
-</p>
+Live site: [mattrics.mwieland.com](https://mattrics.mwieland.com/)

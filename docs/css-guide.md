@@ -63,7 +63,7 @@
 | `--fatigue-row-*` | Table row text colors per tier |
 | `--fatigue-glow-high` / `--fatigue-glow-fresh` / `--fatigue-glow-none` | Drop-shadow glows on body map |
 
-### Per-element custom properties (set inline by JS)
+### Per-element custom properties (set through CSSOM by JS)
 
 | Variable | Set by | Used on |
 |---|---|---|
@@ -74,6 +74,8 @@
 | `--fatigue-fill` | `renderFatigueBodyFigure` | `.fatigue-body-region` SVG fill |
 | `--fatigue-opacity` | `renderFatigueBodyFigure` | `.fatigue-body-region path` opacity |
 | `--fatigue-tier-color` | `[data-fatigue-state]` CSS rules | Status labels and swatches |
+
+Generated templates carry `data-css-*` values. `app.js` transfers them to custom properties with CSSOM property mutation. This keeps dynamic positioning/color behavior without creating inline style attributes, which are forbidden by the production CSP.
 
 ---
 

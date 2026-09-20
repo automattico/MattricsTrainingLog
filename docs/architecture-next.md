@@ -20,9 +20,9 @@ Every implementation slice must read this before making changes.
 
 ## Runtime Direction
 
-- Move away from static hosting over time.
-- Target own-server deployment with Docker Compose, Postgres, and private access through Cloudflare Tunnel.
-- Current static/PHP deploy rules remain valid until the Docker/Postgres migration explicitly replaces them.
+- Production is a Mattwarden-protected static shell plus flat PHP API on Hetzner Webhosting.
+- A possible own-server Docker/Postgres runtime remains future work, not the current production target.
+- The local Foundation stack must not be treated as a deployed HTTP application until a future slice explicitly migrates it.
 - Production must keep private runtime state outside the public web root.
 - Backups and restore checks are required before disabling the current Google Sheet pipeline.
 
@@ -56,7 +56,7 @@ Keep these boundaries explicit as the app evolves:
 - training load and muscle fatigue calculation
 - recommendation logic
 - persistence/storage
-- user settings and credential status
+- user settings and connector status
 - API/export boundary
 - UI rendering
 
@@ -64,8 +64,12 @@ The UI should consume internal APIs rather than reading private files directly o
 
 ## Security
 
+- Mattwarden exclusively owns authentication, sessions, cookies, CSRF generation, security headers, and logout.
+- Application code must not add authentication or credential-recovery features.
+- Every endpoint calls `require_authenticated()`; mutations also require same-origin and CSRF guards.
+- Resolve all application paths from `MATTWARDEN_SITE_DIR`.
 - Never expose secrets, API keys, tokens, `.env.local`, `private/config.php`, raw health exports, database dumps, or Cloudflare Tunnel credentials.
 - Do not commit credentials, private health data, generated raw imports, or local database files.
-- UI responses may expose credential status only, such as `hasCredential: true`, never credential values.
+- Connector responses may expose credential status only, such as `hasCredential: true`, never credential values.
 - Raw imports and health data must stay outside `public/`.
 - Logs and docs must not include secret values or private payload contents.

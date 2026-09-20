@@ -1,73 +1,42 @@
 # Deploy
 
-This repository follows the static-site operating model:
+Mattrics deploys application content by SFTP to `/usr/home/mwiela/sites/mattrics`. Mattwarden separately installs the only two files in `public_html/mattrics`: its `.htaccess` and `index.php` shim.
 
-- only [`public/`](/Users/mwieland/dev/MattricsTrainingLog/public) is deployed as the web root
-- runtime secrets stay outside the public docroot
-- deployment runs through [`deploy.sh`](/Users/mwieland/dev/MattricsTrainingLog/deploy.sh)
-- validation runs through [`scripts/prod-gate.sh`](/Users/mwieland/dev/MattricsTrainingLog/scripts/prod-gate.sh) and [`scripts/predeploy-guard.sh`](/Users/mwieland/dev/MattricsTrainingLog/scripts/predeploy-guard.sh)
+Do not run the first post-migration application deploy until the operator has moved production data into `/usr/home/mwiela/sites/mattrics/private`. Deploying first can upload empty seed files with `--only-missing`, making the real production paths no longer missing.
 
-## Local setup
+## Configuration
 
-1. Copy `.env.example` to `.env.local`.
-2. Fill in deploy placeholders in `.env.local`.
-3. Keep `.env.local`, `private/config.php`, and `public/config.js` out of Git.
+Copy `.env.example` to `.env.local` and configure:
 
-Deploy auth is **SSH key only**. `deploy.sh` refuses to run if `SFTP_PASSWORD` is set.
+- `SFTP_HOST`, `SFTP_PORT`, and `SFTP_USER`
+- `SFTP_KEY_PATH` and optional `SFTP_IDENTITY_AGENT`
+- `SFTP_KNOWN_HOSTS=deploy/known_hosts`
+- `MATTRICS_REMOTE_DIR=sites/mattrics` exactly
 
-- `SFTP_KEY_PATH` — the deploy key. Point it at the **public** key (`~/.ssh/id_ed25519_hetzner.pub`);
-  with `IdentitiesOnly` the private half is taken from the SSH agent, i.e. the Bitwarden desktop
-  app's SSH agent (must be running and unlocked; it asks for approval per connection).
-- `SFTP_IDENTITY_AGENT` — optional path of the agent socket (`~/.bitwarden-ssh-agent.sock`) for
-  shells that do not export `SSH_AUTH_SOCK`.
-- `deploy/known_hosts` — pinned Hetzner host keys; connections to any other host key fail.
-  Public host keys are not secrets and are committed on purpose.
+The deploy refuses password variables, missing key material, an empty host-pin file, absolute or traversing targets, every `public_html` target, and every remote directory except `sites/mattrics`.
 
-## Runtime config
+Never commit or upload `.env.local` or `private/config.php`.
 
-Create a real `private/config.php` from [`private/config.example.php`](/Users/mwieland/dev/MattricsTrainingLog/private/config.example.php).
+## Managed upload set
 
-Deploy keeps the current project behavior:
+```text
+public/  -> sites/mattrics/public   mirror --delete
+api/     -> sites/mattrics/api      mirror --delete
+lib/     -> sites/mattrics/lib      mirror --delete
+private/config.example.php          upload --only-missing
+private/data/{activity-type-configs,exercise-configs,exercise-dataset,exercise-unknowns}.json
+                                         upload --only-missing
+```
 
-- syncs [`public/`](/Users/mwieland/dev/MattricsTrainingLog/public) to `SFTP_REMOTE_DIR`
-- uploads `private/config.php` to `SFTP_REMOTE_PRIVATE_DIR`
-- excludes `public/config.js` from deployment
+Runtime `config.php`, user settings, data/cache/log state, and raw imports are never uploaded or overwritten. Directories are set to mode 700 and managed files to 600. The deploy verifies exact file inventories for the managed public/API/library trees and only verifies presence of required private seeds, leaving unrelated runtime state intact.
 
-`public/config.js` remains a local-only compatibility file. Do not deploy or commit it.
-
-## Validation
-
-Run these checks before deploy:
+## Validation and deployment
 
 ```sh
-bash -n deploy.sh scripts/*.sh
-./scripts/predeploy-guard.sh --check
 ./scripts/prod-gate.sh
-```
-
-Optional health checks:
-
-```sh
-./scripts/check-remote-health.sh
-./scripts/smoke-test.sh
-```
-
-## Deploy
-
-```sh
 ./deploy.sh
 ```
 
-The deploy flow is:
+`deploy.sh` runs the production gate again before connecting. It does not make unauthenticated HTTP content requests; authenticated verification belongs to the fixed runbook in `docs/mattwarden-migration.md`.
 
-1. `scripts/prod-gate.sh`
-2. `scripts/predeploy-guard.sh`
-3. upload `public/`
-4. upload `private/config.php`
-5. `scripts/smoke-test.sh`
-
-## Notes
-
-- CI validates only and does not deploy.
-- Prefer storing the real runtime config outside the docroot on the server.
-- If your host exposes `MATTRICS_CONFIG`, it may point to the uploaded private config path.
+Do not deploy or push without explicit operator approval.

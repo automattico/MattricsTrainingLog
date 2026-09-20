@@ -33,8 +33,8 @@ Tracks implementation progress across Codex slices.
 ## Implemented Files
 - `private/data/exercise-configs.json`
 - `private/data/activity-type-configs.json`
-- `public/api/exercise-config-repository.php`
-- `public/api/exercises.php`
+- `lib/exercise-config-repository.php`
+- `api/exercises.php`
 - `private/data/exercise-unknowns.json`
 - `public/assets/js/core/exercise-config.js`
 - `public/assets/js/core/constants.js`
@@ -49,10 +49,10 @@ Tracks implementation progress across Codex slices.
 - `docs/fatigue-model.md`
 - `public/assets/js/renderers/docs/section-module-map.js`
 - `public/assets/js/renderers/docs/section-fatigue-model.js`
-- `public/tests/exercise-config-tests.js`
+- `tests/js/exercise-config-tests.js`
 - `tests/exercise-config-tests.php`
 - `tests/fixtures/run-exercises-endpoint.php`
-- `public/api/exercise-config-ai.php`
+- `lib/exercise-config-ai.php`
 - `tests/fixtures/run-exercise-suggest-endpoint.php`
 - `private/data/exercise-dataset.json`
 - `tests/fixtures/run-exercise-delete-endpoint.php`

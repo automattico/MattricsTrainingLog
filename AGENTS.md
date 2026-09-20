@@ -7,6 +7,18 @@ The deployable web root is `public/`.
 
 Agents must preserve the deployment and security model defined here.
 
+## Mattwarden Security Boundary
+
+Authentication is Mattwarden's job. This repository contains no authentication code and must not grow any.
+
+- Application code must not start or inspect sessions, read or write `$_SESSION`, set cookies, or send `Set-Cookie`.
+- Every file in `api/` begins with `declare(strict_types=1); require_authenticated();`.
+- Every state-changing method also calls `mattwarden_require_same_origin()` and `mattwarden_require_csrf()`.
+- `MATTWARDEN_SITE_DIR` is the only application base path. Private state resolves to `MATTWARDEN_SITE_DIR . '/private'` with no fallback.
+- Logout is `/__mattwarden/logout`. Passkey enrolment and management are not application features.
+- Content deploys over SFTP to `sites/mattrics/public`, `sites/mattrics/api`, `sites/mattrics/lib`, and `sites/mattrics/private`; this repository never deploys into `public_html`.
+- Deploy authentication is SSH-key-only with a pinned host key. Password variables are forbidden.
+
 ## Codex Slice Framework
 
 Future architecture and migration work must read:
@@ -156,17 +168,20 @@ Status markers: ✅ done · ❌ failed · ❗ warning · 🚀 deployed · 🔒 s
 ## Repository Architecture
 
 ```
-public/   deployable web root
-private/  runtime config + cache (never deployed)
-scripts/  deploy pipeline and validation tools
+public/   static shell and assets
+api/      flat Mattwarden-dispatched endpoint scripts
+lib/      non-addressable shared PHP modules
+private/  config example and first-deploy JSON seeds
+scripts/  local gate, deploy, imports, and validation
 docs/     architecture and operational documentation
 ```
 
 Rules:
-- Only `public/` is deployed.
-- `private/` must never be deployed.
-- Server-side code is allowed **only in `public/api/`**.
-- Secrets must never appear in `public/`.
+- `public/`, `api/`, and `lib/` are mirrored to the matching `sites/mattrics/*` tree.
+- Only `private/config.example.php` and the four JSON seeds are uploaded with `--only-missing`.
+- `private/config.php`, runtime data, caches, logs, and raw imports are never uploaded or overwritten.
+- Server-side entry points are allowed only as flat files in `api/`; shared code belongs in `lib/`.
+- Secrets must never appear in `public/`, `api/`, `lib/`, Git, logs, or documentation.
 
 ---
 
@@ -184,9 +199,9 @@ Treat `.env.local` and deploy credentials as 🔒 security-sensitive.
 ./deploy.sh
 ```
 
-Flow: prod-gate → predeploy guard → deploy public/ → smoke tests
+Flow: source guard → lint → PHP and JavaScript tests → allowlisted SFTP mirrors → remote-tree verification.
 
-Agents must run validation before deploy, deploy only `public/`, and avoid exposing secrets in logs.
+Agents must not deploy without explicit approval. The production data move documented in `docs/mattwarden-migration.md` must happen before the first application deploy.
 
 ---
 
