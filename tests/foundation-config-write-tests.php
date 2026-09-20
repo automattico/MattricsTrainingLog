@@ -3,12 +3,17 @@ declare(strict_types=1);
 
 $tempRoot = sys_get_temp_dir() . '/mattrics-foundation-config-write-tests-' . bin2hex(random_bytes(4));
 mkdir($tempRoot, 0775, true);
+$siteRoot = $tempRoot . '/site';
+mkdir($siteRoot, 0775, true);
 
-require_once dirname(__DIR__) . '/public/api/bootstrap.php';
-require_once dirname(__DIR__) . '/public/api/exercise-config-repository.php';
-require_once dirname(__DIR__) . '/public/api/foundation-read.php';
-require_once dirname(__DIR__) . '/public/api/foundation-write.php';
-require_once dirname(__DIR__) . '/scripts/lib/foundation-import.php';
+define('MATTWARDEN_SITE_DIR', $siteRoot);
+putenv('MATTWARDEN_TEST_SITE_DIR=' . $siteRoot);
+require_once dirname(__DIR__) . '/tests/stubs/mattwarden.php';
+require_once dirname(__DIR__) . '/lib/bootstrap.php';
+require_once dirname(__DIR__) . '/lib/exercise-config-repository.php';
+require_once dirname(__DIR__) . '/lib/foundation-read.php';
+require_once dirname(__DIR__) . '/lib/foundation-write.php';
+require_once dirname(__DIR__) . '/lib/foundation-import.php';
 
 $passed = 0;
 $failed = 0;
@@ -87,8 +92,13 @@ function foundation_write_run_php_fixture(string $fixturePath, string $stdin = '
 
 function foundation_write_apply_env(string $configPath): void
 {
-    putenv('MATTRICS_CONFIG=' . $configPath);
-    putenv('MATTRICS_AUTH_REQUIRE_HTTPS=0');
+    $sitePrivate = MATTWARDEN_SITE_DIR . '/private';
+    if (is_link($sitePrivate)) {
+        unlink($sitePrivate);
+    }
+    if (!symlink(dirname($configPath), $sitePrivate)) {
+        throw new RuntimeException('Could not point the test site at the case private directory.');
+    }
     mattrics_foundation_read_reset_cache();
 }
 

@@ -4,7 +4,10 @@ declare(strict_types=1);
 $tempRoot = sys_get_temp_dir() . '/mattrics-connectors-api-tests-' . bin2hex(random_bytes(4));
 mkdir($tempRoot, 0775, true);
 
-require_once dirname(__DIR__) . '/scripts/lib/foundation-connectors.php';
+define('MATTWARDEN_SITE_DIR', $tempRoot);
+putenv('MATTWARDEN_TEST_SITE_DIR=' . $tempRoot);
+require_once dirname(__DIR__) . '/lib/bootstrap.php';
+require_once dirname(__DIR__) . '/lib/foundation-connectors.php';
 
 $passed = 0;
 $failed = 0;
@@ -34,18 +37,13 @@ function connectors_test_write_json(string $path, mixed $value): void
 function connectors_test_fixture_env(
     string $configPath,
     string $method = 'GET',
-    string $host = 'localhost',
     bool $authed = true,
     string $csrf = '',
-    string $requester = '',
-    string $runtimeMode = 'foundation'
+    string $requester = ''
 ): array {
     return [
-        'MATTRICS_CONFIG' => $configPath,
-        'MATTRICS_RUNTIME_MODE' => $runtimeMode,
-        'MATTRICS_AUTH_REQUIRE_HTTPS' => '0',
+        'MATTRICS_TEST_SITE_DIR' => dirname(dirname($configPath)),
         'MATTRICS_TEST_CONNECTORS_METHOD' => $method,
-        'MATTRICS_TEST_HTTP_HOST' => $host,
         'MATTRICS_TEST_CONNECTORS_AUTH' => $authed ? '1' : '0',
         'MATTRICS_TEST_CONNECTORS_CSRF' => $csrf,
         'MATTRICS_TEST_CONNECTORS_REQUESTER' => $requester,
@@ -54,13 +52,16 @@ function connectors_test_fixture_env(
 
 function connectors_test_run_fixture(string $fixturePath, array $env, string $stdin = ''): array
 {
+    foreach ($env as $name => $value) {
+        putenv($name . '=' . $value);
+    }
     $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($fixturePath);
     $descriptorSpec = [
         0 => ['pipe', 'r'],
         1 => ['pipe', 'w'],
         2 => ['pipe', 'w'],
     ];
-    $process = proc_open($command, $descriptorSpec, $pipes, dirname(__DIR__), $env);
+    $process = proc_open($command, $descriptorSpec, $pipes, dirname(__DIR__));
 
     if (!is_resource($process)) {
         return [
@@ -92,7 +93,6 @@ $privateRoot = $tempRoot . '/private';
 mkdir($privateRoot . '/storage', 0775, true);
 $configPath = $privateRoot . '/config.php';
 connectors_test_write_php_config($configPath, [
-    'auth_require_https' => false,
     'foundation_database_url' => '',
     'foundation_user_key' => 'legacy-local-user',
 ]);
@@ -103,6 +103,9 @@ $getResult = connectors_test_run_fixture(
     $fixturePath,
     connectors_test_fixture_env($configPath)
 );
+if (($getResult['exitCode'] ?? 1) !== 0) {
+    fwrite(STDERR, (string) ($getResult['stderr'] ?? ''));
+}
 connectors_test_assert(($getResult['exitCode'] ?? 1) === 0, 'connectors GET fixture exits successfully');
 connectors_test_assert(isset($getResult['decoded']['connectors']['hevy']), 'connectors GET exposes Hevy payload');
 connectors_test_assert(!isset($getResult['decoded']['connectors']['hevy']['apiKey']), 'connectors GET never exposes raw API keys');
@@ -110,27 +113,27 @@ connectors_test_assert(($getResult['decoded']['connectors']['hevy']['connectionS
 
 $remoteResult = connectors_test_run_fixture(
     $fixturePath,
-    connectors_test_fixture_env($configPath, 'GET', 'example.com', true, '', '', 'default')
+    connectors_test_fixture_env($configPath, 'GET', true)
 );
-connectors_test_assert(($remoteResult['decoded']['error'] ?? '') === 'Not found.', 'connectors endpoint is hidden for non-local requests');
+connectors_test_assert(isset($remoteResult['decoded']['connectors']['hevy']), 'connectors GET remains available behind Mattwarden without a host gate');
 
 $unauthorizedResult = connectors_test_run_fixture(
     $fixturePath,
-    connectors_test_fixture_env($configPath, 'POST', 'example.com', false, 'token-1', '', 'foundation'),
+    connectors_test_fixture_env($configPath, 'POST', false, 'token-1'),
     json_encode(['connector' => 'hevy', 'action' => 'save', 'enabled' => true], JSON_UNESCAPED_SLASHES)
 );
-connectors_test_assert(($unauthorizedResult['decoded']['error'] ?? '') === 'Unauthorized.', 'connectors POST requires auth');
+connectors_test_assert(($unauthorizedResult['decoded']['error'] ?? '') === 'Authentication required.', 'connectors POST requires Mattwarden authentication');
 
 $csrfFailureResult = connectors_test_run_fixture(
     $fixturePath,
-    connectors_test_fixture_env($configPath, 'POST', 'localhost', true, ''),
+    connectors_test_fixture_env($configPath, 'POST', true, ''),
     json_encode(['connector' => 'hevy', 'action' => 'save', 'enabled' => true], JSON_UNESCAPED_SLASHES)
 );
-connectors_test_assert(($csrfFailureResult['decoded']['error'] ?? '') === 'Security check failed. Refresh and try again.', 'connectors POST requires CSRF');
+connectors_test_assert(($csrfFailureResult['decoded']['error'] ?? '') === 'CSRF validation failed.', 'connectors POST requires Mattwarden CSRF validation');
 
 $saveResult = connectors_test_run_fixture(
     $fixturePath,
-    connectors_test_fixture_env($configPath, 'POST', 'localhost', true, 'token-save'),
+    connectors_test_fixture_env($configPath, 'POST', true, 'token-save'),
     json_encode([
         'connector' => 'hevy',
         'action' => 'save',
@@ -148,7 +151,7 @@ connectors_test_assert(($savedStore['connectors']['hevy']['apiKey'] ?? '') === '
 
 $preserveKeyResult = connectors_test_run_fixture(
     $fixturePath,
-    connectors_test_fixture_env($configPath, 'POST', 'localhost', true, 'token-preserve'),
+    connectors_test_fixture_env($configPath, 'POST', true, 'token-preserve'),
     json_encode([
         'connector' => 'hevy',
         'action' => 'save',
@@ -162,7 +165,7 @@ connectors_test_assert(($preservedStore['connectors']['hevy']['apiKey'] ?? '') =
 
 $testResult = connectors_test_run_fixture(
     $fixturePath,
-    connectors_test_fixture_env($configPath, 'POST', 'localhost', true, 'token-test', 'success'),
+    connectors_test_fixture_env($configPath, 'POST', true, 'token-test', 'success'),
     json_encode([
         'connector' => 'hevy',
         'action' => 'test',
@@ -173,7 +176,7 @@ connectors_test_assert(!str_contains($testResult['stdout'] ?? '', 'test-hevy-key
 
 $clearResult = connectors_test_run_fixture(
     $fixturePath,
-    connectors_test_fixture_env($configPath, 'POST', 'localhost', true, 'token-clear'),
+    connectors_test_fixture_env($configPath, 'POST', true, 'token-clear'),
     json_encode([
         'connector' => 'hevy',
         'action' => 'clear',

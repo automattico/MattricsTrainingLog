@@ -1,7 +1,14 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/scripts/lib/foundation-import.php';
+$tempRoot = sys_get_temp_dir() . '/mattrics-foundation-import-tests-' . bin2hex(random_bytes(4));
+mkdir($tempRoot, 0775, true);
+if (!symlink(dirname(__DIR__) . '/docker', $tempRoot . '/docker')) {
+    throw new RuntimeException('Could not attach Foundation migration files to the test site.');
+}
+define('MATTWARDEN_SITE_DIR', $tempRoot);
+require_once dirname(__DIR__) . '/lib/bootstrap.php';
+require_once dirname(__DIR__) . '/lib/foundation-import.php';
 
 $passed = 0;
 $failed = 0;
@@ -26,12 +33,10 @@ function foundation_test_skip(string $message): void
     fwrite(STDOUT, "SKIP: {$message}\n");
 }
 
-$tempRoot = sys_get_temp_dir() . '/mattrics-foundation-import-tests-' . bin2hex(random_bytes(4));
 $privateRoot = $tempRoot . '/private';
 mattrics_ensure_dir($privateRoot . '/data');
 mattrics_ensure_dir($privateRoot . '/cache');
 mattrics_ensure_dir($privateRoot . '/storage');
-mattrics_foundation_set_private_root($privateRoot);
 
 $exerciseRecord = [
     'id' => 'bench-press',

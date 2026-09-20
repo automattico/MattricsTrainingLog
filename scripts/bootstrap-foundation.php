@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/lib/foundation-import.php';
+define('MATTWARDEN_SITE_DIR', dirname(__DIR__));
+require_once MATTWARDEN_SITE_DIR . '/lib/bootstrap.php';
+require_once MATTWARDEN_SITE_DIR . '/lib/foundation-import.php';
 
 $options = getopt('', [
     'database-url::',
@@ -16,7 +18,7 @@ $databaseUrl = (string) ($options['database-url'] ?? getenv('DATABASE_URL') ?: M
 $userKey = (string) ($options['user-key'] ?? 'legacy-local-user');
 $displayName = (string) ($options['display-name'] ?? 'Legacy Local User');
 $timezone = (string) ($options['timezone'] ?? 'Europe/Berlin');
-$privateRoot = (string) ($options['private-root'] ?? dirname(__DIR__) . '/private');
+$privateRoot = (string) ($options['private-root'] ?? MATTWARDEN_SITE_DIR . '/private');
 $dryRun = array_key_exists('dry-run', $options);
 
 try {

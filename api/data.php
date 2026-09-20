@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-require __DIR__ . '/bootstrap.php';
-require_once __DIR__ . '/foundation-read.php';
+require_authenticated();
+require_once MATTWARDEN_SITE_DIR . '/lib/bootstrap.php';
+require_once MATTWARDEN_SITE_DIR . '/lib/foundation-read.php';
 
-mattrics_require_auth();
 mattrics_require_method('GET');
 
 $allowedFields = array_flip([
@@ -125,6 +125,7 @@ function mattrics_fetch_live_snapshot(array $allowedFields, ?array $previousSnap
         mattrics_write_snapshot($snapshot);
         return mattrics_build_snapshot_response($snapshot, false, 'live', $warning);
     } catch (Throwable $exception) {
+        error_log('Mattrics live data refresh failed: ' . $exception->getMessage());
         if ($previousSnapshot !== null) {
             $fallback = $previousSnapshot;
             $fallback['meta'] = is_array($fallback['meta'] ?? null) ? $fallback['meta'] : [];
@@ -142,7 +143,7 @@ function mattrics_fetch_live_snapshot(array $allowedFields, ?array $previousSnap
             );
         }
 
-        mattrics_send_json(['error' => $exception->getMessage()], 502);
+        mattrics_send_json(['error' => 'Training data is temporarily unavailable.'], 502);
     }
 }
 
@@ -156,6 +157,7 @@ if ($canonicalEnabled) {
     try {
         mattrics_send_json(mattrics_build_canonical_data_response($includeChildren));
     } catch (Throwable $throwable) {
+        error_log('Mattrics canonical data read failed: ' . $throwable->getMessage());
         $canonicalFallbackWarning = 'Canonical read failed. Showing legacy training data instead.';
     }
 }

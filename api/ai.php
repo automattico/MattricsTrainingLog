@@ -1,10 +1,12 @@
 <?php
 declare(strict_types=1);
 
-require __DIR__ . '/bootstrap.php';
+require_authenticated();
+require_once MATTWARDEN_SITE_DIR . '/lib/bootstrap.php';
 
-mattrics_require_auth();
 mattrics_require_method('POST');
+mattwarden_require_same_origin();
+mattwarden_require_csrf();
 
 $config = mattrics_load_config();
 $apiKey = trim((string) ($config['anthropic_api_key'] ?? ''));

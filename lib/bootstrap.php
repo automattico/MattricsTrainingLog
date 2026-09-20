@@ -9,91 +9,34 @@ function mattrics_send_json(array $payload, int $status = 200): void
 {
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
-    header('Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-    header('Expires: 0');
     echo json_encode($payload, JSON_UNESCAPED_SLASHES);
     exit;
 }
 
 function mattrics_private_root(): string
 {
-    $configPath = getenv('MATTRICS_CONFIG') ?: null;
-    if ($configPath && is_file($configPath)) {
-        return dirname($configPath);
+    if (!defined('MATTWARDEN_SITE_DIR')) {
+        throw new RuntimeException('Mattwarden site context is unavailable.');
     }
 
-    $cursor = dirname(__DIR__, 2);
-    for ($depth = 0; $depth < 5; $depth++) {
-        $parent = dirname($cursor);
-        foreach ([
-            $parent . '/mattrics-private/config.php',
-            $cursor . '/private/config.php',
-            $cursor . '/mattrics-private/config.php',
-            $cursor . '/.private/mattrics-config.php',
-        ] as $candidate) {
-            if (is_file($candidate)) {
-                return dirname($candidate);
-            }
-        }
-
-        if ($parent === $cursor) {
-            break;
-        }
-        $cursor = $parent;
-    }
-
-    return dirname(__DIR__, 2) . '/private';
+    return MATTWARDEN_SITE_DIR . '/private';
 }
-
-require_once __DIR__ . '/bootstrap-auth.php';
 
 function mattrics_load_config(): array
 {
-    $candidates = [];
-    $envConfig = getenv('MATTRICS_CONFIG') ?: null;
-    if ($envConfig) {
-        $candidates[] = $envConfig;
+    $configPath = mattrics_private_root() . '/config.php';
+    if (!is_file($configPath)) {
+        error_log('Mattrics configuration is missing from the Mattwarden private directory.');
+        mattrics_send_json(['error' => 'Server configuration is unavailable.'], 500);
     }
 
-    $cursor = dirname(__DIR__, 2);
-    for ($depth = 0; $depth < 5; $depth++) {
-        $parent = dirname($cursor);
-        $candidates[] = $parent . '/mattrics-private/config.php';
-        $candidates[] = $cursor . '/private/config.php';
-        $candidates[] = $cursor . '/mattrics-private/config.php';
-        $candidates[] = $cursor . '/.private/mattrics-config.php';
-        if ($parent === $cursor) {
-            break;
-        }
-        $cursor = $parent;
+    $config = require $configPath;
+    if (!is_array($config)) {
+        error_log('Mattrics configuration did not return an array.');
+        mattrics_send_json(['error' => 'Server configuration is unavailable.'], 500);
     }
 
-    $candidates = array_values(array_unique(array_filter($candidates)));
-
-    foreach ($candidates as $candidate) {
-        if (is_file($candidate)) {
-            $config = require $candidate;
-            if (!is_array($config)) {
-                mattrics_send_json(['error' => 'Config file must return an array.'], 500);
-            }
-            return function_exists('mattrics_apply_config_env_overrides')
-                ? mattrics_apply_config_env_overrides($config)
-                : $config;
-        }
-    }
-
-    $config = function_exists('mattrics_apply_config_env_overrides')
-        ? mattrics_apply_config_env_overrides([])
-        : [];
-
-    if ($config !== []) {
-        return $config;
-    }
-
-    mattrics_send_json([
-        'error' => 'Server config missing. Create a private config outside the public docroot or set MATTRICS_CONFIG.',
-    ], 500);
+    return $config;
 }
 
 function mattrics_require_method(string $expected): void
@@ -192,7 +135,8 @@ function mattrics_fetch_json(string $url, array $headers = [], string $method = 
     try {
         return mattrics_request_json($url, $headers, $method, $body);
     } catch (MattricsUpstreamException $exception) {
-        mattrics_send_json(['error' => $exception->getMessage()], 502);
+        error_log('Mattrics upstream request failed: ' . $exception->getMessage());
+        mattrics_send_json(['error' => 'Upstream service unavailable.'], 502);
     }
 }
 
@@ -217,7 +161,7 @@ function mattrics_ensure_dir(string $path): void
         return;
     }
 
-    if (!mkdir($path, 0775, true) && !is_dir($path)) {
+    if (!mkdir($path, 0700, true) && !is_dir($path)) {
         mattrics_send_json(['error' => 'Failed to create private cache directory.'], 500);
     }
 }
@@ -281,27 +225,6 @@ function mattrics_with_refresh_lock(callable $callback)
         flock($handle, LOCK_UN);
         fclose($handle);
     }
-}
-
-function mattrics_session_start(): void
-{
-    mattrics_auth_session_start();
-}
-
-function mattrics_require_auth(): void
-{
-    mattrics_session_start();
-    mattrics_require_https_if_needed();
-    mattrics_dev_bypass_auth();
-    if (empty($_SESSION['mattrics_authed'])) {
-        mattrics_send_json(['error' => 'Unauthorized.'], 401);
-    }
-    if (mattrics_session_is_timed_out()) {
-        mattrics_audit_log('session_timeout', ['outcome' => 'success']);
-        mattrics_clear_auth_session();
-        mattrics_send_json(['error' => 'Session expired. Please sign in again.'], 401);
-    }
-    mattrics_touch_auth_session();
 }
 
 function mattrics_read_json_body(): array

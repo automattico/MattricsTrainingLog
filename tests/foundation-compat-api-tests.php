@@ -7,11 +7,16 @@ $dataRoot = $privateRoot . '/data';
 $cacheRoot = $privateRoot . '/cache';
 mkdir($dataRoot, 0775, true);
 mkdir($cacheRoot, 0775, true);
+$siteRoot = $tempRoot . '/site';
+mkdir($siteRoot, 0775, true);
 
-require_once dirname(__DIR__) . '/public/api/bootstrap.php';
-require_once dirname(__DIR__) . '/public/api/exercise-config-repository.php';
-require_once dirname(__DIR__) . '/public/api/foundation-read.php';
-require_once dirname(__DIR__) . '/scripts/lib/foundation-import.php';
+define('MATTWARDEN_SITE_DIR', $siteRoot);
+putenv('MATTWARDEN_TEST_SITE_DIR=' . $siteRoot);
+require_once dirname(__DIR__) . '/tests/stubs/mattwarden.php';
+require_once dirname(__DIR__) . '/lib/bootstrap.php';
+require_once dirname(__DIR__) . '/lib/exercise-config-repository.php';
+require_once dirname(__DIR__) . '/lib/foundation-read.php';
+require_once dirname(__DIR__) . '/lib/foundation-import.php';
 
 $passed = 0;
 $failed = 0;
@@ -85,10 +90,13 @@ function compat_run_php_fixture(string $fixturePath, string $stdin = ''): array
 function compat_reset_config(string $configPath, array $config): void
 {
     compat_write_php_config($configPath, $config);
-    putenv('MATTRICS_CONFIG=' . $configPath);
-    putenv('MATTRICS_AUTH_REQUIRE_HTTPS=0');
-    putenv('MATTRICS_FOUNDATION_DATABASE_URL');
-    putenv('MATTRICS_FOUNDATION_USER_KEY');
+    $sitePrivate = MATTWARDEN_SITE_DIR . '/private';
+    if (is_link($sitePrivate)) {
+        unlink($sitePrivate);
+    }
+    if (!symlink(dirname($configPath), $sitePrivate)) {
+        throw new RuntimeException('Could not point the test site at the case private directory.');
+    }
     mattrics_foundation_read_reset_cache();
 }
 

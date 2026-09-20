@@ -1,9 +1,8 @@
 <?php
 declare(strict_types=1);
 
-require __DIR__ . '/bootstrap.php';
-
-mattrics_require_auth();
+require_authenticated();
+require_once MATTWARDEN_SITE_DIR . '/lib/bootstrap.php';
 
 const VALID_RPE_VALUES = [6.0, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0];
 const VALID_SEX_VALUES = ['Male', 'Female', 'Prefer not to say'];
@@ -169,7 +168,8 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
-    mattrics_require_csrf();
+    mattwarden_require_same_origin();
+    mattwarden_require_csrf();
     $body = mattrics_read_json_body();
     $result = mattrics_validate_settings($body);
 

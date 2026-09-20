@@ -7,14 +7,14 @@ $dataRoot = $privateRoot . '/data';
 mkdir($dataRoot, 0775, true);
 
 $configPath = $privateRoot . '/config.php';
-file_put_contents($configPath, "<?php\nreturn [\n    'auth_require_https' => false,\n];\n");
+file_put_contents($configPath, "<?php\nreturn [];\n");
 
-putenv('MATTRICS_CONFIG=' . $configPath);
-putenv('MATTRICS_AUTH_REQUIRE_HTTPS=0');
-
-require_once dirname(__DIR__) . '/public/api/bootstrap.php';
-require_once dirname(__DIR__) . '/public/api/exercise-config-repository.php';
-require_once dirname(__DIR__) . '/public/api/exercise-config-ai.php';
+define('MATTWARDEN_SITE_DIR', $tmpRoot);
+putenv('MATTWARDEN_TEST_SITE_DIR=' . $tmpRoot);
+require_once dirname(__DIR__) . '/tests/stubs/mattwarden.php';
+require_once dirname(__DIR__) . '/lib/bootstrap.php';
+require_once dirname(__DIR__) . '/lib/exercise-config-repository.php';
+require_once dirname(__DIR__) . '/lib/exercise-config-ai.php';
 
 $passed = 0;
 $failed = 0;

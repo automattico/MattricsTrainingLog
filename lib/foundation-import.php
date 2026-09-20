@@ -3,20 +3,6 @@ declare(strict_types=1);
 
 const MATTRICS_FOUNDATION_DEFAULT_DATABASE_URL = 'postgres://mattrics:mattrics-local-only-change-me@127.0.0.1:5433/mattrics';
 
-$GLOBALS['mattrics_foundation_private_root'] = null;
-
-if (!function_exists('mattrics_private_root')) {
-    function mattrics_private_root(): string
-    {
-        $configured = $GLOBALS['mattrics_foundation_private_root'] ?? null;
-        if (is_string($configured) && $configured !== '') {
-            return $configured;
-        }
-
-        return dirname(__DIR__, 2) . '/private';
-    }
-}
-
 if (!function_exists('mattrics_ensure_dir')) {
     function mattrics_ensure_dir(string $path): void
     {
@@ -30,21 +16,11 @@ if (!function_exists('mattrics_ensure_dir')) {
     }
 }
 
-require_once dirname(__DIR__, 2) . '/public/api/exercise-config-repository.php';
+require_once __DIR__ . '/exercise-config-repository.php';
 require_once __DIR__ . '/foundation-connectors.php';
 require_once __DIR__ . '/foundation-migrations.php';
 require_once __DIR__ . '/garmin-import-parser.php';
 require_once __DIR__ . '/hevy-import-parser.php';
-
-function mattrics_foundation_set_private_root(string $privateRoot): void
-{
-    $path = rtrim($privateRoot, '/');
-    if ($path === '') {
-        throw new RuntimeException('Private root cannot be empty.');
-    }
-
-    $GLOBALS['mattrics_foundation_private_root'] = $path;
-}
 
 function mattrics_foundation_connect(string $databaseUrl): PDO
 {
@@ -643,7 +619,6 @@ function mattrics_foundation_run_import(PDO $pdo, array $options = []): array
     mattrics_foundation_apply_migrations($pdo);
 
     $privateRoot = rtrim((string) ($options['privateRoot'] ?? mattrics_private_root()), '/');
-    mattrics_foundation_set_private_root($privateRoot);
 
     $userKey = trim((string) ($options['userKey'] ?? 'legacy-local-user'));
     $displayName = trim((string) ($options['displayName'] ?? 'Legacy Local User'));
@@ -815,7 +790,6 @@ function mattrics_foundation_run_hevy_import(PDO $pdo, array $options = []): arr
     mattrics_foundation_apply_migrations($pdo);
 
     $privateRoot = rtrim((string) ($options['privateRoot'] ?? mattrics_private_root()), '/');
-    mattrics_foundation_set_private_root($privateRoot);
 
     $userKey = trim((string) ($options['userKey'] ?? 'legacy-local-user'));
     $displayName = trim((string) ($options['displayName'] ?? 'Legacy Local User'));
@@ -959,7 +933,6 @@ function mattrics_foundation_run_garmin_import(PDO $pdo, array $options = []): a
     mattrics_foundation_apply_migrations($pdo);
 
     $privateRoot = rtrim((string) ($options['privateRoot'] ?? mattrics_private_root()), '/');
-    mattrics_foundation_set_private_root($privateRoot);
 
     $userKey = trim((string) ($options['userKey'] ?? 'legacy-local-user'));
     $displayName = trim((string) ($options['displayName'] ?? 'Legacy Local User'));
@@ -1086,7 +1059,6 @@ function mattrics_foundation_run_live_connector_sync(PDO $pdo, array $options = 
     mattrics_foundation_apply_migrations($pdo);
 
     $privateRoot = rtrim((string) ($options['privateRoot'] ?? mattrics_private_root()), '/');
-    mattrics_foundation_set_private_root($privateRoot);
 
     $userKey = trim((string) ($options['userKey'] ?? 'legacy-local-user'));
     $displayName = trim((string) ($options['displayName'] ?? 'Legacy Local User'));

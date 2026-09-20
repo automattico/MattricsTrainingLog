@@ -1,21 +1,17 @@
 <?php
 declare(strict_types=1);
 
-require __DIR__ . '/bootstrap.php';
-require_once __DIR__ . '/exercise-config-repository.php';
-require_once __DIR__ . '/exercise-config-ai.php';
-require_once __DIR__ . '/foundation-read.php';
-require_once __DIR__ . '/foundation-write.php';
-
-mattrics_require_auth();
+require_authenticated();
+require_once MATTWARDEN_SITE_DIR . '/lib/bootstrap.php';
+require_once MATTWARDEN_SITE_DIR . '/lib/exercise-config-repository.php';
+require_once MATTWARDEN_SITE_DIR . '/lib/exercise-config-ai.php';
+require_once MATTWARDEN_SITE_DIR . '/lib/foundation-read.php';
+require_once MATTWARDEN_SITE_DIR . '/lib/foundation-write.php';
 
 function mattrics_exercises_request_path(): string
 {
-    $path = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
-    if ($path === '') {
-        return '/api/exercises.php';
-    }
-    return $path;
+    $pathInfo = (string) ($_SERVER['PATH_INFO'] ?? '');
+    return '/api/exercises' . ($pathInfo !== '' ? '/' . ltrim($pathInfo, '/') : '');
 }
 
 function mattrics_use_canonical_exercise_config_source(): bool
@@ -233,7 +229,8 @@ function mattrics_build_existing_exercise_preview_suggestion(array $exercise, ar
 
 function mattrics_handle_unknown_suggestion_request(string $unknownId): void
 {
-    mattrics_require_csrf();
+    mattwarden_require_same_origin();
+    mattwarden_require_csrf();
 
     $unknown = mattrics_find_unknown_exercise_record($unknownId);
     if ($unknown === null) {
@@ -346,7 +343,8 @@ function mattrics_handle_unknown_suggestion_request(string $unknownId): void
 
 function mattrics_handle_exercise_create_request(?array $body = null): void
 {
-    mattrics_require_csrf();
+    mattwarden_require_same_origin();
+    mattwarden_require_csrf();
 
     $body = is_array($body) ? $body : mattrics_read_json_body();
     $configType = (string) ($body['configType'] ?? 'exercise');
@@ -392,7 +390,8 @@ function mattrics_handle_exercise_create_request(?array $body = null): void
 
 function mattrics_handle_exercise_update_request(string $exerciseId): void
 {
-    mattrics_require_csrf();
+    mattwarden_require_same_origin();
+    mattwarden_require_csrf();
 
     $body = mattrics_read_json_body();
     $exercise = mattrics_find_exercise_config_by_id_for_active_source($exerciseId);
@@ -440,7 +439,8 @@ function mattrics_handle_exercise_update_request(string $exerciseId): void
 
 function mattrics_handle_exercise_suggestion_request(string $exerciseId): void
 {
-    mattrics_require_csrf();
+    mattwarden_require_same_origin();
+    mattwarden_require_csrf();
 
     $exercise = mattrics_find_exercise_config_by_id_for_active_source($exerciseId);
     if ($exercise === null) {
@@ -485,7 +485,8 @@ function mattrics_handle_exercise_suggestion_request(string $exerciseId): void
 
 function mattrics_handle_exercise_merge_request(string $exerciseId): void
 {
-    mattrics_require_csrf();
+    mattwarden_require_same_origin();
+    mattwarden_require_csrf();
 
     if (mattrics_find_exercise_config_by_id_for_active_source($exerciseId) === null) {
         mattrics_send_json(['error' => 'Exercise config not found.'], 404);
@@ -526,7 +527,8 @@ function mattrics_handle_exercise_merge_request(string $exerciseId): void
 
 function mattrics_handle_unknown_merge_request(string $unknownId): void
 {
-    mattrics_require_csrf();
+    mattwarden_require_same_origin();
+    mattwarden_require_csrf();
 
     $unknown = mattrics_find_unknown_exercise_record($unknownId);
     if ($unknown === null) {
@@ -569,7 +571,8 @@ function mattrics_handle_unknown_merge_request(string $unknownId): void
 
 function mattrics_handle_exercise_delete_request(string $exerciseId): void
 {
-    mattrics_require_csrf();
+    mattwarden_require_same_origin();
+    mattwarden_require_csrf();
     $exercise = mattrics_find_exercise_config_by_id_for_active_source($exerciseId);
     $activityType = $exercise === null ? mattrics_find_activity_type_config_by_id_for_active_source($exerciseId) : null;
     if ($exercise === null && $activityType === null) {
@@ -656,7 +659,8 @@ try {
     }
 
     if ($method === 'POST') {
-        mattrics_require_csrf();
+        mattwarden_require_same_origin();
+        mattwarden_require_csrf();
         $body = mattrics_read_json_body();
         if (preg_match('#/api/exercises(?:\.php)?$#', $path)) {
             if (array_key_exists('unknowns', $body)) {
@@ -718,5 +722,6 @@ try {
     header('Allow: GET, POST, PATCH, DELETE');
     mattrics_send_json(['error' => 'Method not allowed.'], 405);
 } catch (RuntimeException $exception) {
-    mattrics_send_json(['error' => $exception->getMessage()], 500);
+    error_log('Mattrics exercise endpoint failed: ' . $exception->getMessage());
+    mattrics_send_json(['error' => 'Exercise configuration is temporarily unavailable.'], 500);
 }

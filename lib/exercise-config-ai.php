@@ -17,14 +17,12 @@ function mattrics_log_exercise_ai_request(array $context): void
 {
     $entry = array_merge([
         'ts' => gmdate('c'),
-        'session' => function_exists('mattrics_session_fingerprint') ? mattrics_session_fingerprint() : null,
-        'ip' => function_exists('mattrics_ip_fingerprint') ? mattrics_ip_fingerprint() : null,
     ], $context);
 
     $path = mattrics_exercise_ai_log_path();
     $dir = dirname($path);
     if (!is_dir($dir)) {
-        @mkdir($dir, 0775, true);
+        @mkdir($dir, 0700, true);
     }
 
     @file_put_contents($path, json_encode($entry, JSON_UNESCAPED_SLASHES) . "\n", FILE_APPEND | LOCK_EX);

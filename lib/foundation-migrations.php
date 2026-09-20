@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 function mattrics_foundation_migration_dir(): string
 {
-    return dirname(__DIR__, 2) . '/docker/postgres/migrations';
+    return MATTWARDEN_SITE_DIR . '/docker/postgres/migrations';
 }
 
 function mattrics_foundation_ensure_migration_table(PDO $pdo): void

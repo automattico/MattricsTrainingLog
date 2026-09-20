@@ -1,17 +1,11 @@
 <?php
 declare(strict_types=1);
 
-require __DIR__ . '/bootstrap.php';
-require_once __DIR__ . '/foundation-read.php';
-require_once __DIR__ . '/foundation-diagnostics.php';
-require_once dirname(__DIR__, 2) . '/scripts/lib/foundation-connectors.php';
-require_once dirname(__DIR__, 2) . '/scripts/lib/foundation-import.php';
-
-if (!mattrics_foundation_local_diagnostics_allowed()) {
-    mattrics_send_json(['error' => 'Not found.'], 404);
-}
-
-mattrics_require_auth();
+require_authenticated();
+require_once MATTWARDEN_SITE_DIR . '/lib/bootstrap.php';
+require_once MATTWARDEN_SITE_DIR . '/lib/foundation-read.php';
+require_once MATTWARDEN_SITE_DIR . '/lib/foundation-connectors.php';
+require_once MATTWARDEN_SITE_DIR . '/lib/foundation-import.php';
 
 function mattrics_connectors_requester(): ?callable
 {
@@ -101,6 +95,7 @@ function mattrics_connectors_test_hevy(array $store): array
             'success'
         );
     } catch (Throwable $throwable) {
+        error_log('Mattrics connector test failed: ' . $throwable->getMessage());
         $updatedStore = mattrics_foundation_update_connector_store_after_attempt(
             $updatedStore,
             'hevy',
@@ -130,7 +125,8 @@ if ($method !== 'POST') {
     mattrics_send_json(['error' => 'Method not allowed.'], 405);
 }
 
-mattrics_require_csrf();
+mattwarden_require_same_origin();
+mattwarden_require_csrf();
 $body = mattrics_read_json_body();
 $connector = trim((string) ($body['connector'] ?? ''));
 $action = trim((string) ($body['action'] ?? ''));
