@@ -561,8 +561,8 @@ const heavyRecovery = M.getMuscleFatigueAnalysis([
   },
 ]).regions.find((region) => region.key === "chest");
 assert(
-  heavyRecovery && lightRecovery && heavyRecovery.recoveryHours > lightRecovery.recoveryHours,
-  "severity-adjusted recovery keeps heavier sessions recovering longer than lighter sessions"
+  heavyRecovery && lightRecovery && heavyRecovery.freshRecoveryHours > lightRecovery.freshRecoveryHours,
+  "severity-adjusted full recovery keeps heavier sessions recovering longer than lighter sessions"
 );
 assert(
   heavyRecovery && typeof heavyRecovery.freshRecoveryHours === "number" && heavyRecovery.freshRecoveryHours > heavyRecovery.recoveryHours,

@@ -14,11 +14,12 @@ Earlier Foundation/Postgres slices established canonical schema, importers, comp
 | Runtime diagnostics | removed | Diagnostics are not public product endpoints |
 | Live connectors | retained | Authenticated connector administration remains a product feature |
 | Mattwarden migration | implemented, not deployed | See migration report and fixed runbook |
+| Real-gate integration check | validated locally | Passkey, static shell, session, guards, PATH_INFO, settings write/readback; synthetic upstream intentionally returned 502 |
 
 ## Current validation
 
-The source contract, endpoint guards, static CSP, local router dispatch, deploy refusal cases, PHP suites, JavaScript suites, lints, Compose configuration, Foundation static-server startup, and local browser behavior are validated by `scripts/prod-gate.sh` plus the commands recorded in `docs/slices/mattwarden-migration-report.md`. The optional Foundation import integration block has one documented pre-existing schema mismatch; it does not affect Hetzner production or the Mattwarden migration.
+The source contract, endpoint guards, static CSP, local router dispatch, deploy refusal cases, PHP suites, JavaScript suites, lints, Compose configuration, Foundation static-server startup, and local browser behavior are validated by `scripts/prod-gate.sh` plus the commands recorded in `docs/slices/mattwarden-migration-report.md`. An isolated local run against the merged Mattwarden gate is recorded in `docs/slices/mattwarden-real-gate-validation-report.md`. The optional Foundation import integration block has one documented pre-existing schema mismatch; it does not affect Hetzner production or the Mattwarden migration.
 
 ## Next slice
 
-Use `docs/slices/next-runtime-slice-prompt.md` only after the Mattwarden cut-over is complete and verified.
+Use `docs/slices/next-mattwarden-cutover-prompt.md` for the operator-assisted cut-over. Use `docs/slices/next-runtime-slice-prompt.md` only after the Mattwarden cut-over is complete and verified.
