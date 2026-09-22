@@ -1,8 +1,8 @@
 # Deploy
 
-Mattrics deploys application content by SFTP to `/usr/home/mwiela/sites/mattrics`. Mattwarden separately installs the only two files in `public_html/mattrics`: its `.htaccess` and `index.php` shim.
+Mattrics deploys application content by SFTP to `/usr/home/mwiela/sites/mattrics`. Mattwarden separately installs the `.htaccess` and `index.php` shim in the active Hetzner webroot. On 2026-09-22 the configured mattrics webroot proved to be `public_html/mattrics/public`, not the planned parent `public_html/mattrics`; see the migration runbook before changing either path.
 
-Do not run the first post-migration application deploy until the operator has moved production data into `/usr/home/mwiela/sites/mattrics/private`. Deploying first can upload empty seed files with `--only-missing`, making the real production paths no longer missing.
+Do not run an application deploy against a fresh target until production data is already in `/usr/home/mwiela/sites/mattrics/private`. Deploying first can upload empty seed files with `--only-missing`, making the real production paths no longer missing. The 2026-09-22 first deploy followed a verified data copy from the live private tree.
 
 ## Configuration
 
