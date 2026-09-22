@@ -1,5 +1,7 @@
 # Next slice: finish Mattwarden production verification
 
+Superseded after the 2026-09-22 AI diagnosis. Use `next-mattwarden-ai-credential-verification-prompt.md` instead; the Anthropic key was rejected with HTTP 401 and the authorized temporary gate-log copy was deleted.
+
 Read `AGENTS.md`, `docs/architecture-next.md`, `docs/codex-framework.md`, `docs/implementation-progress.md`, `docs/mattwarden-migration.md`, and the production cut-over report first.
 
 Goal: identify and fix the production `/api/ai` non-JSON response, verify one successful AI workout request, and finish the remaining cut-over cleanup without losing rollback capability prematurely.

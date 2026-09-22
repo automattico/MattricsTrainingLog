@@ -24,6 +24,8 @@ Deployed Mattrics application content behind Mattwarden and verified the unauthe
 - Authenticated browser: passkey login and static shell passed; the all-time dashboard showed preserved activity data; forced sheet refresh returned a live-sheet status; settings save showed success; connectors and exercise views loaded; logout link opened Mattwarden's confirmation page.
 - One AI workout request failed with `Unexpected token '<', "<!DOCTYPE "... is not valid JSON`. No second paid request was sent.
 
+On 2026-09-22, with explicit operator authorization, a protected temporary copy of Mattwarden's gate log showed `Mattrics upstream request failed: Upstream request failed. HTTP 401` for the AI call. The temporary copy was removed. A no-generation Anthropic models request with the ignored local key also returned 401. The UI now handles non-JSON error pages safely, was tested, and was redeployed. A valid replacement key and one successful authenticated AI request are still required.
+
 ## Security check
 
 - Secrets read: production `config.php` was temporarily copied for byte comparison and migration, but its contents were never printed. Sensitive settings/cache/log data were temporarily staged under a 0700 directory and deleted locally after verified upload.
@@ -33,7 +35,7 @@ Deployed Mattrics application content behind Mattwarden and verified the unauthe
 
 ## Open issues
 
-- AI's non-JSON response requires status/log diagnosis. An automated safety review denied downloading the full production gate log without explicit authorization; no log copy was made.
+- The Anthropic API key used by the app was rejected with HTTP 401. The operator must replace the key in the private production config, then one authenticated AI request must succeed before legacy cleanup.
 - The nested configured webroot differs from the planned parent-only shim layout. It is secure and smoke-tested, but changing the hosting webroot to the parent is a separate coordinated operation.
 - Keep `/mattrics-private`, `/mattrics-lib`, and the remote rollback tree until AI and all final checks pass. Do not merge or push yet.
 

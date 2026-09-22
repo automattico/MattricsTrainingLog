@@ -1,6 +1,25 @@
 (function () {
   const M = window.Mattrics;
 
+  M.readAiResponse = async function readAiResponse(response) {
+    const contentType = response.headers.get("Content-Type") || "";
+    let payload = null;
+    if (/\bapplication\/json\b/i.test(contentType)) {
+      try {
+        payload = await response.json();
+      } catch (_) {
+        // An upstream error page or malformed response is not a useful UI message.
+      }
+    }
+    if (!response.ok) {
+      throw new Error(payload && payload.error || `AI service unavailable (HTTP ${response.status}).`);
+    }
+    if (!payload || typeof payload.text !== "string") {
+      throw new Error("AI service returned an unexpected response.");
+    }
+    return payload.text || "No response.";
+  };
+
   M.renderAiPreview = function renderAiPreview() {
     const recent = M.getFixedRecentActivities(M.state.allData);
     const fatigue = M.getMuscleFatigueAnalysis(M.state.allData);
@@ -80,9 +99,7 @@
             fatigueRegions,
           }),
         });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      const output = data.text || "No response.";
+      const output = await M.readAiResponse(res);
 
       document.getElementById("aiText").textContent = output;
       document.getElementById("aiOutput").style.display = "block";

@@ -2,7 +2,7 @@
 
 ## Current architecture
 
-The Mattwarden migration is deployed on branch `mattwarden`; unauthenticated production smoke checks and most logged-in product checks pass. The AI request returned non-JSON HTML and remains unresolved, so legacy cleanup and merge/push are on hold. Mattwarden owns authentication, sessions, cookies, CSRF generation, headers, static serving, PHP dispatch, and logout. The application is a static shell plus six flat authenticated endpoints.
+The Mattwarden migration is deployed on branch `mattwarden`; unauthenticated production smoke checks and most logged-in product checks pass. The AI request is blocked by an Anthropic HTTP 401 from the configured API key; the browser now handles non-JSON upstream error pages without a syntax error. Legacy cleanup and merge/push are on hold until a replacement key is installed and one successful AI request is verified. Mattwarden owns authentication, sessions, cookies, CSRF generation, headers, static serving, PHP dispatch, and logout. The application is a static shell plus six flat authenticated endpoints.
 
 ## Slice history
 
@@ -13,7 +13,7 @@ Earlier Foundation/Postgres slices established canonical schema, importers, comp
 | Foundation schema/import/read/write | retained | Optional local/future backend modules live in `lib/` |
 | Runtime diagnostics | removed | Diagnostics are not public product endpoints |
 | Live connectors | retained | Authenticated connector administration remains a product feature |
-| Mattwarden migration | deployed, AI verification pending | Production data and app/gate content deployed 2026-09-22; see cut-over report |
+| Mattwarden migration | deployed, AI credential replacement pending | Production data and app/gate content deployed 2026-09-22; Anthropic rejected the configured key with 401 |
 | Real-gate integration check | validated locally | Passkey, static shell, session, guards, PATH_INFO, settings write/readback; synthetic upstream intentionally returned 502 |
 
 ## Current validation
@@ -22,4 +22,4 @@ The source contract, endpoint guards, static CSP, local router dispatch, deploy 
 
 ## Next slice
 
-Use `docs/slices/next-mattwarden-production-verification-prompt.md` to diagnose AI, finish verification, and clean up legacy paths. Use `docs/slices/next-runtime-slice-prompt.md` only after that is complete.
+Use `docs/slices/next-mattwarden-ai-credential-verification-prompt.md` after replacing the private Anthropic key to finish AI verification and legacy cleanup. Use `docs/slices/next-runtime-slice-prompt.md` only after that is complete.
