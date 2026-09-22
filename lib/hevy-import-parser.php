@@ -7,12 +7,19 @@ const MATTRICS_FOUNDATION_DEFAULT_RPE = 7.5;
 
 function mattrics_foundation_hevy_is_description(?string $description): bool
 {
-    return preg_match('/^Logged with Hevy(?:App\.com)?\s*/i', trim((string) $description)) === 1;
+    $firstLine = preg_split('/\R/', trim((string) $description), 2)[0] ?? '';
+    return preg_match('/\bhevy(?:[ \t]*app(?:\.com)?)?\b/i', $firstLine) === 1;
 }
 
 function mattrics_foundation_strip_hevy_header(?string $description): string
 {
-    return trim((string) preg_replace('/^Logged with Hevy(?:App\.com)?\s*/i', '', trim((string) $description)));
+    $text = trim((string) $description);
+    if (!mattrics_foundation_hevy_is_description($text)) {
+        return $text;
+    }
+
+    $lines = preg_split('/\R/', $text, 2);
+    return trim((string) ($lines[1] ?? ''));
 }
 
 function mattrics_foundation_parse_hevy_description(?string $description): ?array

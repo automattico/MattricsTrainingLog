@@ -421,6 +421,10 @@ $hevySignature = mattrics_foundation_read_activity_signature_payload([
 ], 'Europe/Berlin');
 compat_test_assert(($hevySignature['family'] ?? '') === 'hevy', 'Hevy signature payload uses the Hevy dedupe family');
 compat_test_assert(trim((string) ($hevySignature['signature'] ?? '')) !== '', 'Hevy signature payload is created without relying on edited workout titles');
+compat_test_assert(
+    mattrics_foundation_read_hevy_description_anchor(['description' => "Mit hevyapp.com protokolliert\n\nBench Press\n80 kg x 5"]) === 'bench press',
+    'Hevy dedupe skips the German header and uses the first exercise as its fallback anchor'
+);
 
 $garminSignature = mattrics_foundation_read_activity_signature_payload([
     'source_kind' => 'garmin',

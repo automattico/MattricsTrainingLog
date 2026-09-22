@@ -7,7 +7,7 @@
     return M.resolveExerciseConfig(exerciseName);
   };
 
-  const HEVY_HEADER_RE = /^Logged with Hevy(?:App\.com)?\s*/i;
+  const HEVY_BRAND_RE = /\bhevy(?:[ \t]*app(?:\.com)?)?\b/i;
 
   function ensureArray(value) {
     return Array.isArray(value) ? value : [];
@@ -106,11 +106,15 @@
   }
 
   M.isHevyDescription = function isHevyDescription(desc) {
-    return HEVY_HEADER_RE.test(String(desc || "").trim());
+    const firstLine = String(desc || "").trim().split(/\r\n|\r|\n/, 1)[0];
+    return HEVY_BRAND_RE.test(firstLine);
   };
 
   M.stripHevyHeader = function stripHevyHeader(desc) {
-    return String(desc || "").trim().replace(HEVY_HEADER_RE, "").trim();
+    const text = String(desc || "").trim();
+    if (!M.isHevyDescription(text)) return text;
+    const lineEnd = text.search(/[\r\n]/);
+    return lineEnd < 0 ? "" : text.slice(lineEnd).trim();
   };
 
   M.parseHevySetLine = function parseHevySetLine(setText, exerciseName) {

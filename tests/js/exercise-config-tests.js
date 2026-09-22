@@ -186,11 +186,29 @@ assert(M.resolveActivityTypeConfig("Unknown Activity Type") === null, "unknown a
 const bodyweightSet = M.parseHevySetLine("12 reps", "Push Up");
 assert(bodyweightSet.kind === "parsed" && bodyweightSet.load > 0, "bodyweight-eligible exercise configs still parse rep-only sets");
 
-const hevyAppExercises = M.parseHevyDescription("Logged with HevyApp.com\n\nBench Press\n80 kg x 5");
-assert(
-  Array.isArray(hevyAppExercises) && hevyAppExercises.length === 1 && hevyAppExercises[0].name === "Bench Press",
-  "Hevy parser recognizes the HevyApp.com export header"
-);
+for (const header of [
+  "Logged with Hevy",
+  "HevyApp workout",
+  "Logged with HevyApp.com",
+  "Logged with hevyapp.com",
+  "Mit hevyapp.com protokolliert",
+  "MIT HEVY APP PROTOKOLLIERT",
+]) {
+  const description = `\n${header}\r\n\r\nBench Press\r\n80 kg x 5`;
+  const exercises = M.parseHevyDescription(description);
+  assert(M.isHevyDescription(description), `Hevy parser recognizes first-line header: ${header}`);
+  assert(M.stripHevyHeader(description) === "Bench Press\r\n80 kg x 5", `Hevy parser strips entire header: ${header}`);
+  assert(Array.isArray(exercises) && exercises.length === 1 && exercises[0].name === "Bench Press", `Hevy parser preserves first exercise: ${header}`);
+}
+for (const description of [
+  "Ordinary workout\nLogged with Hevy\n\nBench Press\n80 kg x 5",
+  "My hevyweight workout\n\nBench Press\n80 kg x 5",
+  "My heavy workout\n\nBench Press\n80 kg x 5",
+]) {
+  assert(!M.isHevyDescription(description), "Hevy parser rejects later mentions and longer unrelated words");
+  assert(M.parseHevyDescription(description) === null, "Non-Hevy descriptions do not produce exercise blocks");
+  assert(M.stripHevyHeader(description) === description, "Non-Hevy descriptions retain their first line");
+}
 
 const todayIso = M.toIsoDate(new Date());
 const canonicalChildActivity = {

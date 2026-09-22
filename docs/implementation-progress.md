@@ -15,10 +15,11 @@ Earlier Foundation/Postgres slices established canonical schema, importers, comp
 | Live connectors | retained | Authenticated connector administration remains a product feature |
 | Mattwarden migration | deployed, AI credential replacement pending | Production data and app/gate content deployed 2026-09-22; Anthropic rejected the configured key with 401 |
 | Real-gate integration check | validated locally | Passkey, static shell, session, guards, PATH_INFO, settings write/readback; synthetic upstream intentionally returned 502 |
+| Hevy first-line recognition | validated locally, not deployed | JavaScript and PHP now detect standalone Hevy brand terms in the first non-empty description line, with canonical-read header skipping and regression tests |
 
 ## Current validation
 
-The source contract, endpoint guards, static CSP, local router dispatch, deploy refusal cases, PHP suites, JavaScript suites, lints, Compose configuration, Foundation static-server startup, and local browser behavior are validated by `scripts/prod-gate.sh` plus the commands recorded in `docs/slices/mattwarden-migration-report.md`. An isolated local run against the merged Mattwarden gate is recorded in `docs/slices/mattwarden-real-gate-validation-report.md`. The optional Foundation import integration block has one documented pre-existing schema mismatch; it does not affect Hetzner production or the Mattwarden migration.
+The source contract, endpoint guards, static CSP, local router dispatch, deploy refusal cases, PHP suites, JavaScript suites, lints, Compose configuration, Foundation static-server startup, and local browser behavior are validated by `scripts/prod-gate.sh` plus the commands recorded in `docs/slices/mattwarden-migration-report.md`. An isolated local run against the merged Mattwarden gate is recorded in `docs/slices/mattwarden-real-gate-validation-report.md`. Hevy header recognition has JavaScript, PHP import, and canonical-read regression coverage. Database-backed Foundation integration checks may be skipped when local Postgres is unavailable; the earlier optional integration schema mismatch remains documented. Neither affects Hetzner production or the Mattwarden migration.
 
 ## Next slice
 

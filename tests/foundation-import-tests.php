@@ -101,6 +101,29 @@ foundation_test_assert($unknownSet['kind'] === 'unknown', 'parser preserves unkn
 
 $parsedDescription = mattrics_foundation_parse_hevy_description("Logged with HevyApp.com\n\nBench Press\n80 kg x 5\n80 kg for 5 reps\n\nMystery Curl\n12 reps");
 foundation_test_assert(is_array($parsedDescription) && count($parsedDescription) === 2, 'parser splits Hevy descriptions into exercise blocks');
+foreach ([
+    'Logged with Hevy',
+    'HevyApp workout',
+    'Logged with HevyApp.com',
+    'Logged with hevyapp.com',
+    'Mit hevyapp.com protokolliert',
+    'MIT HEVY APP PROTOKOLLIERT',
+] as $header) {
+    $description = "\n{$header}\r\n\r\nBench Press\r\n80 kg x 5";
+    $exercises = mattrics_foundation_parse_hevy_description($description);
+    foundation_test_assert(mattrics_foundation_hevy_is_description($description), "parser recognizes first-line header: {$header}");
+    foundation_test_assert(mattrics_foundation_strip_hevy_header($description) === "Bench Press\r\n80 kg x 5", "parser strips entire header: {$header}");
+    foundation_test_assert(is_array($exercises) && count($exercises) === 1 && $exercises[0]['name'] === 'Bench Press', "parser preserves first exercise: {$header}");
+}
+foreach ([
+    "Ordinary workout\nLogged with Hevy\n\nBench Press\n80 kg x 5",
+    "My hevyweight workout\n\nBench Press\n80 kg x 5",
+    "My heavy workout\n\nBench Press\n80 kg x 5",
+] as $description) {
+    foundation_test_assert(!mattrics_foundation_hevy_is_description($description), 'parser rejects later mentions and longer unrelated words');
+    foundation_test_assert(mattrics_foundation_parse_hevy_description($description) === null, 'non-Hevy descriptions do not produce exercise blocks');
+    foundation_test_assert(mattrics_foundation_strip_hevy_header($description) === $description, 'non-Hevy descriptions retain their first line');
+}
 
 $exerciseIndex = [
     'byNormalized' => [

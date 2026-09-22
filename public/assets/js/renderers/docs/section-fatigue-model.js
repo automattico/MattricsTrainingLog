@@ -155,8 +155,9 @@ freshThreshold     = normalizationLoad × 0.25</div>
 
       ${M.docsSubsection("Hevy workout parsing", `
         <p class="docs-copy">
-          If an activity description starts with <code class="docs-code">Logged with Hevy</code> or
-          <code class="docs-code">Logged with HevyApp.com</code>, the model parses
+          If the first non-empty description line contains a standalone Hevy brand term, such as
+          <code class="docs-code">Hevy</code>, <code class="docs-code">Hevy App</code>, or
+          <code class="docs-code">hevyapp.com</code>, the model removes that line and parses
           exercises and sets. Resolver matching now comes from <code class="docs-code">/api/exercises</code>, which
           indexes canonical names, aliases, and legacy substring <code class="docs-code">matchTerms</code>.
         </p>

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/hevy-import-parser.php';
+
 const MATTRICS_FOUNDATION_READ_MUSCLE_COLUMN_MAP = [
     'chest' => 'chest_weight',
     'deltoids' => 'deltoids_weight',
@@ -428,14 +430,17 @@ function mattrics_foundation_read_hevy_description_anchor(array $row): ?string
     }
 
     $lines = preg_split('/\R/u', $description) ?: [];
+    $firstLine = true;
     foreach ($lines as $line) {
         $candidate = trim((string) $line);
         if ($candidate === '') {
             continue;
         }
-        if (stripos($candidate, 'Logged with Hevy') === 0) {
+        if ($firstLine && mattrics_foundation_hevy_is_description($candidate)) {
+            $firstLine = false;
             continue;
         }
+        $firstLine = false;
         if (preg_match('/\b(\d+\s*kg\s*x\s*\d+|\d+\s*reps|\d+(\.\d+)?km|\d+(\.\d+)?min|\d+(\.\d+)?sec)\b/ui', $candidate) === 1) {
             continue;
         }

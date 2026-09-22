@@ -130,7 +130,7 @@ Preview and scoring:
 
 ## Hevy Workout Parsing
 
-Triggered when `activity.Description` starts with `"Logged with Hevy"` or `"Logged with HevyApp.com"`.
+Triggered when the first non-empty line of `activity.Description` contains a standalone Hevy brand term (case-insensitive), including `Hevy`, `HevyApp`, `Hevy App`, or `hevyapp.com`. The entire identifying line is removed before exercises and sets are parsed. A Hevy mention on a later line does not trigger parsing.
 
 When canonical mode is active and the current activity has canonical child rows, the fatigue engine does **not** treat the rebuilt display strings as the source of truth. It consumes canonical `activityChildren[].exercises[].sets[]` fields first:
 
