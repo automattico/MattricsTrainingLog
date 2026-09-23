@@ -41,6 +41,7 @@
     document.getElementById("detailMeta").textContent = deviceName ? `Tracked with ${deviceName}` : "";
     document.getElementById("detailMeta").style.display = deviceName ? "block" : "none";
 
+    const workoutSection = document.getElementById("detailWorkoutSection");
     if (workoutBlocks && workoutBlocks.length) {
       document.getElementById("detailWorkoutList").innerHTML = workoutBlocks.map((exercise) => `
         <div class="hevy-exercise">
@@ -49,19 +50,20 @@
             ${exercise.sets.map((set) => `<div class="hevy-set">${M.esc(set)}</div>`).join("")}
           </div>
         </div>`).join("");
-      document.getElementById("detailWorkoutSection").style.display = "block";
+      workoutSection.classList.remove("is-hidden");
     } else {
       document.getElementById("detailWorkoutList").innerHTML = "";
-      document.getElementById("detailWorkoutSection").style.display = "none";
+      workoutSection.classList.add("is-hidden");
     }
 
     const cleanNotes = workoutBlocks && workoutBlocks.length ? "" : notes;
+    const notesSection = document.getElementById("detailNotesSection");
     if (cleanNotes) {
       document.getElementById("detailNotes").textContent = cleanNotes;
-      document.getElementById("detailNotesSection").style.display = "block";
+      notesSection.classList.remove("is-hidden");
     } else {
       document.getElementById("detailNotes").textContent = "";
-      document.getElementById("detailNotesSection").style.display = "none";
+      notesSection.classList.add("is-hidden");
     }
 
     document.getElementById("detailOverlay").classList.add("open");
