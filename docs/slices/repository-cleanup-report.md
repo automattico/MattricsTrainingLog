@@ -1,7 +1,7 @@
 # Slice Report: Repository cleanup
 
 Date: 2026-09-23
-Branch: `mattwarden`
+Delivery branch: `main` (prepared on `mattwarden`)
 
 ## Summary
 
@@ -42,11 +42,12 @@ Removed approved obsolete assets, dead code and CSS, the retired Docker/Foundati
 
 ## Git state
 
-- Working tree: cleanup changes plus pre-existing documentation changes; not committed.
-- Commit: none for this cleanup.
-- Push: none.
-- Deploy: not run.
+- Working tree: clean after the final delivery-status commit.
+- Cleanup commit: `b97cab4` (`Finalize Mattwarden docs and repository cleanup`).
+- Merge: `main` was fast-forwarded to `b97cab4`.
+- Push: `mattwarden` and `main` were pushed to origin.
+- Deploy: `b97cab4` deployed successfully on 2026-09-23; the deploy-time production gate passed and the managed remote trees matched the explicit allowlist.
 
 ## Next slice
 
-Use `next-repository-cleanup-finalization-prompt.md` to review and commit the cleanup without sweeping unrelated work into the commit.
+No additional repository-cleanup slice is pending. Authenticated production verification remains separately documented for the Hevy header, workout-detail visibility, and Pádel changes. Workout-AI repair remains explicitly deferred.
