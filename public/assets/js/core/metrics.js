@@ -11,7 +11,7 @@
     const speed = parseFloat(activity["Avg Speed (km/h)"]) || 0;
     const metrics = [];
 
-    switch (activity.Type) {
+    switch (M.canonicalType(activity.Type)) {
       case "Canoeing":
       case "Canoe":
         if (km) metrics.push({ val: km.toFixed(1), lab: "km", color: "var(--canoe)" });
@@ -24,6 +24,10 @@
         if (pace) metrics.push({ val: pace.toFixed(1), lab: "min/km", color: "var(--text)" });
         if (hr) metrics.push({ val: hr.toFixed(0), lab: "avg♥", color: "var(--muted)" });
         if (elev) metrics.push({ val: `${elev}m`, lab: "elev", color: "var(--muted)" });
+        break;
+      case "Padel":
+        if (min) metrics.push({ val: M.fmt(min), lab: "time", color: "var(--padel)" });
+        if (hr) metrics.push({ val: hr.toFixed(0), lab: "avg♥", color: "var(--padel)" });
         break;
       case "Hike":
         if (km) metrics.push({ val: km.toFixed(1), lab: "km", color: "var(--hike)" });

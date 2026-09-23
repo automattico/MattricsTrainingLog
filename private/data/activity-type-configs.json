@@ -50,6 +50,39 @@
     "fatigueMultiplier": 1
   },
   {
+    "id": "padel",
+    "canonicalName": "Padel",
+    "normalizedName": "padel",
+    "aliases": [
+      "Pádel",
+      "Padel Tennis",
+      "Pádel Tennis"
+    ],
+    "muscleWeights": {
+      "quadriceps": 0.9,
+      "calves": 0.8,
+      "obliques": 0.75,
+      "hamstrings": 0.65,
+      "gluteal": 0.65,
+      "adductors": 0.65,
+      "deltoids": 0.65,
+      "abs": 0.5,
+      "triceps": 0.45,
+      "upperBack": 0.35,
+      "biceps": 0.3,
+      "trapezius": 0.3,
+      "lowerBack": 0.25
+    },
+    "status": "approved",
+    "reviewNeeded": false,
+    "source": "manual",
+    "lastUpdatedAt": "2026-09-23T00:00:00Z",
+    "lastUpdatedType": "manual",
+    "exerciseFamily": "conditioning_lower",
+    "fatigueArchetype": "conditioning_hybrid",
+    "fatigueMultiplier": 1
+  },
+  {
     "id": "hike",
     "canonicalName": "Hike",
     "normalizedName": "hike",

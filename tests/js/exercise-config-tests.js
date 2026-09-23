@@ -66,6 +66,7 @@ const M = loadScriptContext([
   "public/assets/js/core/date-utils.js",
   "public/assets/js/core/formatters.js",
   "public/assets/js/core/filters.js",
+  "public/assets/js/core/metrics.js",
   "public/assets/js/core/exercise-config.js",
   "public/assets/js/core/hevy-parser.js",
   "public/assets/js/core/fatigue-engine.js",
@@ -168,6 +169,66 @@ assert(cyclingExercise && cyclingExercise.setTypeHandling === "time_duration", "
 
 const canoeType = M.resolveActivityTypeConfig("Canoe");
 assert(canoeType && canoeType.canonicalName === "Canoeing", "activity type alias resolves to canonical config");
+
+const padelAliases = ["Padel", "Pádel", "Padel Tennis", "Pádel Tennis"];
+padelAliases.forEach((type) => {
+  assert(M.canonicalType(type) === "Padel", `${type} canonicalizes to Padel`);
+  const metadata = M.tc(type);
+  assert(
+    metadata.label === "Pádel" && metadata.icon === "🎾" && metadata.color === "var(--padel)",
+    `${type} uses canonical Pádel display metadata`
+  );
+  const resolved = M.resolveActivityTypeConfig(type);
+  assert(resolved && resolved.canonicalName === "Padel", `${type} resolves to the Padel activity config`);
+});
+assert(M.canonicalType("Paddle") === "Paddle", "Paddle is not treated as a Padel alias");
+assert(M.resolveActivityTypeConfig("Paddle") === null, "Paddle does not resolve to the Padel activity config");
+
+const padelType = M.resolveActivityTypeConfig("Padel");
+assert(
+  padelType
+    && padelType.status === "approved"
+    && padelType.reviewNeeded === false
+    && padelType.exerciseFamily === "conditioning_lower"
+    && padelType.fatigueArchetype === "conditioning_hybrid"
+    && padelType.fatigueMultiplier === 1,
+  "Padel is an approved conditioning-hybrid activity config"
+);
+assert(
+  padelType
+    && padelType.muscleWeights.quadriceps === 0.9
+    && padelType.muscleWeights.calves === 0.8
+    && padelType.muscleWeights.obliques === 0.75
+    && padelType.muscleWeights.gluteal === 0.65
+    && padelType.muscleWeights.lowerBack === 0.25,
+  "Padel exposes the configured multi-muscle fatigue weights"
+);
+
+const previousTypeFilter = M.state.typeFilter;
+M.state.typeFilter = "Padel";
+const filteredPadel = M.applyTypeFilter([
+  ...padelAliases.map((Type) => ({ Type })),
+  { Type: "Paddle" },
+  { Type: "Canoeing" },
+]);
+assert(filteredPadel.length === 4, "canonical Padel filtering includes all four supported names only");
+M.state.typeFilter = previousTypeFilter;
+
+const padelMetrics = M.cardMetrics({
+  Type: "Pádel Tennis",
+  "Duration (min)": "75",
+  "Avg HR": "142",
+});
+assert(
+  padelMetrics.length === 2
+    && padelMetrics[0].val === "1h 15m"
+    && padelMetrics[0].lab === "time"
+    && padelMetrics[0].color === "var(--padel)"
+    && padelMetrics[1].val === "142"
+    && padelMetrics[1].lab === "avg♥"
+    && padelMetrics[1].color === "var(--padel)",
+  "Pádel cards show duration and average heart rate in the Pádel colour"
+);
 
 const waterSportType = M.resolveActivityTypeConfig("WaterSport");
 assert(waterSportType && waterSportType.canonicalName === "WaterSport", "WaterSport stays distinct from Rowing");
@@ -292,6 +353,19 @@ const runStimulus = M.getActivityMuscleStimulus({
 });
 assert(runStimulus.quadriceps > 0, "activity type configs still drive non-Hevy stimulus");
 assert(runStimulus.calves > 0, "activity type configs preserve multi-muscle load");
+
+const padelStimulus = M.getActivityFatigueStimulus({
+  Type: "Padel",
+  "Duration (min)": "60",
+  Description: "",
+});
+assert(
+  padelStimulus.localStimulus.quadriceps > 0
+    && padelStimulus.localStimulus.deltoids > 0
+    && padelStimulus.localStimulus.obliques > 0
+    && padelStimulus.systemicStimulus > 0,
+  "Padel duration produces non-zero local and systemic fatigue stimulus"
+);
 
 assert(canonicalExercise.exerciseFamily === "horizontal_press", "exercise configs expose internal exercise family metadata");
 assert(canonicalExercise.fatigueArchetype === "freeweight_compound", "exercise configs expose internal fatigue archetype metadata");

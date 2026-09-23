@@ -209,6 +209,7 @@ strengthFactor = clamp(durationMin / 45, 0.85, 1.60)
 stimulus       = baseWeights × factor</div>
         ${M.docsTable([
           ["Run", "Quads, hamstrings, calves, gluteal."],
+          ["Pádel", "Padel, Pádel, Padel Tennis, and Pádel Tennis share one duration-scaled mapping for lower-body movement, rotation, and racquet work."],
           ["Hike", "Quads, hamstrings, calves, gluteal — heavier than run."],
           ["Ride", "Quads dominant, plus gluteal and hamstrings."],
           ["Canoeing / Canoe", "Upper back, deltoids, trapezius, biceps, abs."],

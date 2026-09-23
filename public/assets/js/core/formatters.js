@@ -8,6 +8,7 @@
   M.canonicalType = function canonicalType(type) {
     if (type === "Canoe") return "Canoeing";
     if (type === "WaterSport") return "Rowing";
+    if (["Pádel", "Padel Tennis", "Pádel Tennis"].includes(type)) return "Padel";
     return type;
   };
 

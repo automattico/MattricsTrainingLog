@@ -243,6 +243,7 @@ stimulus       = baseWeights × factor
 | Type | Primary muscles | Factor |
 |---|---|---|
 | Run | Quads, hamstrings, calves, glutes | sport |
+| Padel / Pádel / Padel Tennis / Pádel Tennis | Quads, calves, obliques, hamstrings, glutes, adductors, deltoids, abs, triceps, upper back, biceps, trapezius, lower back | sport |
 | Hike | Quads, hamstrings, calves, glutes (heavier than run) | sport |
 | Ride | Quads dominant, glutes, hamstrings | sport |
 | Canoeing / Canoe | Upper back, deltoids, trapezius, biceps, abs | sport |
