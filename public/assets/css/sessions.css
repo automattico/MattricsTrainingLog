@@ -110,13 +110,6 @@
 
 .a-card-type-sep { opacity: 0.45; }
 
-.a-card-type-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--card-accent, var(--brand));
-}
-
 .a-card-name {
   font-family: var(--font-display);
   color: var(--text);
@@ -278,59 +271,4 @@
   font-family: var(--font-mono);
   font-size: 11px;
   margin-top: var(--space-2);
-}
-
-.bar-group { display: grid; gap: var(--space-3); }
-
-.bar-row {
-  display: grid;
-  grid-template-columns: minmax(110px, 140px) 1fr auto;
-  gap: var(--space-3);
-  align-items: center;
-}
-
-.bar-name {
-  color: var(--muted-strong);
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.bar-track {
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  border-radius: inherit;
-  transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.bar-num {
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-
-.highlight-list { display: grid; gap: var(--space-4); }
-
-.hl-item {
-  border-left: 2px solid rgba(255, 255, 255, 0.08);
-  padding-left: var(--space-3);
-}
-
-.hl-val {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.25;
-}
-
-.hl-desc {
-  color: var(--muted);
-  margin-top: 4px;
-  line-height: 1.55;
-  font-size: 12px;
 }

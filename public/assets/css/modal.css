@@ -118,19 +118,10 @@
   line-height: 1.6;
 }
 
-.detail-facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px;
-}
-
-.detail-fact,
 .hevy-exercise {
   padding: 14px 16px;
   border-radius: var(--radius-sm);
 }
-
-.detail-fact-val { font-size: 18px; font-weight: 700; }
 
 .hevy-list { display: grid; gap: 10px; }
 

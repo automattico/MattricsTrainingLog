@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "php-server",
-      "runtimeExecutable": "php",
-      "runtimeArgs": ["-S", "localhost:8001", "-t", "public"],
-      "port": 8001
+      "name": "mattrics-dev-server",
+      "runtimeExecutable": "./scripts/dev-server.sh",
+      "runtimeArgs": [],
+      "port": 8080
     }
   ]
 }

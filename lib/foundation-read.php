@@ -358,11 +358,6 @@ function mattrics_foundation_read_source_role(array $row): string
     return 'other';
 }
 
-function mattrics_foundation_read_is_legacy_snapshot_row(array $row): bool
-{
-    return mattrics_foundation_read_source_role($row) === 'legacy_snapshot';
-}
-
 function mattrics_foundation_read_local_activity_date(array $row, string $timezoneName): ?string
 {
     $startedAt = trim((string) ($row['started_at'] ?? ''));
@@ -727,11 +722,6 @@ function mattrics_foundation_read_build_selection_state(array $rows, string $tim
         'metadataOverlayCount' => $metadataOverlayCount,
         'metadataDonorCountsBySourceId' => $metadataDonorCountsBySourceId,
     ];
-}
-
-function mattrics_foundation_read_select_activity_rows(array $rows, string $timezoneName): array
-{
-    return mattrics_foundation_read_build_selection_state($rows, $timezoneName)['rows'];
 }
 
 function mattrics_foundation_read_all_activity_rows(): array

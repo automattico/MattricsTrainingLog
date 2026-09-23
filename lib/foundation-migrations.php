@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 function mattrics_foundation_migration_dir(): string
 {
-    return MATTWARDEN_SITE_DIR . '/docker/postgres/migrations';
+    throw new RuntimeException('Bundled Foundation/Postgres migrations have been removed.');
 }
 
 function mattrics_foundation_ensure_migration_table(PDO $pdo): void
@@ -38,35 +38,6 @@ function mattrics_foundation_list_migration_files(?string $migrationDir = null):
 function mattrics_foundation_read_applied_migrations(PDO $pdo): array
 {
     mattrics_foundation_ensure_migration_table($pdo);
-
-    $statement = $pdo->query('SELECT version, checksum FROM mattrics.mattrics_schema_migrations ORDER BY version ASC');
-    $rows = $statement !== false ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
-    $applied = [];
-    foreach ($rows as $row) {
-        $version = trim((string) ($row['version'] ?? ''));
-        if ($version === '') {
-            continue;
-        }
-        $applied[$version] = (string) ($row['checksum'] ?? '');
-    }
-
-    return $applied;
-}
-
-function mattrics_foundation_read_applied_migrations_if_available(PDO $pdo): array
-{
-    $statement = $pdo->query(<<<'SQL'
-SELECT EXISTS (
-    SELECT 1
-    FROM information_schema.tables
-    WHERE table_schema = 'mattrics'
-      AND table_name = 'mattrics_schema_migrations'
-) AS table_exists
-SQL);
-    $tableExists = $statement !== false ? $statement->fetchColumn() : false;
-    if (!filter_var($tableExists, FILTER_VALIDATE_BOOLEAN)) {
-        return [];
-    }
 
     $statement = $pdo->query('SELECT version, checksum FROM mattrics.mattrics_schema_migrations ORDER BY version ASC');
     $rows = $statement !== false ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];

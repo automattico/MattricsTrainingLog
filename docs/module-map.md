@@ -14,9 +14,9 @@ Mattwarden gate
 - `lib/bootstrap.php`: private config/path, JSON request/response, filesystem, and upstream helpers.
 - `lib/exercise-config-repository.php`: JSON-backed exercise/activity configuration.
 - `lib/exercise-config-ai.php`: server-side AI support for exercise configuration.
-- `lib/foundation-read.php` / `foundation-write.php`: optional canonical Postgres compatibility.
+- `lib/foundation-read.php` / `foundation-write.php`: retained compatibility layer used by current API fallback paths; no bundled Postgres runtime remains.
 - `lib/foundation-connectors.php`: connector credential/status storage and Hevy requests.
-- `lib/foundation-import.php`, migrations, and parser modules: local canonical import tooling.
+- `lib/foundation-import.php`, migrations, and parser modules: retained compatibility and connector helpers used by current endpoints and tests.
 
 ## Browser
 

@@ -447,8 +447,7 @@
   line-height: 1.2;
 }
 
-.overview-fatigue-scale-detail,
-.overview-fatigue-row-recovery {
+.overview-fatigue-scale-detail {
   color: var(--muted);
   font-size: 11px;
   line-height: 1.45;

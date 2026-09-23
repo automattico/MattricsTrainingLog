@@ -413,61 +413,6 @@
     return M.getActivityFatigueStimulus(activity, options).localStimulus;
   };
 
-  M.getMuscleLoadAnalysis = function getMuscleLoadAnalysis(activities) {
-    const regions = Object.fromEntries(
-      M.MUSCLE_REGIONS.map((region) => [region.key, { ...region, load: 0, hits: 0 }])
-    );
-
-    activities.forEach((activity) => {
-      const stimulus = M.getActivityMuscleStimulus(activity, { allActivities: activities, excludeActivity: activity });
-      Object.entries(stimulus).forEach(([key, value]) => {
-        if (!regions[key] || !value) return;
-        regions[key].load += value;
-        regions[key].hits += 1;
-      });
-    });
-
-    const ranked = Object.values(regions).sort((a, b) => b.load - a.load);
-    const maxLoad = ranked[0]?.load || 0;
-    const totalLoad = ranked.reduce((sum, region) => sum + region.load, 0);
-
-    if (!maxLoad) {
-      return {
-        regions: ranked.map((region) => ({ ...region, pct: 0, share: 0, hitLabel: "0 hits" })),
-        strongest: [],
-        weakest: ranked,
-        summary: "No worked-body signal yet",
-        detail: "Add more sessions to map which regions are carrying the work.",
-      };
-    }
-
-    const withMetrics = ranked.map((region) => ({
-      ...region,
-      pct: Math.round((region.load / maxLoad) * 100),
-      share: totalLoad ? region.load / totalLoad : 0,
-      hitLabel: `${region.hits} hit${region.hits === 1 ? "" : "s"}`,
-    }));
-    const strongest = withMetrics.filter((region) => region.load >= maxLoad * 0.8);
-    const minNonZero = withMetrics.filter((region) => region.load > 0).slice(-1)[0]?.load || 0;
-    const weakest = minNonZero
-      ? withMetrics.filter((region) => region.load === minNonZero || region.load === 0)
-      : withMetrics;
-    const strongestLabel = strongest.slice(0, 2).map((region) => region.label).join(" + ");
-    const weakestLabel = weakest.filter((region) => region.load === 0).length
-      ? weakest.filter((region) => region.load === 0).slice(0, 2).map((region) => region.label).join(" + ")
-      : weakest.slice(0, 2).map((region) => region.label).join(" + ");
-
-    return {
-      regions: withMetrics,
-      strongest,
-      weakest,
-      summary: strongest.length > 1 ? `${strongestLabel} carried the work` : `${strongest[0].label} took the load`,
-      detail: weakest.some((region) => region.load === 0)
-        ? `${weakestLabel} were barely touched.`
-        : `${weakestLabel} got the least work.`,
-    };
-  };
-
   M.getMuscleFatigueAnalysis = function getMuscleFatigueAnalysis(activities) {
     const configFatigue = M.MUSCLE_FATIGUE_CONFIG;
     const recent = M.getFixedRecentActivities(activities, configFatigue.windowDays);

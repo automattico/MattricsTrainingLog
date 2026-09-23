@@ -5,7 +5,7 @@ Branch: `mattwarden`
 
 ## Summary
 
-Deployed Mattrics application content behind Mattwarden and verified the unauthenticated gate. Production inspection corrected two runbook assumptions: the live private state was in the old app's nested `private/` directory, and Hetzner serves `public_html/mattrics/public` as this vhost's webroot. Both corrections were made before the final gate smoke pass. Authenticated dashboard, data refresh, settings save, connector/exercise views, and logout confirmation passed. AI remains open because the browser received HTML instead of JSON from one request.
+Deployed Mattrics application content behind Mattwarden and verified the unauthenticated gate. Production inspection corrected two runbook assumptions: the live private state was in the old app's nested `private/` directory, and Hetzner serves `public_html/mattrics/public` as this vhost's webroot. Both corrections were made before the final gate smoke pass. Authenticated dashboard, data refresh, settings save, connector/exercise views, and logout confirmation passed. The AI request failed; later gate-log diagnosis identified Anthropic HTTP 401, and the browser's non-JSON error handling was fixed.
 
 ## Data handling
 

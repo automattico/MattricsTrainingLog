@@ -38,6 +38,8 @@ The static shell first fetches `/api/session`, validates the 64-hex CSRF token, 
 
 Logout links to `/__mattwarden/logout`.
 
+The workout AI credential is server-only in `sites/mattrics/private/config.php`; key creation and rotation are described in `anthropic-api-key.md`. Exercise-config AI is a separate server-side feature and does not put provider credentials in the browser.
+
 ## CSP
 
 The shell works with Mattwarden's default policy:

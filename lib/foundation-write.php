@@ -181,16 +181,6 @@ function mattrics_foundation_write_build_activity_type_alias_rows(array $record)
     return $rows;
 }
 
-function mattrics_foundation_write_public_id(array $row): string
-{
-    $legacyId = trim((string) ($row['legacy_config_id'] ?? ''));
-    if ($legacyId !== '') {
-        return $legacyId;
-    }
-
-    return (string) ($row['normalized_name'] ?? '');
-}
-
 function mattrics_foundation_write_load_exercise_records(): array
 {
     $context = mattrics_foundation_write_context();

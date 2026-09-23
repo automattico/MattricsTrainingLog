@@ -42,19 +42,11 @@ Before finishing a slice, Codex must:
 
 1. Framework docs.
 2. Architecture decision docs.
-3. Docker/Postgres foundation.
-4. Canonical schema.
-5. Legacy import.
-6. Compatibility API.
-7. Read-only UI switch-over.
-8. Hevy ingestion.
-9. Fatigue from canonical data.
-10. Exercise config DB migration.
-11. Hevy live connector.
-12. Garmin Connect live connector.
-13. Duplicate resolution and metadata precedence.
-14. Post-cut-over runtime evaluation.
-15. Concept2 erg import.
+3. Provider-independent ingestion behind the existing authenticated APIs.
+4. Direct Hevy and Garmin connector work when separately approved.
+5. Duplicate resolution and metadata precedence.
+6. Storage/runtime migration only after a new architecture decision.
+7. Concept2 erg import after the direct-source priorities.
 
 ## Slice Quality Bar
 

@@ -9,11 +9,11 @@ The data pipeline is:
 1. Strava activity data is pulled with a Make.com scenario
 2. Make writes activities into a Google Sheet
 3. Google Apps Script exposes that sheet as JSON
-4. The local dashboard reads the Apps Script URL from `public/config.js`
+4. Authenticated `GET /api/data` reads the Apps Script URL and shared token from server-only `sites/mattrics/private/config.php`, refreshes a private cache, and returns filtered rows to the dashboard
 
 In short:
 
-`Strava -> Make.com -> Google Sheets -> Apps Script -> dashboard`
+`Strava -> Make.com -> Google Sheets -> Apps Script -> /api/data -> dashboard`
 
 ## Components
 
@@ -53,7 +53,7 @@ Two sheets matter:
 
 ### 3. Google Apps Script
 
-[`apps-script/Code.gs`](/Users/mwieland/dev/MattricsTrainingLog/apps-script/Code.gs) reads the active sheet and returns JSON for the frontend.
+[`apps-script/Code.gs`](../apps-script/Code.gs) reads the active sheet and returns JSON to the server-side Mattrics data endpoint.
 
 Important detail:
 
@@ -62,9 +62,7 @@ Important detail:
 
 ### 4. Dashboard
 
-The dashboard loads the Apps Script endpoint from local `public/config.js`.
-
-That file is intentionally ignored by Git, so the live sheet endpoint and any API keys stay local.
+The dashboard requests `/api/data`; it never sees the Apps Script URL or shared token. The server-side endpoint loads `sheet_url` and `sheet_token` from `MATTWARDEN_SITE_DIR . '/private/config.php'`. That file is excluded from Git and from `deploy.sh`. A successful refresh updates `private/cache/training-data.json`; a failed refresh can serve the previous snapshot with a stale-data warning.
 
 ## Why the cursor exists
 
@@ -192,8 +190,8 @@ Check these first:
    Is the missing activity backdated or manually entered?
 3. Make route filter
    Is the cursor update route still filtered on `Activity ID exists`?
-4. Apps Script deployment
-   Does the dashboard still point at the correct Apps Script URL in local `public/config.js`?
+4. Apps Script deployment and server configuration
+   Does `sheet_url` in the server-only `sites/mattrics/private/config.php` point at the active deployment, and does `sheet_token` match the Apps Script shared secret? Check configuration without printing either value.
 
 ## Operational checklist
 
@@ -202,7 +200,7 @@ When editing or rebuilding the sync later, preserve these rules:
 - keep the cursor in UTC
 - base cursor updates on `Start Date in UTC`
 - keep duplicate protection on `Activity ID raw`
-- keep `public/config.js` local and gitignored
+- keep the Apps Script URL and token only in the private server configuration; never restore browser `public/config.js`
 - do not assume manual activities will always sync automatically
 
 ## Migration note

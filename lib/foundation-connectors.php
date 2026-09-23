@@ -364,23 +364,6 @@ function mattrics_foundation_connector_public_payload(?string $privateRoot = nul
     return $payload;
 }
 
-function mattrics_foundation_safe_connector_public_payload(?string $privateRoot = null): array
-{
-    try {
-        return mattrics_foundation_connector_public_payload($privateRoot);
-    } catch (Throwable $throwable) {
-        $payload = [];
-        foreach (array_keys(mattrics_foundation_connector_definitions()) as $connectorKey) {
-            $payload[$connectorKey] = mattrics_foundation_connector_public_record(
-                $connectorKey,
-                mattrics_foundation_default_connector_record($connectorKey)
-            );
-        }
-
-        return $payload;
-    }
-}
-
 function mattrics_foundation_connector_record_for_update(
     array $store,
     string $connectorKey,
@@ -397,4 +380,134 @@ function mattrics_foundation_connector_record_for_update(
     $normalized['connectors'][$connectorKey] = mattrics_foundation_normalize_connector_record($connectorKey, $updated);
 
     return $normalized;
+}
+
+function mattrics_foundation_update_connector_store_after_attempt(
+    array $store,
+    string $connectorKey,
+    string $stateKey,
+    string $status,
+    array $details = [],
+    ?string $error = null
+): array {
+    return mattrics_foundation_connector_record_for_update(
+        $store,
+        $connectorKey,
+        static function (array $record) use ($stateKey, $status, $details, $error): array {
+            $now = gmdate('c');
+            $state = is_array($record[$stateKey] ?? null) ? $record[$stateKey] : [];
+            foreach ($details as $key => $value) {
+                $state[$key] = $value;
+            }
+            $state['lastAttemptAt'] = $now;
+            if ($status === 'success') {
+                $state['lastSucceededAt'] = $now;
+                $state['lastErrorAt'] = null;
+                $state['lastError'] = null;
+            } elseif ($status === 'error') {
+                $state['lastErrorAt'] = $now;
+                $state['lastError'] = $error;
+            }
+            $record[$stateKey] = $state;
+
+            return $record;
+        }
+    );
+}
+
+function mattrics_foundation_hevy_api_headers(array $connectorRecord): array
+{
+    $apiKey = trim((string) ($connectorRecord['apiKey'] ?? ''));
+    if ($apiKey === '') {
+        throw new RuntimeException('Hevy live connector is missing an API key.');
+    }
+
+    $headerName = trim((string) ($connectorRecord['headerName'] ?? 'api-key'));
+    if ($headerName === '') {
+        $headerName = 'api-key';
+    }
+
+    return [
+        'Accept: application/json',
+        $headerName . ': ' . $apiKey,
+    ];
+}
+
+function mattrics_foundation_hevy_api_base_url(array $connectorRecord): string
+{
+    $baseUrl = rtrim((string) ($connectorRecord['apiBaseUrl'] ?? 'https://api.hevyapp.com'), '/');
+    return $baseUrl !== '' ? $baseUrl : 'https://api.hevyapp.com';
+}
+
+function mattrics_foundation_hevy_api_request(
+    array $connectorRecord,
+    string $path,
+    array $query = [],
+    ?callable $requester = null
+): array {
+    $baseUrl = mattrics_foundation_hevy_api_base_url($connectorRecord);
+    $url = $baseUrl . '/' . ltrim($path, '/');
+    if ($query !== []) {
+        $url .= '?' . http_build_query($query);
+    }
+
+    if (is_callable($requester)) {
+        $result = $requester($url, $query, $connectorRecord, $path);
+        if (!is_array($result)) {
+            throw new RuntimeException('Hevy live requester must return an array.');
+        }
+        return $result;
+    }
+
+    $headers = mattrics_foundation_hevy_api_headers($connectorRecord);
+    $body = false;
+    $statusCode = 0;
+
+    if (function_exists('curl_init')) {
+        $handle = curl_init($url);
+        curl_setopt_array($handle, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_HTTPHEADER => $headers,
+        ]);
+        $body = curl_exec($handle);
+        if ($body === false) {
+            $message = curl_error($handle) ?: 'Hevy API request failed.';
+            curl_close($handle);
+            throw new RuntimeException($message);
+        }
+        $statusCode = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
+        curl_close($handle);
+    } else {
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'header' => implode("\r\n", $headers),
+                'timeout' => 20,
+                'ignore_errors' => true,
+            ],
+        ]);
+        $body = @file_get_contents($url, false, $context);
+        if ($body === false) {
+            throw new RuntimeException('Hevy API request failed.');
+        }
+
+        $statusLine = $http_response_header[0] ?? 'HTTP/1.1 500';
+        if (preg_match('/\s(\d{3})\s/', $statusLine, $matches)) {
+            $statusCode = (int) $matches[1];
+        }
+    }
+
+    if ($statusCode < 200 || $statusCode >= 300) {
+        throw new RuntimeException('Hevy API request failed. HTTP ' . $statusCode);
+    }
+
+    $decoded = json_decode((string) $body, true);
+    if (!is_array($decoded)) {
+        throw new RuntimeException('Hevy API response was not valid JSON.');
+    }
+
+    return $decoded;
 }

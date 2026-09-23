@@ -2,8 +2,8 @@
 
 ## Purpose
 
-This repository hosts a static website template with optional small APIs.
-The deployable web root is `public/`.
+This repository hosts the Mattrics training dashboard: a Mattwarden-protected static shell with a flat PHP API.
+`public/` is the static content tree, not a document root. Mattwarden serves it from outside the webroot.
 
 Agents must preserve the deployment and security model defined here.
 
@@ -27,7 +27,7 @@ Future architecture and migration work must read:
 - `docs/codex-framework.md`
 - `docs/implementation-progress.md`
 
-Every implementation slice must update `docs/implementation-progress.md`, add a slice report, and create the next slice prompt. Existing static deploy rules remain valid until the Docker/Postgres migration explicitly replaces them. Secrets rules remain absolute.
+Every implementation slice must update `docs/implementation-progress.md`, add a slice report, and create the next slice prompt. Existing static deploy rules remain authoritative unless a separately approved architecture decision replaces them. Secrets rules remain absolute.
 
 ---
 
@@ -46,6 +46,10 @@ When you need to change something, open only these files:
 | Change timeline / grouped view | `timeline.js` | `sessions.css` |
 | Change detail modal | `detail.js` | `modal.css` |
 | Change AI pane | `ai.js` | `ai.css` |
+| Change connector administration | `connectors.js` | `connectors.css` |
+| Change settings | `settings.js` | `settings.css` |
+| Change exercise administration | `exercise-admin.js`, `core/exercise-config.js` | `exercise-admin.css` |
+| Change in-app documentation | `renderers/docs.js`, `renderers/docs/*` | `docs.css` |
 | Change date / time formatting | `core/formatters.js` | — |
 | Change load / error screen | `renderers/loader.js` | `loading.css` |
 | Change filter pills / nav / window switcher | `renderers/orchestrator.js` | `buttons.css`, `layout.css` |
@@ -63,28 +67,15 @@ All CSS paths are relative to `public/assets/css/`.
 
 ## Script Load Order
 
-`index.html` loads scripts in this order. **Order matters** — later files call functions defined by earlier ones.
+`public/index.html` is the canonical script list. Its dependency order is:
 
-1. `core/constants.js` — namespace init, config URLs, `TYPES`, `MUSCLE_REGIONS`, `MUSCLE_FATIGUE_CONFIG`
-2. `core/state.js` — `Mattrics.state` initial shape
-3. `core/date-utils.js` — `normalizeDateValue`, `parseDate`, `startOfDay`, `toIsoDate`, `shiftDate`, `diffDays`, `weekStart`, `formatWeekRange`
-4. `core/formatters.js` — `fmt`, `fmtDate`, `fmtShort`, `fmtDateTime`, `formatContextRange`, `tc`, `canonicalType`, `esc`, `escAttr`, `getActivityId`
-5. `core/filters.js` — `getWindowRange`, `getRollingPeriod`, `applyTypeFilter`, `getWindowedData`, `getFixedRecentActivities`
-6. `core/hevy-parser.js` — `getExerciseMuscleMapping`, `parseHevySetLine`, `parseHevyDescription`
-7. `core/fatigue-engine.js` — `getActivityMuscleStimulus`, `getMuscleLoadAnalysis`, `getMuscleFatigueAnalysis`
-8. `core/fatigue-tiers.js` — `getMuscleFatigueTier`, `getFatigueVisualState`, `getFatigueDisplayTier`, `getFatigueTierMeaning`, `getRecoveryLabel`, `getRelativeDayLabel`
-9. `core/activity-analysis.js` — `getActivityMix`, `getActiveDayStats`, `getOverviewMetrics`
-10. `core/metrics.js` — `cardMetrics`, `detailFacts`
-11. `body-map-team-buildr.js` — `MUSCLE_FATIGUE_BODY_MAP` SVG config (generated asset)
-12. `renderers/loader.js` — `showLoading`, `showError`, `showApp`, `renderDataStatus`
-13. `renderers/orchestrator.js` — `fetchData`, `renderAll`, `setWindow`, `setFilter`, `setFeedMode`, `showView`, `renderContextBar`, `renderFilters`
-14. `renderers/dashboard.js` — `renderDashboard`
-15. `renderers/fatigue-view.js` — `renderFatigueView`, `renderFatigueBodyFigure`, `renderFatigueLegendPanel`, `renderFatigueReadinessTables`, `bindFatigueHoverCard`, fatigue readiness helpers
-16. `feed.js` — `renderActivityCards`, `renderFeed`
-17. `timeline.js` — `renderTimeline`
-18. `ai.js` — `renderAiPreview`, `generateWorkout`
-19. `detail.js` — `openDetail`, `closeDetail`
-20. `app.js` — event wiring, `fetchData()` bootstrap call
+1. Core: `constants.js`, `state.js`, `date-utils.js`, `formatters.js`, `filters.js`, `exercise-config.js`, `hevy-parser.js`, `fatigue-engine.js`, `fatigue-tiers.js`, `activity-analysis.js`, `metrics.js`.
+2. Generated body-map asset: `body-map-team-buildr.js`.
+3. Main renderers: `loader.js`, `orchestrator.js`, `dashboard.js`, `fatigue-view.js`.
+4. In-app docs: `docs-helpers.js`, every `renderers/docs/section-*.js` in the HTML's listed order, then `docs.js`.
+5. Views and event wiring: `feed.js`, `timeline.js`, `ai.js`, `detail.js`, `connectors.js`, `settings.js`, `exercise-admin.js`, then `app.js`.
+
+Do not reorder by filename: later modules call globals defined by earlier ones. `app.js` bootstraps `/api/session` before loading training data.
 
 ---
 
@@ -105,7 +96,10 @@ All CSS paths are relative to `public/assets/css/`.
 | `sessions.css` | Activity cards (`.a-card`), timeline tiles (`.tl-*`), filter row, sessions toolbar |
 | `modal.css` | Detail overlay/modal, metrics, hevy exercise breakdown |
 | `ai.css` | AI pane, recent preview, output |
-| `fatigue-doc.css` | In-page fatigue model developer documentation accordion |
+| `docs.css` | In-app documentation, including the fatigue model accordion |
+| `exercise-admin.css` | Exercise and activity-type administration |
+| `connectors.css` | Connector administration |
+| `settings.css` | Settings view and forms |
 | `responsive.css` | All `@media` breakpoint overrides (centralized) |
 
 ---
@@ -117,27 +111,36 @@ All CSS paths are relative to `public/assets/css/`.
 | Field | Type | Mutated by |
 |---|---|---|
 | `allData` | `Array` | `fetchData` (orchestrator.js) |
+| `activityChildren`, `activityChildrenById` | `Array`, `Object` | canonical-data child indexing |
 | `dataMeta` | `Object` | `fetchData` |
-| `windowDays` | `Number` | `setWindow` |
-| `typeFilter` | `String` | `setFilter`, `setWindow` (resets to "All") |
+| `dashboardWindowDays` | `Number` | `setDashboardWindow` |
+| `typeFilter` | `String` | `setFilter`, `fetchData` (resets to "All") |
 | `feedMode` | `"list" \| "grouped"` | `setFeedMode` |
 | `groupBy` | `"week" \| "month"` | `setFeedMode` |
-| `recent` | `Array` | unused (reserved) |
-| `currentFatigue` | `Object \| null` | unused (reserved) |
+| `recent` | `Array` | `renderAiPreview` |
+| `currentFatigue` | `Object \| null` | `renderAiPreview` |
+| `userSettings` | `Object \| null` | settings load/save |
+| `exerciseConfigs`, `activityTypeConfigs`, `exerciseConfigMeta`, `exerciseConfigIndex` | catalogs and metadata | exercise-config load/save |
+| `unknownExercises`, `unknownExerciseMeta` | review queue and metadata | unknown scan/sync |
+| `connectors` | `Object` | connector administration |
+| `exerciseAdmin` | `Object` | exercise editor/review UI |
 
 ---
 
 ## Data Flow
 
 ```
-fetchData()
-  → normalize + sort rows into state.allData
+bootstrapSession() → in-memory CSRF token
+  → fetchData()
+      → GET /api/data and loadExerciseConfigs() in parallel
+      → normalize + sort rows into state.allData
+      → scanAndSyncUnknownExercises()
+      → loadUserSettings()
   → renderAll()
-      → renderContextBar()
-      → renderDashboard()     uses getOverviewMetrics()
-      → renderFatigueView()   uses getMuscleFatigueAnalysis()
+      → renderContextBar() and renderDashboard()
+      → renderFatigueView()
       → renderFilters()
-      → renderFeed()          → renderActivityCards() or renderTimeline()
+      → renderFeed() → renderActivityCards() or renderTimeline()
       → renderAiPreview()
 ```
 
@@ -147,11 +150,15 @@ fetchData()
 
 | Doc | What it covers |
 |---|---|
+| `docs/README.md` | Documentation index, authority, and current-versus-historical routing |
 | `docs/fatigue-model.md` | Algorithm details: decay formula, half-lives, Hevy parsing, tier thresholds |
 | `docs/module-map.md` | Dependency graph showing what each module exports and consumes |
 | `docs/css-guide.md` | CSS class prefix → file mapping, custom property reference |
 | `docs/architecture.md` | High-level system architecture and deploy model |
 | `docs/strava-sync-architecture.md` | Upstream Strava → Make.com → Google Sheets pipeline |
+| `docs/anthropic-api-key.md` | Safely replacing the workout AI provider key |
+
+`docs/slices/` contains dated implementation records and old prompts. They document past states; use this file, `README.md`, `DEPLOY.md`, `docs/README.md`, and the current architecture/runbook for operating instructions.
 
 ---
 

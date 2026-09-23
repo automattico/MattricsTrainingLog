@@ -25,25 +25,22 @@ Production content is stored outside every document root under `/usr/home/mwiela
 
 Open `http://127.0.0.1:8080/`. The temporary development site uses the Mattwarden contract stub, the same flat API dispatch rules, and the default HTML CSP.
 
-Docker can run the same development server:
-
-```sh
-docker compose up --build
-```
-
 Run all deploy-blocking checks with:
 
 ```sh
 ./scripts/prod-gate.sh
 ```
 
-The optional Foundation/Postgres stack remains local-only and is documented in `docs/docker-postgres-foundation.md`.
-
 ## Operations
 
+- Documentation index and authority: `docs/README.md`
 - Deployment: `DEPLOY.md`
 - Architecture: `docs/architecture.md`
 - Mattwarden migration and fixed cut-over order: `docs/mattwarden-migration.md`
-- Local development: `docs/docker-local-dev.md`
+- Local development: `docs/local-development.md`
+- Workout AI key replacement: `docs/anthropic-api-key.md`
+- Hetzner private layout and webroot normalization: `docs/hetzner-private-deploy.md`
+
+`docs/slices/` contains dated implementation reports and past prompts. Those are historical records, not current deployment instructions.
 
 Live site: [mattrics.mwieland.com](https://mattrics.mwieland.com/)

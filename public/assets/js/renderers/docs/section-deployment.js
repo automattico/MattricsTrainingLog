@@ -13,7 +13,7 @@
         ["Mutation guards", "POST, PUT, PATCH, and DELETE operations require both Mattwarden same-origin and CSRF checks."],
         ["Shared code", "Non-addressable PHP modules deploy from <code class=\"docs-code\">lib/</code> to <code class=\"docs-code\">sites/mattrics/lib</code>."],
         ["Private runtime", "Config, cached data, settings, connector state, and JSON data live under <code class=\"docs-code\">sites/mattrics/private</code>."],
-        ["Document root", "Only Mattwarden's shim and Apache rules belong in <code class=\"docs-code\">public_html/mattrics</code>. This repository never deploys there."],
+        ["Document root", "Only Mattwarden's shim and Apache rules belong in <code class=\"docs-code\">public_html/mattrics</code>, the normalized active Hetzner vhost document root. This repository never deploys there."],
         ["Transport", "Deployment uses SFTP with SSH key authentication and a pinned host key. Password authentication is rejected."],
         ["CSP", "The shell uses external same-origin scripts and styles only. Dynamic visual values are applied through CSSOM after rendering."],
       ])}

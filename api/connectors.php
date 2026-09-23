@@ -5,7 +5,6 @@ require_authenticated();
 require_once MATTWARDEN_SITE_DIR . '/lib/bootstrap.php';
 require_once MATTWARDEN_SITE_DIR . '/lib/foundation-read.php';
 require_once MATTWARDEN_SITE_DIR . '/lib/foundation-connectors.php';
-require_once MATTWARDEN_SITE_DIR . '/lib/foundation-import.php';
 
 function mattrics_connectors_requester(): ?callable
 {

@@ -131,14 +131,6 @@
     return `${pct}%`;
   };
 
-  M.getMuscleContextLabel = function getMuscleContextLabel(region) {
-    const views = Array.isArray(region && region.views) ? region.views : [];
-    if (views.includes("front") && views.includes("back")) return "front + back";
-    if (views.includes("front")) return "front";
-    if (views.includes("back")) return "back";
-    return "";
-  };
-
   M.renderFatigueReadinessTables = function renderFatigueReadinessTables(fatigue) {
     const regionsByKey = Object.fromEntries(fatigue.regions.map((region) => [region.key, region]));
     const orderedKeys = fatigue.regions

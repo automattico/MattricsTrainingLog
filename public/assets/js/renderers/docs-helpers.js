@@ -42,10 +42,6 @@
     </section>`;
   };
 
-  M.docsMermaid = function docsMermaid(code) {
-    return `<div class="docs-mermaid"><pre class="mermaid">${code}</pre></div>`;
-  };
-
   M.docsTiers = function docsTiers(tiers) {
     return `<div class="docs-tier-list">
       ${tiers.map((t) => `<div class="docs-tier-item">

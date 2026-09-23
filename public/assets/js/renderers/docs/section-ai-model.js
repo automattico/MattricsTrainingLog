@@ -9,10 +9,10 @@
     body: `
       ${M.docsTable([
         ["Model", "The Anthropic model is configured server-side in <code class=\"docs-code\">private/config.php</code>."],
-        ["Context window", "Sufficient to handle activity history, fatigue state, and user profile within a single request."],
-        ["Temperature", "<code class=\"docs-code\">0.7</code> for balanced creativity and consistency in recommendations."],
-        ["Max tokens", "<code class=\"docs-code\">1024</code> per response. Enough for a detailed workout plan without excessive length."],
-        ["Streaming", "Responses are streamed server-side and sent to the client as server-sent events (SSE) for real-time display."],
+        ["Context", "Recent activity and the current muscle-fatigue estimate are sent to the server in one request."],
+        ["Temperature", "No explicit temperature is set; the provider default applies."],
+        ["Max tokens", "<code class=\"docs-code\">900</code> per response."],
+        ["Response", "The server returns one JSON response after the provider call completes; streaming/SSE is not implemented."],
       ])}
 
       ${M.docsSubsection("Prompt construction", `
@@ -20,32 +20,30 @@
           The coach mode builds a prompt that includes:
         </p>
         ${M.docsList([
-          "User profile (age, bodyweight, experience level, recovery preferences)",
           "Recent activity summary (last 10 days of workouts, by type and duration)",
-          "Current fatigue map (per-muscle readiness state and recovery hours remaining)",
-          "Available time (user-specified session duration)",
-          "Training goal or focus area (if provided)",
+          "Current fatigue summary and per-region fatigue score, tier, and recovery labels",
+          "A request for one concrete workout with a shoulder note when relevant",
         ])}
         <p class="docs-copy">
-          The system prompt instructs Claude to recommend a specific workout that respects the current fatigue state,
-          aligns with the user's experience level, and fits within the available time. Recommendations include exercise
-          selection, sets, reps or duration, and estimated intensity.
+          The server prompt asks Claude for one brief, specific workout that respects current fatigue. It asks for
+          exercises with sets/reps/weights or cardio distance/duration/intensity as appropriate. User settings,
+          a chosen time budget, and a separate training goal are not currently included in this request.
         </p>
       `)}
 
       ${M.docsSubsection("API boundary and security", `
         <p class="docs-copy">
-          The client sends an authenticated, same-origin request to <code class="docs-code">/api/ai</code> with the required context.
-          The server validates the session, constructs the full prompt, calls the Anthropic API, and streams the response
-          back to the client. The API key never leaves the server. Rate limiting and usage quotas should be monitored.
+          The client sends <code class="docs-code">POST /api/ai</code> with the Mattwarden CSRF token. The endpoint calls
+          <code class="docs-code">require_authenticated()</code> and the same-origin and CSRF guards, constructs the prompt,
+          calls Anthropic server-side, and returns JSON. The API key never leaves protected server config.
         </p>
       `)}
 
       ${M.docsSubsection("Response handling", `
         <p class="docs-copy">
-          The client listens to server-sent events and renders the response as it arrives. If the stream is interrupted
-          or an error occurs, the client displays a fallback message and suggests retrying. Users can abort an in-flight
-          request and clear the coach pane.
+          The client displays the returned text when the request succeeds. On an error or a non-JSON upstream page,
+          it shows a service-unavailable message rather than a raw JSON parser exception. The request is not streamed
+          and the UI has no abort control.
         </p>
       `)}
 

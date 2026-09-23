@@ -52,7 +52,6 @@
 .overview-card,
 .recent-preview,
 .api-note,
-.detail-fact,
 .hevy-exercise,
 .tl-mini,
 .a-card,
@@ -249,33 +248,6 @@
   font-family: var(--font-mono);
   font-size: 11px;
   white-space: nowrap;
-}
-
-.overview-chip-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-.overview-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.028);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  color: var(--muted-strong);
-  font-size: 10px;
-}
-
-.overview-chip::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--chip-color, rgba(255, 255, 255, 0.4));
 }
 
 .overview-empty {

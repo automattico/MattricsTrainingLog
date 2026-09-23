@@ -183,10 +183,6 @@
     };
   }
 
-  M.getExerciseAdminMergedRecognitionNames = function getExerciseAdminMergedRecognitionNames(values) {
-    return getMergedRecognitionNames(values);
-  };
-
   M.mapExerciseAdminMergedNames = function mapExerciseAdminMergedNames(values, mergedText) {
     return mapMergedNamesToStoredLists(values, mergedText);
   };

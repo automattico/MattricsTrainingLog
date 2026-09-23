@@ -45,12 +45,10 @@ button { -webkit-tap-highlight-color: transparent; }
 .ai-output-label,
 .rp-label,
 .metric-lab,
-.detail-fact-lab,
 .a-card-type,
 .tl-mini-type,
 .overview-body-caption,
-.overview-donut-kicker,
-.overview-chip {
+.overview-donut-kicker {
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.1em;

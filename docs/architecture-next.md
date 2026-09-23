@@ -21,8 +21,8 @@ Every implementation slice must read this before making changes.
 ## Runtime Direction
 
 - Production is a Mattwarden-protected static shell plus flat PHP API on Hetzner Webhosting.
-- A possible own-server Docker/Postgres runtime remains future work, not the current production target.
-- The local Foundation stack must not be treated as a deployed HTTP application until a future slice explicitly migrates it.
+- The repository does not maintain a Docker or local Postgres runtime.
+- Any future persistence/runtime replacement requires a separate architecture decision and migration plan.
 - Production must keep private runtime state outside the public web root.
 - Backups and restore checks are required before disabling the current Google Sheet pipeline.
 
@@ -36,7 +36,7 @@ Every implementation slice must read this before making changes.
 ## Data Direction
 
 - Build provider-independent ingestion.
-- Store normalized training data in canonical Postgres tables.
+- Preserve provider-independent normalized training data behind internal APIs; the current production store remains private JSON/cache state.
 - Preserve raw provider payloads and imported files outside the public web root for debugging, provenance, and future re-normalization.
 - Hevy is the first direct source because it drives strength sessions, sets, and fatigue, and live Hevy API connectivity is now a near-term migration priority.
 - Garmin is a major direct source for device-native endurance, HR, recovery, and future health-hub signals, and live Garmin Connect connectivity is now a near-term migration priority.

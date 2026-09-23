@@ -188,15 +188,6 @@
     min-width: unset;
   }
 
-  .docs-callout {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .docs-callout-btn {
-    width: 100%;
-  }
-
   .connectors-grid {
     grid-template-columns: 1fr;
   }
@@ -228,9 +219,6 @@
   }
 
   .a-card-btn { padding: 16px; }
-
-  .bar-row { grid-template-columns: 1fr; gap: 8px; }
-  .bar-num { justify-self: start; }
 
   .detail-overlay { padding: 10px; }
   .detail-modal { max-height: calc(100vh - 20px); border-radius: 22px; }
@@ -265,15 +253,7 @@
 
   .detail-metrics .metric .metric-lab { margin-top: 4px; }
 
-  .detail-facts {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .detail-fact,
   .hevy-exercise { padding: 12px 14px; }
-
-  .detail-fact-val { font-size: clamp(16px, 4.8vw, 20px); }
 
   .hevy-exercise {
     grid-template-columns: 1fr;

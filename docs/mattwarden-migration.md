@@ -8,29 +8,26 @@ Every endpoint still calls `require_authenticated()` so direct execution fails c
 
 The earlier security-audit documents remain preserved in the two pre-migration commits on `main`. They are removed from this branch because their findings are resolved by deleting the subsystem rather than incrementally hardening it.
 
-## Current production layout (2026-09-22)
+## Current production layout (2026-09-23)
 
-The hosting control panel currently serves `public_html/mattrics/public` as the webroot, contrary to the planned parent path. Mattwarden's shim is installed in that nested webroot and its unauthenticated smoke test passes. An extra shim was also installed in the parent before the actual webroot was identified; it is not web-accessible through this virtual host. Do not remove the nested shim until a separately coordinated Hetzner webroot change to the parent has been verified.
+The hosting control panel serves the normalized parent `public_html/mattrics` as the webroot. It contains only Mattwarden's `.htaccess` and `index.php`. Application content and private state remain outside every document root. The temporary gate-only staging target, former nested shim, and legacy `/mattrics-private` and `/mattrics-lib` paths are absent; the protected non-auth private migration copy remains outside the webroot.
 
 ```text
 /usr/home/mwiela/
 ├── public_html/mattrics/
-│   ├── .htaccess                         # extra parent shim, inert for this vhost
-│   ├── index.php
-│   └── public/                           # actual configured webroot
-│       ├── .htaccess                     # Mattwarden deploy
-│       └── index.php                     # Mattwarden deploy
+│   ├── .htaccess                         # active Mattwarden gate
+│   └── index.php                         # active Mattwarden shim
 └── sites/mattrics/
     ├── public/                           # this repository: static files
     ├── api/                              # this repository: six endpoints
     ├── lib/                              # this repository: shared code
     ├── private/
-        ├── config.php                    # operator-managed, never overwritten
-        ├── config.example.php            # only-missing seed
-        ├── data/*.json                   # production data / only-missing seeds
-        ├── user-settings.json            # runtime state
-        ├── cache/                         # runtime state
-        └── logs                           # runtime state where present
+    │   ├── config.php                    # operator-managed, never overwritten
+    │   ├── config.example.php            # only-missing seed
+    │   ├── data/*.json                   # production data / only-missing seeds
+    │   ├── user-settings.json            # runtime state
+    │   ├── cache/                         # runtime state
+    │   └── logs                           # runtime state where present
     └── rollback-private-pre-cutover/      # protected non-auth data snapshots
 ```
 
@@ -57,18 +54,19 @@ The static shell requires no site-specific CSP exception. All JavaScript and CSS
 2. Before any Mattrics deploy, create `/usr/home/mwiela/sites/mattrics/private` (mode 700) and populate it with verified production state. The 2026-09-22 inspection found `/mattrics-private` held older exercise JSON while the live app's `public_html/mattrics/private` held the current settings, cache, log, exercise configs, and unknowns. The live non-auth files were copied to the new private tree (0600) and byte-verified; both live and older external versions were retained in protected `sites/mattrics/rollback-private-pre-cutover`. No auth/passkey state was copied. The legacy source was left in place to keep the old site working until the webroot switch.
 3. In this repository, run `./deploy.sh`. It mirrors public/API/library content and uploads only missing private examples/seeds. The real production data must already exist.
 4. Empty the old application tree only after the new private tree is verified. On 2026-09-22 the legacy `lib/`, `private/`, and `public/` trees and Basic Auth files were removed from `public_html/mattrics`. This deleted the obsolete passkey credential, challenge, rate-limit, and auth-audit files from the old docroot. The configured webroot was then found to be the nested `public_html/mattrics/public`, so only a new Mattwarden shim and `.htaccess` were installed there.
-5. In the Mattwarden repository, run `./deploy.sh` with `MW_SITES` targeting the **actual** configured webroot `mattrics:public_html/mattrics/public`. Verify unauthenticated static paths return the login page with status 401 and `/api/data` returns the JSON authentication error with status 401. The first parent-targeted deploy failed its mattrics smoke test with 404; the nested-target deploy and subsequent full smoke suite passed.
-6. Log in with the Mattwarden passkey. Verify the dashboard loads; data, settings, connectors, and an AI call work; and the logout link opens `/__mattwarden/logout`. Then delete `/usr/home/mwiela/mattrics-private` and `/usr/home/mwiela/mattrics-lib`.
+5. In the Mattwarden repository, run `./deploy.sh` against the configured webroot. The initial cut-over used the then-active nested target; the separately verified 2026-09-23 normalization changed `MW_SITES` to `mattrics:public_html/mattrics`. Verify unauthenticated static paths return the login page with status 401 and `/api/data` returns the JSON authentication error with status 401.
+6. Log in with the Mattwarden passkey. Verify the dashboard loads; data, settings, connectors, and logout work. The original runbook also required an AI call; the operator explicitly waived that check on 2026-09-23 after the configured Anthropic key returned 401. Then delete `/usr/home/mwiela/mattrics-private` and `/usr/home/mwiela/mattrics-lib`.
 7. Merge branch `mattwarden` into `main` and push only with explicit approval.
 
-## Current runbook status (2026-09-22)
+## Current runbook status (2026-09-23)
 
 - Implementation and local validation: complete on branch `mattwarden`.
 - Mattwarden PHP-app mode/site entry: merged and present in production; local `MW_SITES` and smoke URL include mattrics.
 - Production data: current non-auth files copied to `sites/mattrics/private` and byte-verified; protected remote rollback tree exists; obsolete auth state was not copied.
 - Mattrics deploy: completed with managed remote-tree verification.
-- Document-root cleanup: old app removed; actual nested webroot contains only Mattwarden `.htaccess` and `index.php`.
-- Mattwarden deploy: completed; brand, matlas, and mattrics unauthenticated smoke suites pass.
-- Authenticated verification: passkey sign-in, dashboard, live-sheet refresh, settings save, connectors and exercise views, and the logout confirmation page passed. The AI request failed: Mattwarden's gate log recorded Anthropic HTTP 401. A no-generation check of the ignored local key also returned 401. The authorized temporary gate-log copy was deleted after inspection. A tested, deployed UI fix now handles non-JSON upstream errors without displaying a JSON parser exception.
-- Operator action: replace `anthropic_api_key` in `/usr/home/mwiela/sites/mattrics/private/config.php` with a valid Anthropic API key. Do not commit or paste the key into a task. After replacement, validate it with a no-generation models request and perform one authenticated AI workout check. No new paid AI request was sent during diagnosis.
-- Old `/mattrics-private` and `/mattrics-lib` deletion, optional webroot correction, merge/push: not done while AI verification remains unresolved.
+- Document-root cleanup: complete. The active parent webroot contains only Mattwarden `.htaccess` and `index.php`; staging, the former nested shim, `/mattrics-private`, and `/mattrics-lib` are absent.
+- Mattwarden deploy: completed against `public_html/mattrics`; brand, matlas, and mattrics unauthenticated smoke suites pass.
+- Authenticated verification: passkey sign-in, dashboard, live-sheet refresh, settings save, connectors and exercise views, and the logout confirmation page passed. The operator subsequently reported the other product checks complete and working. The AI workout request remains a known exception: Mattwarden's gate log recorded Anthropic HTTP 401, and a no-generation check of the ignored local key also returned 401. The operator explicitly skipped replacement and successful-workout verification for migration completion. The deployed UI handles non-JSON upstream errors without displaying a JSON parser exception.
+- Optional operator action: use `anthropic-api-key.md` if workout AI is intentionally re-enabled later. No new paid AI request was sent during migration completion.
+- Webroot normalization: complete. Both konsoleH target changes were verified, the signed-in dashboard reloaded, the final remote tree was inspected, and the app's `sites/mattrics` layout remained unchanged.
+- Old `/mattrics-private`, `/mattrics-lib`, staging, and the nested-shim rollback are absent. The protected private rollback remains. Branch commit/merge/push are still pending and must not sweep in separately owned dirty product work.

@@ -1,6 +1,6 @@
 # Deploy
 
-Mattrics deploys application content by SFTP to `/usr/home/mwiela/sites/mattrics`. Mattwarden separately installs the `.htaccess` and `index.php` shim in the active Hetzner webroot. On 2026-09-22 the configured mattrics webroot proved to be `public_html/mattrics/public`, not the planned parent `public_html/mattrics`; see the migration runbook before changing either path.
+Mattrics deploys application content by SFTP to `/usr/home/mwiela/sites/mattrics`. Mattwarden separately installs the `.htaccess` and `index.php` shim in the active Hetzner webroot, normalized on 2026-09-23 to `public_html/mattrics`. Changing `MATTRICS_REMOTE_DIR` is never part of a webroot operation; see `docs/hetzner-private-deploy.md` for the verified layout and retained rollback paths.
 
 Do not run an application deploy against a fresh target until production data is already in `/usr/home/mwiela/sites/mattrics/private`. Deploying first can upload empty seed files with `--only-missing`, making the real production paths no longer missing. The 2026-09-22 first deploy followed a verified data copy from the live private tree.
 
@@ -16,6 +16,7 @@ Copy `.env.example` to `.env.local` and configure:
 The deploy refuses password variables, missing key material, an empty host-pin file, absolute or traversing targets, every `public_html` target, and every remote directory except `sites/mattrics`.
 
 Never commit or upload `.env.local` or `private/config.php`.
+For the rejected workout-AI credential, follow `docs/anthropic-api-key.md`; `./deploy.sh` cannot rotate it.
 
 ## Managed upload set
 

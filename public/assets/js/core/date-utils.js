@@ -58,18 +58,4 @@
     return Math.round((laterUtc - earlierUtc) / 86400000);
   };
 
-  M.weekStart = function weekStart(ds) {
-    const date = M.parseDate(ds);
-    const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-    const start = new Date(date);
-    start.setDate(diff);
-    return M.toIsoDate(start);
-  };
-
-  M.formatWeekRange = function formatWeekRange(startIso) {
-    const start = M.parseDate(startIso);
-    const end = M.parseDate(M.shiftDate(startIso, 6));
-    return `${start.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} - ${end.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
-  };
 }());

@@ -2,7 +2,7 @@
 
 The browser-facing API remains intentionally small and extensionless. Mattwarden accepts both `/api/name` and `/api/name.php`, but application JavaScript uses extensionless URLs.
 
-Canonical Foundation/Postgres support remains optional. When configured, shared modules in `lib/` may read or write canonical records while retaining the established browser payloads. Without Foundation configuration, Hetzner production uses private JSON/cache state.
+The shared compatibility modules in `lib/` retain established browser payloads and JSON-backed fallback behavior. The repository no longer ships or supports a bundled Foundation/Postgres runtime; Hetzner production uses private JSON/cache state.
 
 Removed diagnostic URLs are not part of the product API. Operational diagnosis uses logs and local CLI/tests, not host-gated public endpoints.
 

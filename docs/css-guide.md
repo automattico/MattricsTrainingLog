@@ -19,7 +19,10 @@
 | `sessions.css` | `.sessions-toolbar`, `.feed-display-tools`, `.section-kicker`, `.filter-row`, `.filter-pill` extras, `.filter-count`, `.cards`, `.a-card`, `.a-card-*`, `.a-card-compact`, `.metric`, `.metric-val`, `.metric-lab`, `.a-card-desc`, `.empty-window`, `.tl-period`, `.tl-period-header`, `.tl-period-title`, `.tl-grid`, `.tl-mini`, `.tl-mini-*`, `.bar-group`, `.bar-row`, `.bar-name`, `.bar-track`, `.bar-fill`, `.bar-num`, `.highlight-list`, `.hl-item` |
 | `modal.css` | `.detail-overlay`, `.detail-modal`, `.detail-head`, `.detail-kicker`, `.detail-kicker-*`, `.detail-label`, `.detail-title`, `.detail-date`, `.detail-close`, `.detail-body`, `.detail-metrics`, `.detail-meta`, `.detail-section`, `.detail-note`, `.detail-facts`, `.detail-fact`, `.detail-fact-val`, `.hevy-list`, `.hevy-exercise`, `.hevy-ex-name`, `.hevy-set-list`, `.hevy-set`, `::-webkit-scrollbar` |
 | `ai.css` | `.ai-pane`, `.ai-head`, `.ai-desc`, `.api-note`, `.recent-preview`, `.rp-label`, `.rp-row`, `.rp-name`, `.rp-date`, `.ai-thinking`, `.ai-output`, `.ai-output-label`, `.ai-output-text`, `.ai-top-btn`, `.gen-btn` variant, `@keyframes blink` |
-| `fatigue-doc.css` | `.fatigue-doc`, `.fatigue-doc-summary-*`, `.fatigue-doc-body`, `.fatigue-doc-intro`, `.fatigue-doc-grid`, `.fatigue-doc-section`, `.fatigue-doc-heading`, `.fatigue-doc-text`, `.fatigue-doc-table`, `.fatigue-doc-code`, `.fatigue-doc-formula`, `.fatigue-doc-tiers`, `.fatigue-doc-tier`, `.fatigue-doc-tier-*` |
+| `docs.css` | `.fatigue-doc*` and other in-app documentation layout and typography |
+| `exercise-admin.css` | Exercise and activity-type review queue, editor, and forms |
+| `connectors.css` | Connector administration and status |
+| `settings.css` | User settings controls and forms |
 | `responsive.css` | All `@media (max-width: 1024px)` and `@media (max-width: 920px)` overrides |
 
 ---

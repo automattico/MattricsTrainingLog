@@ -42,8 +42,6 @@
     return age;
   }
 
-  M.deriveAge = deriveAge;
-
   function parseBirthdayDate(iso) {
     if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return new Date(NaN);
     const [year, month, day] = iso.split("-").map((part) => parseInt(part, 10));
@@ -126,8 +124,6 @@
 
     return errors;
   }
-
-  M.validateSettings = validateSettings;
 
   // ── Tooltip helper ────────────────────────────────────────────────────────────
 
