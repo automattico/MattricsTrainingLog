@@ -103,9 +103,9 @@
 }
 
 .connectors-badge--ready {
-  background: rgba(93, 177, 255, 0.14);
-  border-color: rgba(93, 177, 255, 0.34);
-  color: #bfe1ff;
+  background: var(--brand-soft);
+  border-color: rgba(0, 130, 201, 0.4);
+  color: color-mix(in srgb, var(--brand) 40%, white);
 }
 
 .connectors-badge--error {

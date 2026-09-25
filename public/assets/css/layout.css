@@ -47,6 +47,19 @@
   gap: 22px;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand-mark {
+  display: block;
+  flex: none;
+  width: auto;
+  height: clamp(48px, 4.6vw, 66px);
+}
+
 .brand-block {
   display: flex;
   flex-direction: column;

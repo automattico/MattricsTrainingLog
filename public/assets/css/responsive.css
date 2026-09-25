@@ -44,6 +44,10 @@
     gap: 14px;
   }
 
+  .brand { justify-content: center; gap: 12px; }
+
+  .brand-mark { height: clamp(36px, 10vw, 48px); }
+
   .brand-block {
     gap: 4px;
     align-items: center;
