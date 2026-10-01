@@ -1,0 +1,25 @@
+id: mattrics-training-log
+name: MattricsTrainingLog
+kind: project
+portfolio: personal
+scope:
+  - personal
+type: app
+lifecycle: live
+activity: active
+icon_image: /entry-icons/mattrics-training-log.svg
+summary: Private workout dashboard with trend analysis and AI suggestions.
+description: >
+  Presents recent workouts and activity trends from a protected Google Sheets data
+  source, with a private cached snapshot for resilient loading. It can generate optional
+  AI-assisted workout suggestions without exposing the provider API key in the browser.
+source_host: github
+runs_on:
+  - hetzner-web-hosting
+repo: https://github.com/automattico/MattricsTrainingLog
+local_path: /Users/mwieland/dev/MattricsTrainingLog
+url: https://mattrics.mwieland.com/
+docs: README.md
+stack:
+  - PHP
+  - Google Apps Script
