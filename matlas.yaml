@@ -23,3 +23,6 @@ docs: README.md
 stack:
   - PHP
   - Google Apps Script
+next_actions:
+  - Review README.md and docs/README.md against the current application and deployment state.
+  - Record concrete follow-up work from the review in project documentation and update this report’s next_actions.
