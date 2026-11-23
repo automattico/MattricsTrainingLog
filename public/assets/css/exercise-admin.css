@@ -166,6 +166,10 @@
   line-height: 1.5;
 }
 
+.exercise-admin-list-meta {
+  overflow-wrap: anywhere;
+}
+
 .exercise-admin-list-item--unknown {
   background: rgba(255, 176, 122, 0.04);
 }
@@ -396,6 +400,7 @@
   color: var(--muted-strong);
   font-size: 0.98rem;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .exercise-admin-synonyms-empty {
@@ -915,18 +920,16 @@
 }
 
 .exercise-admin-inline-action {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  padding: 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.025);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.exercise-admin-inline-action .settings-label {
+  margin-bottom: 0;
 }
 
 .exercise-admin-inline-copy {
-  flex-basis: 100%;
   color: var(--muted-strong);
   font-size: 0.9rem;
   line-height: 1.5;
@@ -939,6 +942,7 @@
 }
 
 .exercise-admin-action-panel {
+  min-width: 0;
   padding: 16px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--line);
@@ -955,10 +959,6 @@
   color: var(--muted-strong);
   font-size: 0.92rem;
   line-height: 1.5;
-}
-
-.exercise-admin-merge-select {
-  min-width: min(100%, 280px);
 }
 
 .exercise-admin-delete-btn {
@@ -1095,8 +1095,11 @@
     align-items: center;
   }
 
+  .exercise-admin-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .exercise-admin-metrics,
-  .exercise-admin-workspace,
   .exercise-admin-muscle-workspace {
     grid-template-columns: 1fr;
   }
@@ -1175,7 +1178,6 @@
   }
 
   .exercise-admin-secondary-actions,
-  .exercise-admin-inline-action,
   .exercise-admin-advanced-actions {
     flex-direction: column;
     align-items: stretch;

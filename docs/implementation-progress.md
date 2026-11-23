@@ -20,6 +20,7 @@ Earlier Foundation/Postgres slices established canonical schema experiments, imp
 | Detail workout visibility | deployed; authenticated verification pending | The detail modal removes its `is-hidden` class when parsed or canonical exercises exist, so the workout breakdown is visible |
 | Pádel activity support | deployed; authenticated verification pending | Padel and its accented/tennis aliases share canonical display/filter metadata, card metrics, and an approved duration-scaled fatigue config |
 | Repository cleanup | deployed | Obsolete Docker/Foundation/Postgres scaffolding, historical prompts, dead code/CSS, and orphaned assets were removed; required compatibility modules and `CLAUDE.md` remain |
+| Exercise Manager merge layout | verified locally | Names and merging share equal-width cards that stack on narrow screens. The merge picker includes the full eligible catalog regardless of list search and filters. [Slice report](slices/exercise-manager-merge-layout-report.md) |
 
 ## Current validation
 
