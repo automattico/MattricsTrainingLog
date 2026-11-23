@@ -22,6 +22,7 @@ Earlier Foundation/Postgres slices established canonical schema experiments, imp
 | Repository cleanup | deployed | Obsolete Docker/Foundation/Postgres scaffolding, historical prompts, dead code/CSS, and orphaned assets were removed; required compatibility modules and `CLAUDE.md` remain |
 | Exercise Manager merge layout | verified locally | Names and merging share equal-width cards that stack on narrow screens. The merge picker includes the full eligible catalog regardless of list search and filters. [Slice report](slices/exercise-manager-merge-layout-report.md) |
 | Standalone Exercise Manager cards | verified locally | Matching names and merging use the same card style as the other editor sections, with equal columns on desktop and a vertical stack on phones. [Slice report](slices/exercise-manager-standalone-cards-report.md) |
+| Compact Exercise Manager merge | verified locally | One full-width card groups Edit names and Merge in its header. The inline picker searches the eligible catalog and requires a target before showing the warning and enabling confirmation. [Slice report](slices/exercise-manager-compact-merge-report.md) |
 
 ## Current validation
 
