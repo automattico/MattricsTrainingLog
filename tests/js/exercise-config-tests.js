@@ -998,11 +998,14 @@ assert(
   editorHtml.includes("data-exercise-admin-names-edit-start") && !editorHtml.includes("data-exercise-admin-names-text"),
   "exercise editor shows recognition names in display mode by default"
 );
+const exerciseActionCards = editorHtml.match(
+  /<div class="exercise-admin-action-grid">\s*<section class="exercise-admin-form-section">([\s\S]*?)<\/section>\s*<section class="exercise-admin-form-section">([\s\S]*?)<\/section>/
+);
 assert(
-  editorHtml.match(/<h3[^>]*>Names<\/h3>[\s\S]*?<\/section>/)?.[0].includes("data-exercise-admin-merge-open")
-    && !editorHtml.includes("data-exercise-admin-merge-target")
-    && !editorHtml.split('<details class="exercise-admin-advanced">')[1]?.includes("data-exercise-admin-merge"),
-  "exercise editor places the collapsed merge control in Names"
+  exerciseActionCards?.[1].includes("Also match these names")
+    && exerciseActionCards?.[2].includes("data-exercise-admin-merge-open")
+    && !editorHtml.includes("data-exercise-admin-merge-target"),
+  "matching names and the collapsed merge control are sibling form cards"
 );
 assert(
   editorHtml.includes("data-exercise-admin-delete-open") && !editorHtml.includes("data-exercise-admin-delete-confirm"),
@@ -1026,12 +1029,12 @@ assert(
   "exercise editor moves family and archetype selectors into advanced settings"
 );
 assert(
-  editorHtml.includes("Names")
-    && editorHtml.includes("How this should count")
+  editorHtml.includes("How this should count")
     && editorHtml.includes("Muscles worked")
     && editorHtml.includes("Exercise format")
     && editorHtml.includes("Strength / reps")
     && editorHtml.includes("Use bodyweight when reps are logged without a weight")
+    && !editorHtml.includes(">Names</h3>")
     && !editorHtml.includes("Names and matching")
     && !editorHtml.includes("Fatigue and set handling")
     && !editorHtml.includes("Muscle involvement"),

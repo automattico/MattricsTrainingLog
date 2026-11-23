@@ -941,12 +941,8 @@
   gap: var(--space-3);
 }
 
-.exercise-admin-action-panel {
+.exercise-admin-action-grid > .exercise-admin-form-section {
   min-width: 0;
-  padding: 16px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.02);
 }
 
 .exercise-admin-action-panel--danger {

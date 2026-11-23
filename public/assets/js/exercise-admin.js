@@ -1077,17 +1077,12 @@
       <form id="exerciseAdminForm" class="exercise-admin-form" novalidate>
         ${renderSaveAssistant(selected, state, record, editorLabel, saveState, pendingAction)}
 
-        <section class="exercise-admin-form-section">
-          <div class="exercise-admin-form-section-headline">
-            <h3 class="exercise-admin-form-section-title">Names</h3>
-          </div>
-          ${isExercise
-            ? `<div class="exercise-admin-action-grid">
-                <div class="exercise-admin-action-panel">${renderRecognitionNamesSection(record, values, state)}</div>
-                <div class="exercise-admin-action-panel">${renderMergeAction(selected, state)}</div>
-              </div>`
-            : renderRecognitionNamesSection(record, values, state)}
-        </section>
+        ${isExercise
+          ? `<div class="exercise-admin-action-grid">
+              <section class="exercise-admin-form-section">${renderRecognitionNamesSection(record, values, state)}</section>
+              <section class="exercise-admin-form-section">${renderMergeAction(selected, state)}</section>
+            </div>`
+          : `<section class="exercise-admin-form-section">${renderRecognitionNamesSection(record, values, state)}</section>`}
 
         ${isExercise ? `<section class="exercise-admin-form-section">
           <div class="exercise-admin-form-section-headline">
