@@ -942,16 +942,15 @@
     </div>`;
   }
 
-  function renderMergeAction(selected, state, options = {}) {
-    if (!isExerciseKind(selected)) return "";
+  function renderMergeAction(selected, state) {
     const mergeOptions = getMergeTargetOptions(selected);
     const mergeTargetId = getMergeTargetId(selected);
     const isExpanded = state.mergePanelKey === selected.key;
     const pendingAction = state.pendingKey === selected.key ? state.pendingAction : "";
-    const emptyMessage = options.emptyMessage || "No other exercise config is available as a merge target.";
 
     if (!mergeOptions.length) {
-      return `<div class="exercise-admin-empty exercise-admin-empty--compact">${esc(emptyMessage)}</div>`;
+      return `<div class="settings-label">Merge with other exercise</div>
+        <div class="exercise-admin-empty exercise-admin-empty--compact">No configured exercise is available as a merge target.</div>`;
     }
 
     if (!isExpanded) {
@@ -959,8 +958,9 @@
     }
 
     return `<div class="exercise-admin-inline-action">
-      <div class="exercise-admin-inline-copy">Merge this item into another exercise and keep the target as the live config.</div>
-      <select class="settings-input settings-select exercise-admin-merge-select" data-exercise-admin-merge-target>
+      <label class="settings-label" for="exerciseMergeTarget">Merge with other exercise</label>
+      <div class="exercise-admin-inline-copy">The target keeps its settings and will match this exercise’s names.${selected.type === "configured" ? " This exercise’s separate configuration will be removed." : ""}</div>
+      <select class="settings-input settings-select" id="exerciseMergeTarget" data-exercise-admin-merge-target>
         ${mergeOptions.map((option) => `<option value="${escAttr(option.id)}"${mergeTargetId === option.id ? " selected" : ""}>${esc(option.canonicalName)}</option>`).join("")}
       </select>
       <div class="exercise-admin-editor-actions exercise-admin-editor-actions--inline">
@@ -991,18 +991,11 @@
     </div>`;
   }
 
-  function renderAdvancedPanel(selected, state, values, editorLabel, pendingAction, metaBits) {
-    const isExercise = isExerciseKind(selected);
-    const isActivityType = isActivityTypeKind(selected);
-    const mergeAction = renderMergeAction(selected, state, {
-      emptyMessage: "Create at least one exercise config before merging unknowns as aliases.",
-    });
+  function renderAdvancedPanel(selected, values, editorLabel, pendingAction, metaBits) {
     const deleteAction = selected.type === "unknown"
       ? ""
       : `<button type="button" class="settings-save-btn exercise-admin-delete-btn" data-exercise-admin-delete-open${pendingAction === "delete" ? " disabled" : ""}>Delete ${esc(editorLabel.toLowerCase())}</button>`;
-    const isOpen = state.mergePanelKey === selected.key;
-
-    return `<details class="exercise-admin-advanced" ${isOpen ? "open" : ""}>
+    return `<details class="exercise-admin-advanced">
       <summary class="exercise-admin-advanced-summary">Advanced</summary>
       <div class="exercise-admin-advanced-body">
         ${metaBits.length ? `<div class="exercise-admin-editor-meta exercise-admin-editor-meta--advanced">${metaBits.map((bit) => `<span>${bit}</span>`).join("")}</div>` : ""}
@@ -1027,8 +1020,7 @@
             </select>
           </div>
         </div>
-        ${isExercise && (mergeAction || deleteAction) ? `<div class="exercise-admin-advanced-actions">${mergeAction}${deleteAction}</div>` : ""}
-        ${isActivityType && deleteAction ? `<div class="exercise-admin-advanced-actions">${deleteAction}</div>` : ""}
+        ${deleteAction ? `<div class="exercise-admin-advanced-actions">${deleteAction}</div>` : ""}
       </div>
     </details>`;
   }
@@ -1089,7 +1081,12 @@
           <div class="exercise-admin-form-section-headline">
             <h3 class="exercise-admin-form-section-title">Names</h3>
           </div>
-          ${renderRecognitionNamesSection(record, values, state)}
+          ${isExercise
+            ? `<div class="exercise-admin-action-grid">
+                <div class="exercise-admin-action-panel">${renderRecognitionNamesSection(record, values, state)}</div>
+                <div class="exercise-admin-action-panel">${renderMergeAction(selected, state)}</div>
+              </div>`
+            : renderRecognitionNamesSection(record, values, state)}
         </section>
 
         ${isExercise ? `<section class="exercise-admin-form-section">
@@ -1149,7 +1146,7 @@
             </aside>
           </div>
         </section>
-        ${renderAdvancedPanel(selected, state, values, editorLabel, pendingAction, metaBits)}
+        ${renderAdvancedPanel(selected, values, editorLabel, pendingAction, metaBits)}
       </form>
     </section>`;
   }

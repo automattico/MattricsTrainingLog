@@ -999,8 +999,10 @@ assert(
   "exercise editor shows recognition names in display mode by default"
 );
 assert(
-  editorHtml.includes("data-exercise-admin-merge-open") && !editorHtml.includes("data-exercise-admin-merge-target"),
-  "exercise editor keeps merge controls collapsed until explicitly opened"
+  editorHtml.match(/<h3[^>]*>Names<\/h3>[\s\S]*?<\/section>/)?.[0].includes("data-exercise-admin-merge-open")
+    && !editorHtml.includes("data-exercise-admin-merge-target")
+    && !editorHtml.split('<details class="exercise-admin-advanced">')[1]?.includes("data-exercise-admin-merge"),
+  "exercise editor places the collapsed merge control in Names"
 );
 assert(
   editorHtml.includes("data-exercise-admin-delete-open") && !editorHtml.includes("data-exercise-admin-delete-confirm"),
@@ -1133,6 +1135,12 @@ assert(
   "activity type editor uses the activity type mode without exercise-only AI controls"
 );
 assert(
+  activityTypeEditorHtml.includes("Also match these names")
+    && !activityTypeEditorHtml.includes("exercise-admin-action-grid")
+    && !activityTypeEditorHtml.includes("data-exercise-admin-merge"),
+  "activity type editor keeps its full-width names field"
+);
+assert(
   !activityTypeEditorHtml.includes('name="setTypeHandling"') && !activityTypeEditorHtml.includes('name="bodyweightEligible"'),
   "activity type editor hides exercise-only set handling and bodyweight fields"
 );
@@ -1225,13 +1233,53 @@ assert(
   "unknown exercise list items hide seen and suggestion metadata"
 );
 
-const expandedMergeHtml = M.renderExerciseAdminEditorHtmlForTest(M.state.exerciseConfigs[1], {
+const exerciseCatalog = M.state.exerciseConfigs;
+M.state.exerciseConfigs = [
+  { ...exerciseCatalog[0], id: "z-press", canonicalName: "Z Press" },
+  ...exerciseCatalog,
+];
+const expandedMergeHtml = M.renderExerciseAdminShellHtmlForTest({
+  query: "hammer",
+  filter: "exercise",
+  selectedKey: "exercise:hammer-curl",
   mergePanelKey: "exercise:hammer-curl",
   mergeTargetId: "bench-press",
 });
+const mergeOptionIds = (html) => {
+  const picker = html.match(/<select[^>]*data-exercise-admin-merge-target>[\s\S]*?<\/select>/)?.[0] || "";
+  return Array.from(picker.matchAll(/<option value="([^"]+)"/g), (option) => option[1]).join(",");
+};
 assert(
-  expandedMergeHtml.includes("data-exercise-admin-merge-target") && expandedMergeHtml.includes("data-exercise-admin-merge-cancel"),
-  "exercise editor reveals merge target controls only after merge is opened"
+  M.getExerciseAdminListItems("hammer", "exercise").length === 1
+    && mergeOptionIds(expandedMergeHtml) === "bench-press,z-press"
+    && expandedMergeHtml.includes('value="bench-press" selected')
+    && expandedMergeHtml.includes("data-exercise-admin-merge-cancel")
+    && expandedMergeHtml.includes("separate configuration will be removed"),
+  "configured exercise picker includes the full sorted catalog beyond the filtered list and excludes itself"
+);
+const expandedUnknownMergeHtml = M.renderExerciseAdminShellHtmlForTest({
+  query: "bird",
+  filter: "exercise",
+  selectedKey: "unknown:exercise:bird dog",
+  mergePanelKey: "unknown:exercise:bird dog",
+});
+assert(
+  mergeOptionIds(expandedUnknownMergeHtml) === "bench-press,hammer-curl,z-press"
+    && !expandedUnknownMergeHtml.includes("separate configuration will be removed"),
+  "unconfigured exercise picker offers every configured exercise"
+);
+M.state.exerciseConfigs = [exerciseCatalog[1]];
+const noMergeTargetsHtml = M.renderExerciseAdminEditorHtmlForTest(exerciseCatalog[1]);
+M.state.exerciseConfigs = [];
+const noConfiguredExercisesHtml = M.renderExerciseAdminUnknownEditorHtmlForTest(M.state.unknownExercises[0]);
+M.state.exerciseConfigs = exerciseCatalog;
+assert(
+  [noMergeTargetsHtml, noConfiguredExercisesHtml].every((html) =>
+    html.includes("No configured exercise is available as a merge target.")
+      && !html.includes("data-exercise-admin-merge-open")
+      && !html.includes("data-exercise-admin-merge-target")
+  ),
+  "exercise editors show an empty state when there are no eligible merge targets"
 );
 
 const deleteDialogHtml = M.renderExerciseAdminConfirmDialogHtmlForTest({
