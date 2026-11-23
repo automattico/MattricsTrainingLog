@@ -76,7 +76,7 @@
       <div class="connectors-card-head">
         <div>
           <div class="connectors-kicker">Live Connector</div>
-          <h2 class="connectors-title">Hevy</h2>
+          <h3 class="connectors-title">Hevy</h3>
         </div>
         <span class="connectors-badge connectors-badge--${escAttr(statusLabel)}">${esc(statusLabel)}</span>
       </div>
@@ -113,7 +113,7 @@
       <div class="connectors-card-head">
         <div>
           <div class="connectors-kicker">Groundwork</div>
-          <h2 class="connectors-title">Garmin</h2>
+          <h3 class="connectors-title">Garmin</h3>
         </div>
         <span class="connectors-badge connectors-badge--${escAttr(statusLabel)}">${esc(statusLabel)}</span>
       </div>
@@ -130,10 +130,7 @@
   function renderUnavailable(message) {
     return `<section class="connectors-card connectors-card--muted">
       <div class="connectors-card-head">
-        <div>
-          <div class="connectors-kicker">Connectors</div>
-          <h2 class="connectors-title">Unavailable</h2>
-        </div>
+        <h3 class="connectors-title">Unavailable</h3>
       </div>
       <p class="connectors-copy">${esc(message)}</p>
     </section>`;
@@ -198,15 +195,14 @@
           ? renderUnavailable("Connector data is not available yet.")
           : `${renderHevyCard(state, state.data)}${renderGarminCard(state.data)}`;
 
-    mount.innerHTML = `<div class="connectors-shell">
+    mount.innerHTML = `<section class="connectors-shell" aria-labelledby="connectorsHeading">
       <div class="connectors-head">
-        <div class="connectors-kicker">Operator</div>
-        <h1 class="connectors-heading">Connectors</h1>
+        <h2 class="connectors-heading" id="connectorsHeading">Connectors</h2>
         <p class="connectors-intro">Local-only admin for live connector credentials and incremental sync state.</p>
       </div>
       ${renderFeedback(state.feedback)}
       <div class="connectors-grid">${body}</div>
-    </div>`;
+    </section>`;
   };
 
   async function submitAction(action, extraBody) {

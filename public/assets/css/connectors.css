@@ -1,7 +1,7 @@
-/* connectors.css — Local connector admin view */
+/* connectors.css — Connector administration in Settings */
 
 .connectors-shell {
-  padding: var(--space-5) 0 var(--space-8);
+  padding-bottom: var(--space-8);
 }
 
 .connectors-head {

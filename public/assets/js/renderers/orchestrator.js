@@ -1,6 +1,6 @@
 (function () {
   const M = window.Mattrics;
-  const VIEW_IDS = ["dashboard", "fatigue", "sessions", "exercises", "connectors", "ai", "docs", "settings"];
+  const VIEW_IDS = ["dashboard", "fatigue", "sessions", "exercises", "ai", "docs", "settings"];
 
   function isValidView(id) {
     return VIEW_IDS.includes(id) && Boolean(document.getElementById(`view-${id}`));
@@ -8,7 +8,8 @@
 
   function getUrlView() {
     try {
-      const id = new URL(window.location.href).searchParams.get("view");
+      const requestedView = new URL(window.location.href).searchParams.get("view");
+      const id = requestedView === "connectors" ? "settings" : requestedView;
       return isValidView(id) ? id : "";
     } catch {
       return "";
@@ -290,11 +291,9 @@
     if (id === "exercises" && typeof M.renderExerciseAdminView === "function") {
       M.renderExerciseAdminView();
     }
-    if (id === "connectors" && typeof M.renderConnectorsView === "function") {
-      M.renderConnectorsView();
-    }
     if (id === "settings") {
       M.renderSettingsView();
+      M.renderConnectorsView?.();
     }
   };
 
