@@ -57,6 +57,7 @@
       pendingKey: "",
       pendingUnknownId: "",
       mergeTargetId: "",
+      mergeQuery: "",
       titleEditOpen: false,
       titleDraft: "",
       namesEditOpen: false,

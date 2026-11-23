@@ -77,6 +77,7 @@
         pendingKey: "",
         pendingUnknownId: "",
         mergeTargetId: "",
+        mergeQuery: "",
         titleEditOpen: false,
         titleDraft: "",
         namesEditOpen: false,
@@ -498,27 +499,10 @@
     return M.filterExerciseAdminList(toArray(M.state.activityTypeConfigs), query, filter, "activityType");
   }
 
-  function getMergeTargetOptions(selected) {
+  function getMergeTargetOptions(selected, query = "") {
     const selectedExerciseId = selected && selected.kind === "exercise" ? selected.record.id : "";
-    return toArray(M.state.exerciseConfigs)
-      .filter((record) => record && record.id !== selectedExerciseId)
-      .sort((left, right) => String(left.canonicalName || "").localeCompare(String(right.canonicalName || "")));
-  }
-
-  function getMergeTargetId(selected) {
-    const state = getAdminState();
-    const options = getMergeTargetOptions(selected);
-    if (!options.length) {
-      state.mergeTargetId = "";
-      return "";
-    }
-
-    if (options.some((record) => record.id === state.mergeTargetId)) {
-      return state.mergeTargetId;
-    }
-
-    state.mergeTargetId = options[0].id;
-    return state.mergeTargetId;
+    return M.filterExerciseAdminList(M.state.exerciseConfigs, query, "all")
+      .filter((record) => record.id !== selectedExerciseId);
   }
 
   function countUnknownItems() {
@@ -909,27 +893,27 @@
       .join("");
   }
 
-  function renderRecognitionNamesSection(record, values, state) {
+  function renderRecognitionNamesSection(selected, values, state) {
     const mergedNames = getMergedRecognitionNames(values);
     const isEditing = state.namesEditOpen;
     const draftText = isEditing ? state.namesDraft : mergedNames.join("\n");
+    const canMerge = isExerciseKind(selected);
+    const isMergeOpen = canMerge && state.mergePanelKey === selected.key;
+    const isMerging = state.pendingKey === selected.key && state.pendingAction === "merge";
 
-    return `<div class="settings-field">
+    return `<section class="exercise-admin-form-section">
       <div class="exercise-admin-section-head">
-        <label class="settings-label" for="exerciseRecognitionNames">
+        <div class="settings-label" id="exerciseRecognitionNamesLabel">
           Also match these names
           ${tooltip("Other names that should map to this exercise.")}
-        </label>
-        ${isEditing
-          ? ""
-          : renderIconButton(
-              'data-exercise-admin-names-edit-start',
-              'Edit synonyms',
-              `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10.9 2.6a1.5 1.5 0 1 1 2.1 2.1L5.4 12.3 2 13l.7-3.4 8.2-7z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`
-            )}
+        </div>
+        <div class="exercise-admin-name-actions">
+          ${isEditing ? "" : '<button type="button" class="secondary-btn" data-exercise-admin-names-edit-start>Edit names</button>'}
+          ${canMerge ? `<button type="button" class="secondary-btn" aria-controls="exerciseMergePanel" aria-expanded="${isMergeOpen}" aria-label="Merge into another exercise" data-exercise-admin-merge-open${isMerging ? " disabled" : ""}>Merge…</button>` : ""}
+        </div>
       </div>
       ${isEditing
-        ? `<textarea class="settings-input exercise-admin-textarea" id="exerciseRecognitionNames" data-exercise-admin-names-text>${esc(draftText)}</textarea>
+        ? `<textarea class="settings-input exercise-admin-textarea" id="exerciseRecognitionNames" aria-labelledby="exerciseRecognitionNamesLabel" data-exercise-admin-names-text>${esc(draftText)}</textarea>
           <div class="exercise-admin-editor-actions exercise-admin-editor-actions--inline">
             <button type="button" class="settings-save-btn" data-exercise-admin-names-save>Save names</button>
             <button type="button" class="secondary-btn exercise-admin-secondary-btn" data-exercise-admin-names-cancel>Cancel</button>
@@ -939,33 +923,41 @@
               ? esc(mergedNames.join(", "))
               : '<span class="exercise-admin-synonyms-empty">No synonyms added.</span>'}
           </div>`}
-    </div>`;
+      ${isMergeOpen ? renderMergeAction(selected, state, isMerging) : canMerge ? '<div id="exerciseMergePanel" hidden></div>' : ""}
+    </section>`;
   }
 
-  function renderMergeAction(selected, state) {
-    const mergeOptions = getMergeTargetOptions(selected);
-    const mergeTargetId = getMergeTargetId(selected);
-    const isExpanded = state.mergePanelKey === selected.key;
-    const pendingAction = state.pendingKey === selected.key ? state.pendingAction : "";
+  function renderMergeTargetOptions(options, targetId) {
+    return `<option value=""${targetId ? "" : " selected"}>${options.length ? "Choose an exercise" : "No matching exercises"}</option>
+      ${options.map((option) => `<option value="${escAttr(option.id)}"${targetId === option.id ? " selected" : ""}>${esc(option.canonicalName)}</option>`).join("")}`;
+  }
 
-    if (!mergeOptions.length) {
-      return `<div class="settings-label">Merge with other exercise</div>
-        <div class="exercise-admin-empty exercise-admin-empty--compact">No configured exercise is available as a merge target.</div>`;
-    }
+  function renderMergeWarning(selected, target) {
+    if (!target) return "";
+    const sourceName = selected.record.canonicalName || toArray(selected.record.rawNames)[0] || selected.record.normalizedName;
+    return `<strong>${esc(sourceName)} → ${esc(target.canonicalName)}</strong>
+      <div>The source’s names will point to the target, which keeps its settings.${selected.type === "configured" ? " The source’s separate configuration will be removed." : ""}</div>`;
+  }
 
-    if (!isExpanded) {
-      return `<button type="button" class="secondary-btn exercise-admin-secondary-btn" data-exercise-admin-merge-open>Merge with other exercise</button>`;
-    }
-
-    return `<div class="exercise-admin-inline-action">
-      <label class="settings-label" for="exerciseMergeTarget">Merge with other exercise</label>
-      <div class="exercise-admin-inline-copy">The target keeps its settings and will match this exercise’s names.${selected.type === "configured" ? " This exercise’s separate configuration will be removed." : ""}</div>
-      <select class="settings-input settings-select" id="exerciseMergeTarget" data-exercise-admin-merge-target>
-        ${mergeOptions.map((option) => `<option value="${escAttr(option.id)}"${mergeTargetId === option.id ? " selected" : ""}>${esc(option.canonicalName)}</option>`).join("")}
-      </select>
-      <div class="exercise-admin-editor-actions exercise-admin-editor-actions--inline">
-        <button type="button" class="settings-save-btn" data-exercise-admin-merge${pendingAction === "merge" ? " disabled" : ""}>Merge</button>
-        <button type="button" class="secondary-btn exercise-admin-secondary-btn" data-exercise-admin-merge-cancel${pendingAction === "merge" ? " disabled" : ""}>Cancel</button>
+  function renderMergeAction(selected, state, isMerging) {
+    const allTargets = getMergeTargetOptions(selected);
+    const hasTargets = allTargets.length > 0;
+    const options = state.mergeQuery ? getMergeTargetOptions(selected, state.mergeQuery) : allTargets;
+    const target = options.find((option) => option.id === state.mergeTargetId);
+    return `<div class="exercise-admin-inline-action" id="exerciseMergePanel">
+      ${hasTargets
+        ? `<label class="settings-label" for="exerciseMergeSearch">Find a target exercise</label>
+          <input class="settings-input" id="exerciseMergeSearch" type="search" value="${escAttr(state.mergeQuery || "")}" data-exercise-admin-merge-search${isMerging ? " disabled" : ""}>
+          <select class="settings-input settings-select" aria-label="Target exercise" data-exercise-admin-merge-target${isMerging || !options.length ? " disabled" : ""}>
+            ${renderMergeTargetOptions(options, target?.id)}
+          </select>`
+        : '<div class="exercise-admin-empty exercise-admin-empty--compact">No configured exercise is available as a merge target.</div>'}
+      <div>
+        ${hasTargets ? `<div aria-live="polite" class="exercise-admin-merge-warning" data-exercise-admin-merge-warning>${renderMergeWarning(selected, target)}</div>` : ""}
+        <div class="exercise-admin-editor-actions exercise-admin-editor-actions--inline">
+          ${hasTargets ? `<button type="button" class="settings-save-btn" data-exercise-admin-merge${isMerging || !target ? " disabled" : ""}>${isMerging ? "Merging…" : "Confirm merge"}</button>` : ""}
+          <button type="button" class="secondary-btn exercise-admin-secondary-btn" data-exercise-admin-merge-cancel${isMerging ? " disabled" : ""}>Cancel</button>
+        </div>
       </div>
     </div>`;
   }
@@ -1077,12 +1069,7 @@
       <form id="exerciseAdminForm" class="exercise-admin-form" novalidate>
         ${renderSaveAssistant(selected, state, record, editorLabel, saveState, pendingAction)}
 
-        ${isExercise
-          ? `<div class="exercise-admin-action-grid">
-              <section class="exercise-admin-form-section">${renderRecognitionNamesSection(record, values, state)}</section>
-              <section class="exercise-admin-form-section">${renderMergeAction(selected, state)}</section>
-            </div>`
-          : `<section class="exercise-admin-form-section">${renderRecognitionNamesSection(record, values, state)}</section>`}
+        ${renderRecognitionNamesSection(selected, values, state)}
 
         ${isExercise ? `<section class="exercise-admin-form-section">
           <div class="exercise-admin-form-section-headline">
@@ -1291,7 +1278,7 @@
     state.titleDraft = "";
     state.namesEditOpen = false;
     state.namesDraft = "";
-    state.mergePanelKey = "";
+    clearMergePanelState(state);
     state.confirmDialog = {
       open: false,
       type: "",
@@ -1301,20 +1288,14 @@
   }
 
   function clearSelectionUiState() {
-    const state = getAdminState();
-    state.mergeTargetId = "";
     clearInlineEditorState();
     clearFormState();
   }
 
-  function getActiveMergeTargetId(selected) {
-    const state = getAdminState();
-    const targetId = getMergeTargetId(selected);
-    if (!targetId) {
-      throw new Error("Choose a target exercise before merging.");
-    }
-    state.mergeTargetId = targetId;
-    return targetId;
+  function clearMergePanelState(state) {
+    state.mergePanelKey = "";
+    state.mergeTargetId = "";
+    state.mergeQuery = "";
   }
 
   async function refreshUnknownSnapshotAfterMutation() {
@@ -1578,6 +1559,7 @@
     state.namesEditOpen = true;
     state.namesDraft = getMergedRecognitionNames(getSelectedFormValues(selected)).join("\n");
     M.renderExerciseAdminView();
+    document.getElementById("exerciseRecognitionNames")?.focus();
   }
 
   function cancelNamesEdit() {
@@ -1600,17 +1582,31 @@
 
   function openMergePanel() {
     const selected = getSelectedItem();
-    if (!selected) return;
+    if (!isExerciseKind(selected)) return;
     const state = getAdminState();
+    if (state.mergePanelKey === selected.key) {
+      closeMergePanel();
+      return;
+    }
+    clearMergePanelState(state);
     state.mergePanelKey = selected.key;
-    getMergeTargetId(selected);
     M.renderExerciseAdminView();
+    const panel = document.getElementById("exerciseMergePanel");
+    const focusTarget = panel?.querySelector("[data-exercise-admin-merge-search], [data-exercise-admin-merge-cancel]");
+    focusTarget?.focus();
   }
 
   function closeMergePanel() {
-    const state = getAdminState();
-    state.mergePanelKey = "";
+    clearMergePanelState(getAdminState());
     M.renderExerciseAdminView();
+    document.querySelector("[data-exercise-admin-merge-open]")?.focus();
+  }
+
+  function updateMergeConfirmation(mount, selected, target) {
+    const warning = mount.querySelector("[data-exercise-admin-merge-warning]");
+    const confirmButton = mount.querySelector("[data-exercise-admin-merge]");
+    warning.innerHTML = renderMergeWarning(selected, target);
+    confirmButton.disabled = !target;
   }
 
   function openDeleteDialog() {
@@ -1821,19 +1817,17 @@
   async function handleMergeAlias() {
     const state = getAdminState();
     const selected = getSelectedItem();
-    if (!selected || state.pendingAction || !isExerciseKind(selected)) return;
+    if (!isExerciseKind(selected) || selected.key !== state.mergePanelKey || state.pendingAction) return;
 
-    let targetExerciseId = "";
-    try {
-      targetExerciseId = getActiveMergeTargetId(selected);
-    } catch (error) {
-      setFeedback("error", String(error && error.message ? error.message : error));
+    const target = getMergeTargetOptions(selected, state.mergeQuery).find((option) => option.id === state.mergeTargetId);
+    if (!target) {
+      setFeedback("error", "Choose a target exercise before merging.");
       M.renderExerciseAdminView();
       return;
     }
 
-    const target = getExerciseRecordById(targetExerciseId);
-    const targetLabel = target ? target.canonicalName : "the selected target";
+    const targetExerciseId = target.id;
+    const targetLabel = target.canonicalName;
 
     state.pendingAction = "merge";
     state.pendingKey = selected.key;
@@ -2055,6 +2049,21 @@
     });
 
     mount.addEventListener("input", (event) => {
+      const mergeSearch = event.target.closest("[data-exercise-admin-merge-search]");
+      if (mergeSearch) {
+        const state = getAdminState();
+        const selected = getSelectedItem();
+        state.mergeQuery = mergeSearch.value;
+        const options = getMergeTargetOptions(selected, state.mergeQuery);
+        const target = options.find((option) => option.id === state.mergeTargetId);
+        state.mergeTargetId = target?.id || "";
+        const picker = mount.querySelector("[data-exercise-admin-merge-target]");
+        picker.innerHTML = renderMergeTargetOptions(options, target?.id);
+        picker.disabled = !options.length;
+        updateMergeConfirmation(mount, selected, target);
+        return;
+      }
+
       const search = event.target.closest("[data-exercise-admin-query]");
       if (search) {
         const state = getAdminState();
@@ -2108,7 +2117,11 @@
 
       const mergeTarget = event.target.closest("[data-exercise-admin-merge-target]");
       if (mergeTarget) {
-        getAdminState().mergeTargetId = String(mergeTarget.value || "");
+        const state = getAdminState();
+        const selected = getSelectedItem();
+        const target = getMergeTargetOptions(selected, state.mergeQuery).find((option) => option.id === mergeTarget.value);
+        state.mergeTargetId = target?.id || "";
+        updateMergeConfirmation(mount, selected, target);
         return;
       }
 

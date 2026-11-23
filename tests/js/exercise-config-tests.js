@@ -998,14 +998,15 @@ assert(
   editorHtml.includes("data-exercise-admin-names-edit-start") && !editorHtml.includes("data-exercise-admin-names-text"),
   "exercise editor shows recognition names in display mode by default"
 );
-const exerciseActionCards = editorHtml.match(
-  /<div class="exercise-admin-action-grid">\s*<section class="exercise-admin-form-section">([\s\S]*?)<\/section>\s*<section class="exercise-admin-form-section">([\s\S]*?)<\/section>/
-);
+const namesCard = editorHtml.match(/<section class="exercise-admin-form-section">[\s\S]*?<\/section>/)?.[0];
+const namesActions = namesCard?.match(/<div class="exercise-admin-name-actions">[\s\S]*?<\/div>/)?.[0];
 assert(
-  exerciseActionCards?.[1].includes("Also match these names")
-    && exerciseActionCards?.[2].includes("data-exercise-admin-merge-open")
+  namesCard?.includes("Also match these names")
+    && namesActions?.includes("data-exercise-admin-names-edit-start>Edit names")
+    && namesActions?.includes("data-exercise-admin-merge-open>Merge…")
+    && namesCard.includes('id="exerciseMergePanel" hidden')
     && !editorHtml.includes("data-exercise-admin-merge-target"),
-  "matching names and the collapsed merge control are sibling form cards"
+  "the full-width names card groups Edit names and Merge in the header and keeps the picker collapsed"
 );
 assert(
   editorHtml.includes("data-exercise-admin-delete-open") && !editorHtml.includes("data-exercise-admin-delete-confirm"),
@@ -1139,7 +1140,6 @@ assert(
 );
 assert(
   activityTypeEditorHtml.includes("Also match these names")
-    && !activityTypeEditorHtml.includes("exercise-admin-action-grid")
     && !activityTypeEditorHtml.includes("data-exercise-admin-merge"),
   "activity type editor keeps its full-width names field"
 );
@@ -1238,7 +1238,7 @@ assert(
 
 const exerciseCatalog = M.state.exerciseConfigs;
 M.state.exerciseConfigs = [
-  { ...exerciseCatalog[0], id: "z-press", canonicalName: "Z Press" },
+  { ...exerciseCatalog[0], id: "z-press", canonicalName: "Z Press", aliases: ["Floor Shoulder Press"] },
   ...exerciseCatalog,
 ];
 const expandedMergeHtml = M.renderExerciseAdminShellHtmlForTest({
@@ -1246,7 +1246,6 @@ const expandedMergeHtml = M.renderExerciseAdminShellHtmlForTest({
   filter: "exercise",
   selectedKey: "exercise:hammer-curl",
   mergePanelKey: "exercise:hammer-curl",
-  mergeTargetId: "bench-press",
 });
 const mergeOptionIds = (html) => {
   const picker = html.match(/<select[^>]*data-exercise-admin-merge-target>[\s\S]*?<\/select>/)?.[0] || "";
@@ -1255,31 +1254,62 @@ const mergeOptionIds = (html) => {
 assert(
   M.getExerciseAdminListItems("hammer", "exercise").length === 1
     && mergeOptionIds(expandedMergeHtml) === "bench-press,z-press"
-    && expandedMergeHtml.includes('value="bench-press" selected')
+    && expandedMergeHtml.includes('value="" selected>Choose an exercise')
+    && expandedMergeHtml.includes("data-exercise-admin-merge disabled>Confirm merge")
     && expandedMergeHtml.includes("data-exercise-admin-merge-cancel")
-    && expandedMergeHtml.includes("separate configuration will be removed"),
-  "configured exercise picker includes the full sorted catalog beyond the filtered list and excludes itself"
+    && !expandedMergeHtml.includes("separate configuration will be removed"),
+  "configured exercise picker lists every eligible target alphabetically and requires an explicit selection"
+);
+const filteredMergeHtml = M.renderExerciseAdminEditorHtmlForTest(exerciseCatalog[1], {
+  mergePanelKey: "exercise:hammer-curl",
+  mergeQuery: "floor shoulder",
+  mergeTargetId: "z-press",
+});
+assert(
+  mergeOptionIds(filteredMergeHtml) === "z-press"
+    && filteredMergeHtml.includes('value="z-press" selected')
+    && filteredMergeHtml.includes("Hammer Curl → Z Press")
+    && filteredMergeHtml.includes("separate configuration will be removed")
+    && filteredMergeHtml.includes("data-exercise-admin-merge>Confirm merge"),
+  "merge search matches aliases and an explicit selection reveals the source and target warning"
+);
+const noSearchMatchesHtml = M.renderExerciseAdminEditorHtmlForTest(exerciseCatalog[1], {
+  mergePanelKey: "exercise:hammer-curl",
+  mergeQuery: "no known target",
+  mergeTargetId: "z-press",
+});
+assert(
+  noSearchMatchesHtml.includes("data-exercise-admin-merge-target disabled")
+    && noSearchMatchesHtml.includes("No matching exercises")
+    && noSearchMatchesHtml.includes("data-exercise-admin-merge disabled>Confirm merge"),
+  "merge search disables confirmation when the selected target is outside the results"
 );
 const expandedUnknownMergeHtml = M.renderExerciseAdminShellHtmlForTest({
   query: "bird",
   filter: "exercise",
   selectedKey: "unknown:exercise:bird dog",
   mergePanelKey: "unknown:exercise:bird dog",
+  mergeTargetId: "bench-press",
 });
 assert(
   mergeOptionIds(expandedUnknownMergeHtml) === "bench-press,hammer-curl,z-press"
+    && expandedUnknownMergeHtml.includes("Bird Dog → Bench Press")
     && !expandedUnknownMergeHtml.includes("separate configuration will be removed"),
   "unconfigured exercise picker offers every configured exercise"
 );
 M.state.exerciseConfigs = [exerciseCatalog[1]];
-const noMergeTargetsHtml = M.renderExerciseAdminEditorHtmlForTest(exerciseCatalog[1]);
+const noMergeTargetsHtml = M.renderExerciseAdminEditorHtmlForTest(exerciseCatalog[1], {
+  mergePanelKey: "exercise:hammer-curl",
+});
 M.state.exerciseConfigs = [];
-const noConfiguredExercisesHtml = M.renderExerciseAdminUnknownEditorHtmlForTest(M.state.unknownExercises[0]);
+const noConfiguredExercisesHtml = M.renderExerciseAdminUnknownEditorHtmlForTest(M.state.unknownExercises[0], {
+  mergePanelKey: `unknown:${M.state.unknownExercises[0].id}`,
+});
 M.state.exerciseConfigs = exerciseCatalog;
 assert(
   [noMergeTargetsHtml, noConfiguredExercisesHtml].every((html) =>
     html.includes("No configured exercise is available as a merge target.")
-      && !html.includes("data-exercise-admin-merge-open")
+      && html.includes("data-exercise-admin-merge-cancel")
       && !html.includes("data-exercise-admin-merge-target")
   ),
   "exercise editors show an empty state when there are no eligible merge targets"
