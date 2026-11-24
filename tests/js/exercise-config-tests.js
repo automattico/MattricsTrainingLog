@@ -71,6 +71,8 @@ const M = loadScriptContext([
   "public/assets/js/core/hevy-parser.js",
   "public/assets/js/core/fatigue-engine.js",
   "public/assets/js/core/fatigue-tiers.js",
+  "public/assets/js/body-map-team-buildr.js",
+  "public/assets/js/renderers/fatigue-view.js",
   "public/assets/js/exercise-admin.js",
 ]);
 
@@ -106,6 +108,38 @@ assert(
 );
 assert(M.state.exerciseConfigMeta.source === "canonical", "exercise config meta preserves the last read source when write responses omit it");
 assert(M.state.exerciseConfigMeta.lastSuccessfulSyncAt === "2026-06-07T08:00:00Z", "exercise config meta preserves the last canonical sync timestamp when write responses omit it");
+
+{
+  const exerciseCases = [
+    ["Wrist Curl", 1], ["Farmer's Walk", 0.65], ["Hammer Curl", 0.45],
+    ["Biceps Curl", 0.20], ["Shoulder Press", 0.08], ["Leg Press", 0],
+    ["Unrecognized Exercise", 0],
+  ];
+  const exercises = exerciseCases.map(([canonicalName], index) => ({
+    id: `forearm-test-${index}`,
+    canonicalName,
+    muscleWeights: { biceps: 1 },
+  }));
+  const merged = { id: "merged-exercise", canonicalName: "Cable Pull", aliases: ["Lat Pulldown"], muscleWeights: { upperBack: 1 } };
+  const mergedCurl = { canonicalName: "Dumbbell Biceps Curl", aliases: ["DB Curl", "Cable Hammer Curl"], muscleWeights: { biceps: 1 } };
+  const excluded = { canonicalName: "Wrist Extension", fatigueImpact: "none", muscleWeights: {} };
+  const soccer = { canonicalName: "Soccer", muscleWeights: { calves: 0.45 } };
+  M.indexExerciseConfigs({ exercises: [...exercises, merged, mergedCurl, excluded], activityTypes: [soccer] });
+  exerciseCases.forEach(([name, expected]) => {
+    assert(M.resolveExerciseConfig(name)?.muscleWeights.forearms === expected, `${name} gets the expected forearm weight`);
+  });
+  assert(M.resolveExerciseConfig("Wrist Extension").muscleWeights.forearms === 0, "excluded exercises get zero forearm involvement");
+  assert(M.resolveExerciseConfig("Lat Pulldown")?.muscleWeights.forearms === 0.45, "merged aliases can inform the forearm default");
+  assert(M.resolveExerciseConfig("Cable Hammer Curl")?.muscleWeights.forearms === 0.45, "a merged hammer curl retains its default on a named biceps curl");
+  assert(!Object.hasOwn(merged.muscleWeights, "forearms"), "prefill leaves the original catalog record intact");
+  assert(M.resolveActivityTypeConfig("Soccer").muscleWeights.forearms === undefined, "exercise defaults leave Soccer activity mappings intact");
+  assert(!M.renderActivityTypeAdminEditorHtmlForTest(soccer).includes('name="muscle-forearms"'), "activity type editor omits the Forearms field");
+
+  const overridden = { ...merged, muscleWeights: { ...merged.muscleWeights, forearms: 0 } };
+  M.indexExerciseConfigs({ ...payload, exercises: [...payload.exercises, overridden] });
+  assert(M.resolveExerciseConfig("Lat Pulldown").muscleWeights.forearms === 0, "explicit zero overrides prefill after reindexing");
+  assert(M.resolveExerciseConfig("Hammer Curl").muscleWeights.forearms === 0.45, "the generic Curl record picks up its merged hammer-curl default");
+}
 
 assert(M.normalizeExerciseConfigName("CableLateralRaise") === "cable lateral raise", "camelCase names are split and lowercased");
 assert(M.normalizeExerciseConfigName("HIITRun") === "hiit run", "acronym-prefixed camelCase names are split");
@@ -576,6 +610,38 @@ assert(
   Math.abs(lightBenchStimulus.localStimulus.chest - 0.078) < 0.001,
   "parsed strength stimulus applies min relative clamp for light sets"
 );
+
+{
+  const rowSession = {
+    Type: "WeightTraining", Date: todayIso, "Duration (min)": "45",
+    Description: "Logged with Hevy\n\nRow\n80 kg x 10",
+  };
+  const getLoad = (activity) => M.getMuscleFatigueAnalysis([activity]).regions.find((region) => region.key === "forearms");
+  const present = getLoad(rowSession);
+  const older = getLoad({ ...rowSession, Date: M.shiftDate(todayIso, -3) });
+  assert(present.rawLoad > older.rawLoad && older.rawLoad > 0, "mapped row work loads the forearms and decays over time");
+
+  const withForearms = M.getActivityFatigueStimulus(rowSession, { allActivities: [] });
+  M.indexExerciseConfigs({ ...payload, exercises: payload.exercises.map((record) => ({
+    ...record, muscleWeights: { ...record.muscleWeights, forearms: 0 },
+  })) });
+  const withoutForearms = M.getActivityFatigueStimulus(rowSession, { allActivities: [] });
+  assert(withForearms.localStimulus.forearms > 0 && withoutForearms.localStimulus.forearms === 0, "forearm weight controls local forearm stimulus");
+  assert(withForearms.systemicStimulus === withoutForearms.systemicStimulus
+    && Object.keys(withoutForearms.localStimulus).every((key) => key === "forearms" || withForearms.localStimulus[key] === withoutForearms.localStimulus[key]),
+  "forearm prefill preserves the other local and systemic stimulus");
+  M.indexExerciseConfigs(payload);
+
+  for (const side of ["front", "back"]) {
+    const figure = M.renderFatigueBodyFigure({ regions: [present] }, side);
+    assert((figure.match(/data-region="forearms"/g) || []).length === 2
+      && (figure.match(/data-muscle-label="Forearms"/g) || []).length === 2, `both ${side} arms expose the shared fatigue tooltip`);
+  }
+  const editor = M.renderExerciseAdminEditorHtmlForTest(M.resolveExerciseConfig("Row"));
+  assert(editor.includes('name="muscle-forearms" value="0.45"')
+    && (editor.match(/<title>Forearms: Secondary<\/title>/g) || []).length === 4,
+  "Exercise Manager displays the prefilled weight and all four preview highlights");
+}
 
 M.setActivityChildren([
   {

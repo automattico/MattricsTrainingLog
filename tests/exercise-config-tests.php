@@ -564,7 +564,7 @@ expect_runtime_exception(
         mattrics_decode_unknown_suggestion_output(json_encode([
             'canonicalName' => 'Bad Curl',
             'aliases' => [],
-            'muscleWeights' => ['forearms' => 1.0],
+            'muscleWeights' => ['invalidMuscle' => 1.0],
             'bodyweightEligible' => false,
             'setTypeHandling' => 'weight_reps',
             'confidence' => 0.5,
@@ -573,6 +573,22 @@ expect_runtime_exception(
     },
     'AI response decoder rejects invalid muscle keys'
 );
+
+$forearmEdit = [
+    'canonicalName' => 'Bench Press',
+    'aliases' => ['Push Up'],
+    'matchTerms' => ['bench'],
+    'muscleWeights' => ['chest' => 1, 'forearms' => 0.45],
+    'bodyweightEligible' => true,
+    'setTypeHandling' => 'weight_reps',
+];
+mattrics_update_exercise_config_record('bench-press', $forearmEdit);
+test_assert(mattrics_find_exercise_config_by_id('bench-press')['muscleWeights']['forearms'] === 0.45, 'exercise repository saves and reloads a positive forearm weight');
+$forearmEdit['muscleWeights']['forearms'] = 0;
+mattrics_update_exercise_config_record('bench-press', $forearmEdit);
+unset($forearmEdit['muscleWeights']['forearms']);
+mattrics_update_exercise_config_record('bench-press', $forearmEdit);
+test_assert(mattrics_find_exercise_config_by_id('bench-press')['muscleWeights']['forearms'] === 0.0, 'exercise repository preserves an explicit zero, including when an older client omits it');
 
 $result = run_php_fixture(dirname(__DIR__) . '/tests/fixtures/run-exercises-endpoint.php');
 if (!$result['started']) {

@@ -35,7 +35,7 @@ After one half-life, 50% of the stimulus remains. After two, 25%.
 |---|---|
 | 72 h | Chest, upper back |
 | 60 h | Deltoids, trapezius, calves |
-| 48 h | Triceps, biceps, abs, obliques, gluteal, quadriceps, hamstrings |
+| 48 h | Triceps, biceps, forearms, abs, obliques, gluteal, quadriceps, hamstrings |
 
 ---
 
@@ -86,6 +86,7 @@ The per-muscle "fully loaded" reference values (used to scale rawLoad to a 0–1
 | Trapezius | 2.30 |
 | Triceps | 2.50 |
 | Biceps | 2.50 |
+| Forearms | 2.50 |
 | Calves | 1.55 |
 | Adductors | 3.20 |
 | Obliques | 3.50 |
@@ -93,6 +94,8 @@ The per-muscle "fully loaded" reference values (used to scale rawLoad to a 0–1
 ---
 
 ## Exercise-Admin Muscle Editing
+
+Forearms has one fatigue score across both arms. Existing exercise records without a Forearms weight get an estimated value from their canonical name or a recognized alias. Saving the exercise stores its selected value, including zero. Activity-type records use their existing weights.
 
 The exercise admin UI no longer asks for free-form decimals. It uses five semantic buckets that still save as numeric multipliers, not percentages, so the fatigue engine keeps working on numbers while the editor stays readable.
 

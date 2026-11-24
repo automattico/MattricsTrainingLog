@@ -9,6 +9,7 @@ const MATTRICS_EXERCISE_CONFIG_ALLOWED_MUSCLES = [
     'upperBack',
     'triceps',
     'biceps',
+    'forearms',
     'abs',
     'obliques',
     'lowerBack',
@@ -1232,6 +1233,9 @@ function mattrics_update_exercise_config_record(string $id, array $input): array
 
     $fatigueImpact = mattrics_normalize_fatigue_impact($input, 'Exercise update');
     $muscleWeights = mattrics_normalize_semantic_muscle_weights_with_options($input, 'Exercise update', $fatigueImpact === 'none');
+    if (!array_key_exists('forearms', $muscleWeights) && isset($existing['muscleWeights']['forearms'])) {
+        $muscleWeights['forearms'] = $existing['muscleWeights']['forearms'];
+    }
 
     if (!array_key_exists('bodyweightEligible', $input) || !is_bool($input['bodyweightEligible'])) {
         throw new RuntimeException('bodyweightEligible must be boolean.');

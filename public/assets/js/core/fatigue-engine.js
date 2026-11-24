@@ -333,10 +333,11 @@
         if (match.fatigueImpact === "none") return;
         const weights = match.muscleWeights || match.weights || {};
         const setTypeHandling = String(match.setTypeHandling || "weight_reps");
-        const mappedNormalizations = Object.keys(weights)
-          .map((key) => configFatigue.normalizationLoad[key] || 0)
-          .filter(Boolean);
-        const smallThreshold = (Math.max(...mappedNormalizations, 0) || 0) * (configFatigue.smallThresholdRatio || 0.02);
+        const existingKeys = Object.keys(weights).filter((key) => key !== "forearms");
+        const forearmOnly = weights.forearms > 0 && !existingKeys.some((key) => weights[key] > 0);
+        const thresholdKeys = forearmOnly ? ["forearms"] : existingKeys;
+        const thresholdLoad = Math.max(0, ...thresholdKeys.map((key) => configFatigue.normalizationLoad[key] || 0));
+        const smallThreshold = thresholdLoad * (configFatigue.smallThresholdRatio || 0.02);
         let parsedExerciseLoad = 0;
         let parsedSetCount = 0;
         let timeDurationMinutes = 0;

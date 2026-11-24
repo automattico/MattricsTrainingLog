@@ -128,8 +128,40 @@
     return Object.values(editorState).some((item) => item && item.involved && item.levelKey === "primary");
   };
 
+  const forearmWeightByMovement = [
+    // These movements can share words with loaded upper-body exercises.
+    [0, /\b(?:leg (?:curls?|press(?:es)?|extensions?)|hamstring curls?|calf (?:press(?:es)?|raises?)|pallof press|(?:leg|knee) raises?)\b/],
+    [1, /\b(?:wrist (?:curls?|extensions?|rollers?|flexion|rotation)|forearm (?:curls?|extensions?)|grippers?|grip (?:training|squeezes?)|hand grips?|plate pinches?)\b/],
+    [0.65, /\b(?:(?:farmer(?:s| s)?|suitcase) (?:walks?|carr(?:y|ies)|holds?)|(?:loaded|dumbbell|kettlebell) carr(?:y|ies)|(?:dead|active|towel|bar) hangs?)\b/],
+    [0.45, /\b(?:dead\s?lifts?|rdl|rows?|(?:chin|pull)\s?ups?|pull\s?downs?|face pulls?|hammer curls?)\b/],
+    [0.20, /\b(?:curls?|triceps? extensions?|push\s?downs?|skull crushers?)\b/],
+    [0.08, /\b(?:press(?:es)?|lateral raises?|(?:external|internal|shoulder) (?:shoulder )?rotations?)\b/],
+  ];
+
+  function prefillExerciseForearms(record) {
+    const weights = record?.muscleWeights;
+    if (!weights || Object.prototype.hasOwnProperty.call(weights, "forearms")) return record;
+
+    let forearms = 0;
+    if (record.fatigueImpact !== "none") {
+      const canonicalName = M.normalizeExerciseConfigName(record.canonicalName);
+      const aliases = ensureArray(record.aliases).map(M.normalizeExerciseConfigName);
+      for (const name of [canonicalName, ...aliases]) {
+        const match = forearmWeightByMovement.find(([, pattern]) => pattern.test(name));
+        if (!match) continue;
+        forearms = match[0];
+        break;
+      }
+      // Curl variants share a single weight when the hammer curl is merged into them.
+      if (forearms === 0.20 && /\bcurls?\b/.test(canonicalName) && aliases.some((name) => /\bhammer curls?\b/.test(name))) {
+        forearms = 0.45;
+      }
+    }
+    return { ...record, muscleWeights: { ...weights, forearms } };
+  }
+
   M.indexExerciseConfigs = function indexExerciseConfigs(payload) {
-    const exercises = ensureArray(payload && payload.exercises);
+    const exercises = ensureArray(payload && payload.exercises).map(prefillExerciseForearms);
     const activityTypes = ensureArray(payload && payload.activityTypes);
     const unknowns = ensureArray(payload && payload.unknowns);
     const meta = payload && payload.meta && typeof payload.meta === "object" ? payload.meta : {};

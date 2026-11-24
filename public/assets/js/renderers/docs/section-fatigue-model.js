@@ -60,7 +60,7 @@ remaining        = stimulus × 0.5^(hoursElapsed / adjustedHalfLife)</div>
         ${M.docsTable([
           ["72 h", "Chest, upper back, lower back, quadriceps, hamstrings, gluteal, adductors."],
           ["60 h", "Deltoids, trapezius, calves."],
-          ["48 h", "Triceps, biceps, abs, obliques."],
+          ["48 h", "Triceps, biceps, forearms, abs, obliques."],
         ])}
         <p class="docs-copy">
           Activity timestamps are normalized to noon on the activity date for simple sheet date handling —
@@ -138,7 +138,7 @@ remaining        = stimulus × 0.5^(hoursElapsed / adjustedHalfLife)</div>
         ${M.docsTable([
           ["Chest", "3.50"], ["Upper back", "3.50"], ["Gluteal", "7.50"], ["Quadriceps", "5.50"],
           ["Abs", "5.00"], ["Hamstrings", "4.00"], ["Obliques", "3.50"], ["Adductors", "3.20"],
-          ["Deltoids", "2.80"], ["Lower back", "2.50"], ["Triceps", "2.50"], ["Biceps", "2.50"],
+          ["Deltoids", "2.80"], ["Lower back", "2.50"], ["Triceps", "2.50"], ["Biceps", "2.50"], ["Forearms", "2.50"],
           ["Trapezius", "2.30"], ["Calves", "1.55"],
         ])}
       `)}
