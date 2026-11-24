@@ -10,6 +10,7 @@ Earlier Foundation/Postgres slices established canonical schema experiments, imp
 
 | Slice | State | Current note |
 |---|---|---|
+| Forearms fatigue | verified locally | One score across both arms, exercise prefill from each environment's catalog, and saved overrides including zero. The production snapshot, local catalog rehearsals, and staging integration passed. [Slice report](slices/forearms-fatigue-report.md) |
 | Foundation Docker/Postgres runtime | removed | Docker, Compose, schema, migration, and CLI runtime scaffolding were retired; API compatibility modules remain |
 | Runtime diagnostics | removed | Diagnostics are not public product endpoints |
 | Live connectors | retained | Authenticated connector administration remains a product feature |

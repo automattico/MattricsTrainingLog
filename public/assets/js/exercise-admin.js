@@ -823,7 +823,7 @@
     </div>`;
   }
 
-  function renderMuscleWeightInputs(values, errors) {
+  function renderMuscleWeightInputs(values, errors, isExercise) {
     const levels = typeof M.getExerciseMuscleUiLevels === "function" ? M.getExerciseMuscleUiLevels() : [];
     const defaultLevel = typeof M.getExerciseMuscleUiLevel === "function"
       ? M.getExerciseMuscleUiLevel(M.EXERCISE_MUSCLE_DEFAULT_LEVEL)
@@ -833,7 +833,7 @@
       : {};
 
     return M.MUSCLE_REGIONS
-      .slice()
+      .filter((region) => isExercise || region.key !== "forearms")
       .sort((left, right) => (left.order || 0) - (right.order || 0))
       .map((region) => {
         const current = editorState[region.key] || {
@@ -1116,7 +1116,7 @@
           <div class="exercise-admin-muscle-workspace">
             <div class="exercise-admin-muscle-panel">
               <div class="exercise-admin-muscle-grid">
-                ${renderMuscleWeightInputs(values, errors)}
+                ${renderMuscleWeightInputs(values, errors, isExercise)}
               </div>
               ${renderMuscleErrorMessage(errors, values.muscleWeights, values.fatigueImpact)}
             </div>
