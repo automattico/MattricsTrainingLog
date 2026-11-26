@@ -85,7 +85,7 @@ On 2026-11-23 the app gate and 29 synthetic Postgres assertions passed, includin
 
 ## Next slice
 
-Use the [hosted application verification handoff](slices/next-main-review-fixes-prompt.md). The private host path, web PHP, outbound provider access, and host-side Postgres TLS probe passed. The actual application TLS connection, hosted FIT decode, and full app-open timing remain open.
+Use the [hosted cutover verification handoff](slices/next-cutover-prep-hosted-prompt.md). The private host path, web PHP, outbound provider access, and host-side Postgres TLS probe passed. The application builder also passed both controls in the disposable TLS fixture. The hosted application connection, FIT decode, and full app-open timing remain open.
 
 The [Hevy REST sample](slices/hevy-rest-preflight-report.md) verified pagination, workout and exercise template IDs, and structured sets. Both exports are present. The [Garmin inventory](slices/garmin-archive-inventory-report.md) records workout and wellness coverage and exact FIT overlaps with the [Strava archive](slices/strava-archive-inventory-report.md).
 
