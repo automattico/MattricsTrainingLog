@@ -37,13 +37,13 @@ done
 [ -z "${SFTP_PASSWORD:-}" ] || die "password authentication is forbidden; remove SFTP_PASSWORD"
 [ -f "$SFTP_KEY_PATH" ] || die "SSH key not found: $SFTP_KEY_PATH"
 grep -q '^[^#[:space:]]' "$SFTP_KNOWN_HOSTS" 2>/dev/null || die "no host key pinned in $SFTP_KNOWN_HOSTS"
-command -v lftp >/dev/null 2>&1 || die "lftp is required"
 
 case "$MATTRICS_REMOTE_DIR" in
   sites/mattrics) : ;;
   public_html*|*/public_html*|/*|*..*|'') die "MATTRICS_REMOTE_DIR must be exactly sites/mattrics and never public_html" ;;
   *) die "MATTRICS_REMOTE_DIR must be exactly sites/mattrics" ;;
 esac
+command -v lftp >/dev/null 2>&1 || die "lftp is required"
 
 revision=$(git rev-parse --verify --end-of-options "$release_ref^{commit}") || die 'expected a release commit'
 [ -z "$(git status --porcelain --untracked-files=no)" ] || die 'commit tracked changes before deploying'
