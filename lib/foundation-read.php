@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/hevy-import-parser.php';
+require_once __DIR__ . '/postgres-connection.php';
 
 const MATTRICS_FOUNDATION_READ_MUSCLE_COLUMN_MAP = [
     'chest' => 'chest_weight',
@@ -47,43 +48,13 @@ function mattrics_foundation_read_enabled(): bool
 
 function mattrics_foundation_read_connect(?string $databaseUrl = null): PDO
 {
-    $databaseUrl = trim((string) ($databaseUrl ?? mattrics_foundation_read_database_url()));
-    if ($databaseUrl === '') {
-        throw new RuntimeException('Canonical foundation database URL is not configured.');
-    }
-
-    if (!extension_loaded('pdo_pgsql')) {
-        throw new RuntimeException('Canonical foundation reads require the pdo_pgsql PHP extension.');
-    }
-
-    $parts = parse_url($databaseUrl);
-    if ($parts === false || ($parts['scheme'] ?? '') !== 'postgres') {
-        throw new RuntimeException('foundation_database_url must use the postgres:// scheme.');
-    }
-
-    $host = (string) ($parts['host'] ?? '');
-    $port = (int) ($parts['port'] ?? 5432);
-    $database = isset($parts['path']) ? ltrim((string) $parts['path'], '/') : '';
-    $user = rawurldecode((string) ($parts['user'] ?? ''));
-    $password = rawurldecode((string) ($parts['pass'] ?? ''));
-
-    if ($host === '' || $database === '' || $user === '') {
-        throw new RuntimeException('foundation_database_url must include host, database, and username.');
-    }
-
-    $dsn = sprintf('pgsql:host=%s;port=%d;dbname=%s', $host, $port, $database);
-    $pdo = new PDO($dsn, $user, $password, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
-    $pdo->exec("SET TIME ZONE 'UTC'");
-
-    return $pdo;
+    return mattrics_foundation_connect($databaseUrl ?? mattrics_foundation_read_database_url());
 }
 
 function mattrics_foundation_read_context(): array
 {
-    $cacheKey = mattrics_foundation_read_database_url() . '|' . mattrics_foundation_read_user_key();
+    $linkedWorkouts = (mattrics_load_config()['foundation_linked_workouts'] ?? false) === true;
+    $cacheKey = mattrics_foundation_read_database_url() . '|' . mattrics_foundation_read_user_key() . '|' . (int) $linkedWorkouts;
     $cached = $GLOBALS['mattrics_foundation_read_context'] ?? null;
     if (is_array($cached) && ($cached['cacheKey'] ?? '') === $cacheKey) {
         return $cached;
@@ -99,6 +70,7 @@ function mattrics_foundation_read_context(): array
         'userKey' => $userKey,
         'userId' => $user['id'],
         'timezoneName' => $user['timezoneName'],
+        'linkedWorkouts' => $linkedWorkouts,
     ];
     $GLOBALS['mattrics_foundation_read_context'] = $context;
 
@@ -264,20 +236,34 @@ function mattrics_foundation_read_map_activity_type_record(array $row, array $al
 
 function mattrics_foundation_read_map_child_set(array $row): array
 {
-    return [
+    $parsedKind = (string) ($row['parsed_kind'] ?? '');
+    $reps = mattrics_foundation_read_int_or_null($row['reps'] ?? null);
+    $weightKg = mattrics_foundation_read_float_or_null($row['weight_kg'] ?? null);
+    $effortFactor = mattrics_foundation_read_float_or_null($row['effort_factor'] ?? null);
+    $computedLoad = mattrics_foundation_read_float_or_null($row['computed_load'] ?? null);
+
+    // Earlier linked imports stored the raw weight but calculated load with the effective weight.
+    if ($parsedKind === 'parsed' && ($weightKg ?? 0) <= 0 && $reps > 0 && $effortFactor > 0 && $computedLoad > 0) {
+        $weightKg = $computedLoad / ($reps * $effortFactor);
+    }
+    $set = [
         'id' => (string) ($row['set_id'] ?? ''),
         'setOrder' => mattrics_foundation_read_int_or_null($row['set_order'] ?? null),
-        'parsedKind' => (string) ($row['parsed_kind'] ?? ''),
+        'parsedKind' => $parsedKind,
         'sourceSetText' => ($row['source_set_text'] ?? null) !== null ? (string) $row['source_set_text'] : null,
-        'reps' => mattrics_foundation_read_int_or_null($row['reps'] ?? null),
-        'weightKg' => mattrics_foundation_read_float_or_null($row['weight_kg'] ?? null),
+        'reps' => $reps,
+        'weightKg' => $weightKg,
         'durationMinutes' => mattrics_foundation_read_float_or_null($row['duration_minutes'] ?? null),
         'distanceKm' => mattrics_foundation_read_float_or_null($row['distance_km'] ?? null),
         'rpe' => mattrics_foundation_read_float_or_null($row['rpe'] ?? null),
-        'effortFactor' => mattrics_foundation_read_float_or_null($row['effort_factor'] ?? null),
-        'computedLoad' => mattrics_foundation_read_float_or_null($row['computed_load'] ?? null),
+        'effortFactor' => $effortFactor,
+        'computedLoad' => $computedLoad,
         'notes' => ($row['notes'] ?? null) !== null ? (string) $row['notes'] : null,
     ];
+    if (isset($row['set_type'])) {
+        $set['setType'] = (string) $row['set_type'];
+    }
+    return $set;
 }
 
 function mattrics_foundation_read_map_activity_children(array $rows): array
@@ -311,6 +297,14 @@ function mattrics_foundation_read_map_activity_children(array $rows): array
                 'normalizedSourceExerciseName' => (string) ($row['normalized_source_exercise_name'] ?? ''),
                 'sets' => [],
             ];
+            if (isset($row['provider_template_id'])) {
+                $activities[$activityDbId]['exercises'][$activityExerciseId]['providerTemplateId'] =
+                    (string) $row['provider_template_id'];
+                if (isset($row['exercise_data_source_id'])) {
+                    $activities[$activityDbId]['exercises'][$activityExerciseId]['hevyTemplateKey'] =
+                        $row['exercise_data_source_id'] . ':' . $row['provider_template_id'];
+                }
+            }
         }
 
         if (($row['set_id'] ?? null) !== null && $row['set_id'] !== '') {
@@ -626,7 +620,7 @@ function mattrics_foundation_read_activity_metadata_donor(array $winner, array $
     return null;
 }
 
-function mattrics_foundation_read_build_selection_state(array $rows, string $timezoneName): array
+function mattrics_foundation_read_build_selection_state(array $rows, string $timezoneName, bool $linkedWorkouts = false): array
 {
     $selectedById = [];
     $signatureBuckets = [];
@@ -639,7 +633,7 @@ function mattrics_foundation_read_build_selection_state(array $rows, string $tim
             continue;
         }
 
-        $signaturePayload = mattrics_foundation_read_activity_signature_payload($row, $timezoneName);
+        $signaturePayload = $linkedWorkouts ? null : mattrics_foundation_read_activity_signature_payload($row, $timezoneName);
         if (!is_array($signaturePayload)) {
             $selectedById[$activityId] = $row;
             continue;
@@ -733,7 +727,24 @@ function mattrics_foundation_read_all_activity_rows(): array
         return $cached['rows'] ?? [];
     }
 
-    $statement = $context['pdo']->prepare(<<<'SQL'
+    $displayFields = '';
+    $displayJoin = '';
+    if ($context['linkedWorkouts']) {
+        $displayFields = ', display.activity_name AS display_activity_name, display.activity_type AS display_activity_type_name';
+        $displayJoin = <<<'SQL'
+LEFT JOIN LATERAL (
+    SELECT NULLIF(btrim(r.raw_payload->>'title'), '') AS activity_name,
+           NULLIF(btrim(r.raw_payload->>'sport'), '') AS activity_type
+    FROM mattrics.mattrics_activity_source_links l
+    JOIN mattrics.mattrics_source_records r ON r.id = l.source_record_id
+    JOIN mattrics.mattrics_data_sources source ON source.id = r.data_source_id
+    WHERE l.activity_id = a.id AND source.source_kind = 'strava'
+    ORDER BY source.account_key, r.external_id
+    LIMIT 1
+) display ON true
+SQL;
+    }
+    $sql = strtr(<<<'SQL'
 SELECT
     a.id,
     a.data_source_id,
@@ -756,13 +767,15 @@ SELECT
     a.device_name,
     a.created_at,
     ds.source_key,
-    ds.source_kind
+    ds.source_kind__DISPLAY_FIELDS__
 FROM mattrics.mattrics_activities a
 JOIN mattrics.mattrics_data_sources ds
     ON ds.id = a.data_source_id
+__DISPLAY_JOIN__
 WHERE a.user_id = :user_id
 ORDER BY a.activity_date DESC, a.started_at DESC NULLS LAST, a.created_at DESC
-SQL);
+SQL, ['__DISPLAY_FIELDS__' => $displayFields, '__DISPLAY_JOIN__' => $displayJoin]);
+    $statement = $context['pdo']->prepare($sql);
     $statement->execute(['user_id' => $context['userId']]);
     $rows = $statement->fetchAll();
 
@@ -785,7 +798,8 @@ function mattrics_foundation_read_selected_activity_rows(): array
 
     $selection = mattrics_foundation_read_build_selection_state(
         mattrics_foundation_read_all_activity_rows(),
-        $context['timezoneName']
+        $context['timezoneName'],
+        $context['linkedWorkouts']
     );
 
     $GLOBALS['mattrics_foundation_read_activity_selection_state'] = [
@@ -996,7 +1010,10 @@ function mattrics_foundation_read_activity_children(): array
         $params['activity_id_' . $index] = $activityId;
     }
 
-    $sql = str_replace('__ACTIVITY_IDS__', implode(', ', $placeholders), <<<'SQL'
+    $providerFields = $context['linkedWorkouts']
+        ? ', a.data_source_id AS exercise_data_source_id, ae.provider_template_id, s.set_type'
+        : '';
+    $sql = strtr(<<<'SQL'
 SELECT
     a.id AS activity_db_id,
     a.activity_name,
@@ -1019,7 +1036,7 @@ SELECT
     s.rpe,
     s.effort_factor,
     s.computed_load,
-    s.notes
+    s.notes__PROVIDER_FIELDS__
 FROM mattrics.mattrics_activities a
 JOIN mattrics.mattrics_activity_exercises ae
     ON ae.activity_id = a.id
@@ -1030,8 +1047,7 @@ LEFT JOIN mattrics.mattrics_activity_sets s
 WHERE a.user_id = :user_id
   AND a.id IN (__ACTIVITY_IDS__)
 ORDER BY a.activity_date DESC, a.started_at DESC NULLS LAST, a.created_at DESC, ae.exercise_order ASC, s.set_order ASC
-SQL
-    );
+SQL, ['__ACTIVITY_IDS__' => implode(', ', $placeholders), '__PROVIDER_FIELDS__' => $providerFields]);
     $statement = $context['pdo']->prepare($sql);
     $statement->execute($params);
     $rows = $statement->fetchAll();

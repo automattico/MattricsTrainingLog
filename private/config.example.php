@@ -2,6 +2,10 @@
 return [
     'sheet_url' => 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec',
     'sheet_token' => 'replace-with-a-long-random-shared-secret',
+    'foundation_database_url' => '',
+    'foundation_linked_workouts' => false,
+    'direct_refresh_providers' => [],
+    'make_postgres_enabled' => false,
     'anthropic_api_key' => 'sk-ant-api03-...',
     'anthropic_model' => 'claude-sonnet-4-20250514',
     'openai_api_key' => 'sk-...',

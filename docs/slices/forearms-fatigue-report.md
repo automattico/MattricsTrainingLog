@@ -24,4 +24,6 @@ The checkout already contained unrelated changes. Forearms work is uncommitted, 
 
 Merged the latest production snapshots and the linked history preview catalog into 38 exercises and 11 activity types. Kept all 37 production exercise IDs and existing muscle weights. Five exercises already covered by production merges retained their production targets. Spinning, Padel, and missing exact aliases carried forward from staging. Both local staging catalog locations have the verified copies and use the Forearms prefill. Original snapshots and the validated promotion candidates are retained in an owner-only release bundle outside Git. The production catalog promotion is pending an approved release.
 
+The Forearms code was deployed from commit `002fb9d`. Catalog promotion and verification are required by the [v1.0 cutover procedure](../planning/milestones/ms-v1-0.md#required-production-catalog-promotion). [Forearms release PR](https://github.com/automattico/MattricsTrainingLog/pull/5)
+
 [Next slice prompt](next-forearms-production-verification-prompt.md)

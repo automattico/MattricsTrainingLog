@@ -14,6 +14,7 @@ Every implementation slice must read this before making changes.
 
 - Mattrics remains the real app.
 - The current purpose is training analysis, workout history, exercise mapping, and muscle fatigue/readiness calculation.
+- A later [Health Data milestone](planning/milestones/ms-v1-2.md) adds personal measurement history alongside training analysis. Model health readings with their own date, unit, and source, separate from workout records.
 - Open Health Hub is a future-compatible direction, not current scope.
 - Current architecture work must serve Mattrics first and avoid building a generic health platform before it is needed.
 - The system should keep future health-hub concepts possible by using clear boundaries for users, sources, raw imports, normalized records, metrics, recommendations, and exports.
@@ -21,7 +22,7 @@ Every implementation slice must read this before making changes.
 ## Runtime Direction
 
 - Production is a Mattwarden-protected static shell plus flat PHP API on Hetzner Webhosting.
-- The repository does not maintain a Docker or local Postgres runtime.
+- Native Postgres supports synthetic local development. Use a separate persistent native Postgres cluster for the staging recovery rehearsal. See the [database environments runbook](database-environments.md) for commands and the production TLS probe.
 - Any future persistence/runtime replacement requires a separate architecture decision and migration plan.
 - Production must keep private runtime state outside the public web root.
 - Backups and restore checks are required before disabling the current Google Sheet pipeline.

@@ -1,0 +1,55 @@
+[
+  {
+    "provider": "garmin",
+    "account": "synthetic-garmin",
+    "records": [
+      {
+        "id": "synthetic-garmin-run",
+        "title": "Synthetic riverside run",
+        "sport": "Run",
+        "device_name": "Synthetic running watch",
+        "fit_sha256": "7ffbd18fe0dfa31aeaf895a00996d366e207225cd9923b4918186822156602de",
+        "session": {
+          "start_time": "2026-10-05T07:10:00+02:00",
+          "timestamp": "2026-10-05T07:41:00+02:00",
+          "total_elapsed_time": 1860,
+          "total_timer_time": 1800,
+          "total_distance": 5040,
+          "total_ascent": 42,
+          "avg_heart_rate": 148,
+          "max_heart_rate": 167
+        }
+      }
+    ]
+  },
+  {
+    "provider": "hevy",
+    "account": "synthetic-hevy",
+    "records": [
+      {
+        "id": "synthetic-hevy-workout",
+        "title": "Synthetic strength",
+        "description": "Fixture workout",
+        "start_time": "2026-10-06T20:30:00+02:00",
+        "end_time": "2026-10-06T21:15:00+02:00",
+        "exercises": [
+          {
+            "title": "Bench Press",
+            "exercise_template_id": "SYNTH-BENCH",
+            "sets": [
+              { "type": "warmup", "weight_kg": 20, "reps": 12 },
+              { "type": "normal", "weight_kg": 62.5, "reps": 8, "rpe": 8.5 }
+            ]
+          },
+          {
+            "title": "Treadmill",
+            "exercise_template_id": "SYNTH-TREAD",
+            "sets": [
+              { "type": "normal", "duration_seconds": 330, "distance_meters": 900 }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

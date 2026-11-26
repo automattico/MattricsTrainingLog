@@ -33,11 +33,22 @@ Runtime `config.php`, user settings, data/cache/log state, and raw imports are n
 
 ## Validation and deployment
 
+Stage the approved commit and the verified prior release into new directories. Staging reads Git blobs and checks file hashes and inventory. This step needs no deployment credentials or network access.
+
 ```sh
-./scripts/prod-gate.sh
-./deploy.sh
+./deploy.sh --stage-only "$release_revision" "$release_bundle"
+./deploy.sh --stage-only "$previous_revision" "$rollback_bundle"
 ```
 
-`deploy.sh` runs the production gate again before connecting. It does not make unauthenticated HTTP content requests; authenticated verification belongs to the fixed runbook in `docs/mattwarden-migration.md`.
+Run the application gate and disposable Postgres suite from the reviewed release checkout:
+
+```sh
+./scripts/prod-gate.sh
+./scripts/local-postgres.sh test
+```
+
+After explicit operator approval, deploy the exact revision with `./deploy.sh --revision "$release_revision"`. The script reruns the production gate from a snapshot of that commit, then verifies the remote inventory. For the code-only deployment, keep the production canonical database URL empty and direct refresh and the Make cache disabled. Verify authenticated dashboard and Settings loads and the Sheets-backed data source using the fixed runbook in `docs/mattwarden-migration.md`. After separate approval, the same revision option can redeploy the verified rollback revision.
+
+Production database preparation, catalog promotion and changing dashboard reads are separate approved operations. See the [v1.0 cutover procedure](docs/planning/milestones/ms-v1-0.md).
 
 Do not deploy or push without explicit operator approval.

@@ -18,7 +18,9 @@ api/settings.php
 api/connectors.php
 api/exercises.php
 api/ai.php
+api/workout-review.php
 lib/bootstrap.php
+lib/fit_activity.py
 private/config.example.php
 private/data/activity-type-configs.json
 private/data/exercise-configs.json
@@ -34,7 +36,7 @@ for forbidden in public/api public/views public/tests public/.htaccess public/in
 done
 
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  for sensitive in .env.local private/config.php; do
+  for sensitive in .env.local private/config.php private/postgres-ca.pem; do
     if git ls-files --error-unmatch "$sensitive" >/dev/null 2>&1; then
       die "sensitive file is tracked by git: $sensitive"
     fi

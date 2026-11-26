@@ -3,8 +3,8 @@
   const ACTIVITY_ID_RAW_KEY = "Activity ID raw";
   const ACTIVITY_ID_KEY = "Activity ID";
 
-  M.getExerciseMuscleMapping = function getExerciseMuscleMapping(exerciseName) {
-    return M.resolveExerciseConfig(exerciseName);
+  M.getExerciseMuscleMapping = function getExerciseMuscleMapping(exerciseName, hevyTemplateKey) {
+    return M.resolveExerciseConfig(exerciseName, hevyTemplateKey);
   };
 
   const HEVY_BRAND_RE = /\bhevy(?:[ \t]*app(?:\.com)?)?\b/i;
@@ -82,6 +82,7 @@
         canonicalExerciseName: exercise && exercise.canonicalExerciseName ? String(exercise.canonicalExerciseName) : null,
         sourceExerciseName: String(exercise && exercise.sourceExerciseName || ""),
         normalizedSourceExerciseName: String(exercise && exercise.normalizedSourceExerciseName || ""),
+        hevyTemplateKey: exercise && exercise.hevyTemplateKey,
         sets: ensureArray(exercise && exercise.sets).map(cloneCanonicalSet),
       })),
     };
@@ -99,6 +100,7 @@
       canonicalExerciseName: canonicalExerciseName || null,
       normalizedSourceExerciseName: String(exercise && exercise.normalizedSourceExerciseName || "").trim(),
       exerciseId: exercise && exercise.exerciseId ? String(exercise.exerciseId) : null,
+      hevyTemplateKey: exercise && exercise.hevyTemplateKey,
       sets: setDetails.map(formatCanonicalChildSet).filter(Boolean),
       setDetails,
       source: "canonical",

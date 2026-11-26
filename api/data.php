@@ -5,7 +5,14 @@ require_authenticated();
 require_once MATTWARDEN_SITE_DIR . '/lib/bootstrap.php';
 require_once MATTWARDEN_SITE_DIR . '/lib/foundation-read.php';
 
-mattrics_require_method('GET');
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+if ($method === 'POST') {
+    mattwarden_require_same_origin();
+    mattwarden_require_csrf();
+} elseif ($method !== 'GET' || ($_GET['refresh'] ?? null) === '1') {
+    header('Allow: GET, POST');
+    mattrics_send_json(['error' => 'Use POST to refresh training data.'], 405);
+}
 
 $allowedFields = array_flip([
     'Date',
@@ -70,6 +77,13 @@ function mattrics_merge_warning_messages(?string ...$warnings): ?string
 
 function mattrics_build_canonical_data_response(bool $includeChildren = false): array
 {
+    require_once MATTWARDEN_SITE_DIR . '/lib/workout-review.php';
+    $ctx = mattrics_foundation_read_context();
+    $review = workout_review_available($ctx);
+    if ($review) {
+        $ctx['pdo']->beginTransaction();
+        $ctx['pdo']->exec('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
+    }
     $rows = mattrics_foundation_read_activities();
 
     $response = [
@@ -85,10 +99,23 @@ function mattrics_build_canonical_data_response(bool $includeChildren = false): 
         ],
     ];
 
+    $config = mattrics_load_config();
+    if (!empty($config['direct_refresh_providers'])) {
+        require_once MATTWARDEN_SITE_DIR . '/lib/direct-refresh.php';
+        $pdo = mattrics_foundation_read_connect();
+        foreach (mattrics_refresh_providers($config) as $provider) {
+            $response['meta']['directRefresh'][$provider] = mattrics_refresh_state($pdo, mattrics_foundation_read_user_key(), $provider);
+        }
+    }
+
     if ($includeChildren) {
         $response['activityChildren'] = mattrics_foundation_read_activity_children();
     }
 
+    if ($review) {
+        $response = workout_review_project($response, workout_review_state($ctx));
+        $ctx['pdo']->commit();
+    }
     return $response;
 }
 
@@ -149,8 +176,7 @@ function mattrics_fetch_live_snapshot(array $allowedFields, ?array $previousSnap
 
 $canonicalEnabled = mattrics_foundation_read_enabled();
 $includeChildren = isset($_GET['includeChildren']) && $_GET['includeChildren'] === '1';
-$forceRefresh = isset($_GET['refresh']) && $_GET['refresh'] === '1';
-$legacyForceRefresh = $forceRefresh && !$canonicalEnabled;
+$legacyForceRefresh = $method === 'POST' && !$canonicalEnabled;
 $canonicalFallbackWarning = null;
 
 if ($canonicalEnabled) {

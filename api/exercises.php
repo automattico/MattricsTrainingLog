@@ -14,9 +14,36 @@ function mattrics_exercises_request_path(): string
     return '/api/exercises' . ($pathInfo !== '' ? '/' . ltrim($pathInfo, '/') : '');
 }
 
+function mattrics_use_linked_workout_exercise_catalog(): bool
+{
+    return (mattrics_load_config()['foundation_linked_workouts'] ?? false) === true;
+}
+
 function mattrics_use_canonical_exercise_config_source(): bool
 {
-    return mattrics_foundation_write_available();
+    // The linked workout schema has no writable Foundation exercise catalog.
+    return !mattrics_use_linked_workout_exercise_catalog() && mattrics_foundation_write_available();
+}
+
+function mattrics_fetch_catalog_suggestion($lock, callable $request): array
+{
+    if (!flock($lock, LOCK_UN)) {
+        throw new RuntimeException('Could not release the exercise catalog lock.');
+    }
+    try {
+        return $request();
+    } finally {
+        if (!flock($lock, LOCK_EX)) {
+            mattrics_send_json(['error' => 'Exercise configuration is temporarily unavailable.'], 503);
+        }
+    }
+}
+
+function mattrics_recheck_suggestion_target(?array $current, array $original): void
+{
+    if ($current !== $original) {
+        mattrics_send_json(['error' => 'The exercise changed while the suggestion was running. Reload and try again.'], 409);
+    }
 }
 
 function mattrics_join_exercise_config_warning(?string ...$parts): ?string
@@ -137,10 +164,10 @@ function mattrics_build_exercise_config_payload(array $metaExtra = []): array
     ];
 }
 
-function mattrics_build_legacy_exercise_config_get_payload(?string $warning = null): array
+function mattrics_build_json_exercise_config_get_payload(?string $warning = null, string $source = 'legacy'): array
 {
     return mattrics_build_exercise_config_payload([
-        'source' => 'legacy',
+        'source' => $source,
         'warning' => $warning,
         'lastSuccessfulSyncAt' => null,
     ]);
@@ -227,7 +254,7 @@ function mattrics_build_existing_exercise_preview_suggestion(array $exercise, ar
     ];
 }
 
-function mattrics_handle_unknown_suggestion_request(string $unknownId): void
+function mattrics_handle_unknown_suggestion_request(string $unknownId, $lock): void
 {
     mattwarden_require_same_origin();
     mattwarden_require_csrf();
@@ -241,7 +268,9 @@ function mattrics_handle_unknown_suggestion_request(string $unknownId): void
         mattrics_send_json(['error' => 'AI suggestion currently supports exercise unknowns only.'], 422);
     }
 
-    $existing = mattrics_find_exercise_config_match_for_active_source((string) ($unknown['normalizedName'] ?? ''));
+    $existing = isset($unknown['hevyTemplateKey'])
+        ? null
+        : mattrics_find_exercise_config_match_for_active_source((string) ($unknown['normalizedName'] ?? ''));
     if ($existing !== null) {
         mattrics_remove_unknown_exercise_record($unknownId);
         mattrics_send_json([
@@ -293,7 +322,8 @@ function mattrics_handle_unknown_suggestion_request(string $unknownId): void
     }
 
     try {
-        $aiResponse = mattrics_request_openai_suggestion($unknown);
+        $aiResponse = mattrics_fetch_catalog_suggestion($lock, static fn(): array => mattrics_request_openai_suggestion($unknown));
+        mattrics_recheck_suggestion_target(mattrics_find_unknown_exercise_record($unknownId), $unknown);
         $suggestion = mattrics_decode_unknown_suggestion_output((string) ($aiResponse['outputText'] ?? ''));
         $preview = mattrics_build_unknown_preview_suggestion($unknown, $suggestion, 'ai_suggested');
         $updatedUnknown = mattrics_update_unknown_exercise_ai_status($unknownId, 'succeeded');
@@ -320,6 +350,7 @@ function mattrics_handle_unknown_suggestion_request(string $unknownId): void
             ]
         ));
     } catch (RuntimeException $exception) {
+        mattrics_recheck_suggestion_target(mattrics_find_unknown_exercise_record($unknownId), $unknown);
         $status = str_contains($exception->getMessage(), 'configured on the server')
             ? 'failed'
             : 'invalid_response';
@@ -363,7 +394,16 @@ function mattrics_handle_exercise_create_request(?array $body = null): void
         } elseif ($configType === 'activityType') {
             $created = mattrics_create_activity_type_config_record($body);
         } else {
-            $created = mattrics_create_exercise_config_record($body);
+            $unknownId = (string) ($body['unknownId'] ?? '');
+            $templateKey = null;
+            if (str_starts_with($unknownId, 'exercise:hevy:')) {
+                $unknown = mattrics_find_unknown_exercise_record($unknownId);
+                $templateKey = $unknown['hevyTemplateKey'] ?? null;
+                if ($templateKey === null || mattrics_filter_unresolved_legacy_exercises([$unknown]) === []) {
+                    throw new RuntimeException('This Hevy template is no longer awaiting review.');
+                }
+            }
+            $created = mattrics_create_exercise_config_record($body, $templateKey);
         }
         if (!isset($unknowns)) {
             $unknowns = mattrics_prune_resolved_unknown_exercise_records();
@@ -437,7 +477,7 @@ function mattrics_handle_exercise_update_request(string $exerciseId): void
     ));
 }
 
-function mattrics_handle_exercise_suggestion_request(string $exerciseId): void
+function mattrics_handle_exercise_suggestion_request(string $exerciseId, $lock): void
 {
     mattwarden_require_same_origin();
     mattwarden_require_csrf();
@@ -448,7 +488,8 @@ function mattrics_handle_exercise_suggestion_request(string $exerciseId): void
     }
 
     try {
-        $aiResponse = mattrics_request_openai_existing_exercise_suggestion($exercise);
+        $aiResponse = mattrics_fetch_catalog_suggestion($lock, static fn(): array => mattrics_request_openai_existing_exercise_suggestion($exercise));
+        mattrics_recheck_suggestion_target(mattrics_find_exercise_config_by_id_for_active_source($exerciseId), $exercise);
         $suggestion = mattrics_decode_unknown_suggestion_output((string) ($aiResponse['outputText'] ?? ''));
         $preview = mattrics_build_existing_exercise_preview_suggestion($exercise, $suggestion);
     } catch (RuntimeException $exception) {
@@ -616,12 +657,50 @@ function mattrics_handle_exercise_delete_request(string $exerciseId): void
     ));
 }
 
+function mattrics_handle_unknown_sync_request(mixed $incoming, bool $linkedWorkoutCatalog): never
+{
+    if (!is_array($incoming) || !array_is_list($incoming)) {
+        mattrics_send_json(['error' => 'unknowns must be a JSON array.'], 422);
+    }
+
+    try {
+        $validated = [];
+        foreach ($incoming as $record) {
+            if (!is_array($record)) {
+                mattrics_send_json(['error' => 'Each unknown sync record must be an object.'], 422);
+            }
+            if (!$linkedWorkoutCatalog && isset($record['hevyTemplateKey'])) {
+                mattrics_send_json(['error' => 'Hevy template review requires linked workouts.'], 422);
+            }
+            $validated[] = mattrics_validate_unknown_sync_input($record);
+        }
+    } catch (RuntimeException $exception) {
+        mattrics_send_json(['error' => $exception->getMessage()], 422);
+    }
+
+    $synced = mattrics_sync_unknown_exercise_records($linkedWorkoutCatalog
+        ? mattrics_filter_unresolved_legacy_exercises($validated)
+        : $validated);
+    mattrics_send_json([
+        'unknowns' => $synced,
+        'meta' => ['syncedAt' => gmdate('c')],
+    ]);
+}
+
 try {
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     $path = mattrics_exercises_request_path();
+    $linkedWorkoutCatalog = mattrics_use_linked_workout_exercise_catalog();
+    if ($method === 'GET') {
+        $exerciseCatalogLock = mattrics_lock_exercise_catalog(LOCK_SH);
+    } elseif (in_array($method, ['POST', 'PATCH', 'DELETE'], true)) {
+        mattwarden_require_same_origin();
+        mattwarden_require_csrf();
+        $exerciseCatalogLock = mattrics_lock_exercise_catalog(LOCK_EX);
+    }
 
     if ($method === 'POST' && preg_match('#/api/exercises(?:\.php)?/unknowns/([^/]+)/suggest$#', $path, $matches)) {
-        mattrics_handle_unknown_suggestion_request(urldecode((string) $matches[1]));
+        mattrics_handle_unknown_suggestion_request(urldecode((string) $matches[1]), $exerciseCatalogLock);
     }
 
     if ($method === 'POST' && preg_match('#/api/exercises(?:\.php)?/unknowns/([^/]+)/merge-alias$#', $path, $matches)) {
@@ -629,7 +708,7 @@ try {
     }
 
     if ($method === 'POST' && preg_match('#/api/exercises(?:\.php)?/([^/]+)/suggest$#', $path, $matches)) {
-        mattrics_handle_exercise_suggestion_request(urldecode((string) $matches[1]));
+        mattrics_handle_exercise_suggestion_request(urldecode((string) $matches[1]), $exerciseCatalogLock);
     }
 
     if ($method === 'POST' && preg_match('#/api/exercises(?:\.php)?/([^/]+)/merge-alias$#', $path, $matches)) {
@@ -645,78 +724,29 @@ try {
     }
 
     if ($method === 'GET') {
-        if (mattrics_foundation_read_enabled()) {
+        if (!$linkedWorkoutCatalog && mattrics_foundation_read_enabled()) {
             try {
                 mattrics_send_json(mattrics_build_canonical_exercise_config_payload());
             } catch (Throwable $throwable) {
-                mattrics_send_json(mattrics_build_legacy_exercise_config_get_payload(
+                mattrics_send_json(mattrics_build_json_exercise_config_get_payload(
                     'Canonical read failed. Showing legacy exercise config data instead.'
                 ));
             }
         }
 
-        mattrics_send_json(mattrics_build_legacy_exercise_config_get_payload());
+        mattrics_send_json(mattrics_build_json_exercise_config_get_payload(
+            source: $linkedWorkoutCatalog ? 'linked-workout-json' : 'legacy'
+        ));
     }
 
     if ($method === 'POST') {
         mattwarden_require_same_origin();
         mattwarden_require_csrf();
         $body = mattrics_read_json_body();
-        if (preg_match('#/api/exercises(?:\.php)?$#', $path)) {
-            if (array_key_exists('unknowns', $body)) {
-                $incoming = $body['unknowns'] ?? null;
-                if (!is_array($incoming) || !array_is_list($incoming)) {
-                    mattrics_send_json(['error' => 'unknowns must be a JSON array.'], 422);
-                }
-
-                try {
-                    $validated = [];
-                    foreach ($incoming as $record) {
-                        if (!is_array($record)) {
-                            mattrics_send_json(['error' => 'Each unknown sync record must be an object.'], 422);
-                        }
-                        $validated[] = mattrics_validate_unknown_sync_input($record);
-                    }
-                } catch (RuntimeException $exception) {
-                    mattrics_send_json(['error' => $exception->getMessage()], 422);
-                }
-
-                $synced = mattrics_sync_unknown_exercise_records($validated);
-                mattrics_send_json([
-                    'unknowns' => $synced,
-                    'meta' => [
-                        'syncedAt' => gmdate('c'),
-                    ],
-                ]);
-            }
-
+        if (preg_match('#/api/exercises(?:\.php)?$#', $path) && !array_key_exists('unknowns', $body)) {
             mattrics_handle_exercise_create_request($body);
         }
-
-        $incoming = $body['unknowns'] ?? null;
-        if (!is_array($incoming) || !array_is_list($incoming)) {
-            mattrics_send_json(['error' => 'unknowns must be a JSON array.'], 422);
-        }
-
-        try {
-            $validated = [];
-            foreach ($incoming as $record) {
-                if (!is_array($record)) {
-                    mattrics_send_json(['error' => 'Each unknown sync record must be an object.'], 422);
-                }
-                $validated[] = mattrics_validate_unknown_sync_input($record);
-            }
-        } catch (RuntimeException $exception) {
-            mattrics_send_json(['error' => $exception->getMessage()], 422);
-        }
-
-        $synced = mattrics_sync_unknown_exercise_records($validated);
-        mattrics_send_json([
-            'unknowns' => $synced,
-            'meta' => [
-                'syncedAt' => gmdate('c'),
-            ],
-        ]);
+        mattrics_handle_unknown_sync_request($body['unknowns'] ?? null, $linkedWorkoutCatalog);
     }
 
     header('Allow: GET, POST, PATCH, DELETE');

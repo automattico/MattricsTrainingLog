@@ -947,6 +947,11 @@
   margin-bottom: 0;
 }
 
+.exercise-admin-merge-targets {
+  min-height: 0;
+  color-scheme: dark;
+}
+
 .exercise-admin-merge-warning {
   color: var(--muted-strong);
   font-size: 0.9rem;

@@ -36,7 +36,7 @@ The hosting control panel serves the normalized parent `public_html/mattrics` as
 | Endpoint | Methods | Same-origin + CSRF |
 |---|---|---|
 | `/api/session` | GET | No mutation |
-| `/api/data` | GET | No mutation |
+| `/api/data` | GET, POST | GET reads dashboard data. POST refresh requires same-origin and CSRF. |
 | `/api/settings` | GET, POST | POST |
 | `/api/connectors` | GET, POST | POST |
 | `/api/exercises[/<path>]` | GET, POST, PATCH, DELETE | POST, PATCH, DELETE |

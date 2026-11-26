@@ -1,0 +1,25 @@
+# v1.0 Make-to-Postgres rehearsal
+
+24 November 2026 · local rehearsal on main
+
+## Live Make inspection
+
+The active scenario runs every five hours. Google Sheets Get a Cell reads `SyncState!B2`. Strava List Activities starts 24 hours before that value, ends at now and limits results to 50. The processing route searches `StravaActivities` for the raw activity ID and fetches details and adds a row only for a new activity. The row uses Strava’s moving time for duration, with independent elapsed time and distance columns. The other router branch writes now to `SyncState!B2` when an activity ID exists. Its filter does not verify delivery commit or full enumeration. The newest 50 visible runs, November 12–24, showed success. This establishes recent execution, while the inspected configuration explains why it can skip an older upload and miss renames and trims even within the overlap. The live scenario and Sheet were inspected without saving changes or running the scenario. The newly connected Make plugin was not exposed in this Codex session. The signed-in browser provided the evidence.
+
+## Local result
+
+The disposable Postgres test sent synthetic payloads through the existing parameterized Make receiver. A rename and trim for a workout whose start was older than the checkpoint updated a single row by owner and Strava activity ID. An invalid second delivery rolled back the first change and preserved the checkpoint. Retrying committed the edit and a late arrival together with the checkpoint. Replay after the simulated lost acknowledgement and delivery of a stale revision preserved both the newest values and the checkpoint. The test used a local temporary checkpoint table. The separate canonical test verified that the archive-backed review projection put a rename and trim on the original Mattrics workout ID and retained the source identity and preference after Garmin replay. A production Make-to-canonical bridge and its permitted data lifetime still need a decision and end-to-end test.
+
+## Proposed production handoff
+
+1. Keep Make as the Strava connection. Leave the Sheet branch and its live cursor in place during shadow writes and observation. Use a dedicated, permitted Postgres connection with certificate and hostname verification and least-privilege rights to the receiver and checkpoint. Keep Mattwarden’s browser and API boundary intact.
+2. Capture a fixed UTC poll upper bound. Page through all results before acknowledging the range. Track a separate Postgres delivery checkpoint per owner and flow. Serialize runs or conditionally move the checkpoint from the expected predecessor. If any page fails, a result limit truncates coverage, or a database commit is uncertain, retry the same range. Retain the original observation timestamp on a retry so an older observation cannot overwrite a newer edit.
+3. Put the validated batch and checkpoint in one transaction. Writers may resume from the new checkpoint only after a durable commit. If Make requires separate transactions, commit all accepted writes before acknowledging the checkpoint and replay the entire same range if acknowledgement fails. Handle retained, superseded and expired input explicitly. Expired input requiring coverage should be fetched afresh. Initially keep the Sheet cursor independent. Retire the Sheet cursor only after its branch is retired with separate sign-off.
+4. Retain start-time polling for new activities. For old edits, verify whether the existing Strava connection can deliver supported title/type update events to Make, then fetch details by the original activity ID. Strava’s documented update fields do not include trimming. Verify an authorized bounded re-fetch by ID and a targeted owner-triggered review for older trims and backdated activities outside the overlap. Until this is tested, live edit discovery remains open. [Strava webhook events](https://developers.strava.com/docs/webhooks/)
+5. Set `delete_after_week=true` for the isolated Make table. The Settings switch and owner isolation passed. The first-fetch TTL is 168 hours and stale replay cannot extend it. Views hide expired entries, and physical deletion needs an independent cleanup with idle-feed evidence and a deadline within the permitted cache lifetime. Exclude transient rows from long-lived backups and permanent workout, mapping and AI stores. Confirm the terms applicable to the actual Make connection, including deletion handling, before enabling the writer. Plan the historical archive and retained direct sources independently so expiry cannot erase canonical coverage. [Strava API Policy §§5.5 and 6.2–6.6](https://www.strava.com/legal/api_policy)
+
+## Validation and scope
+
+Repository gate, disposable Postgres suite, May regression and fresh comparison ran locally. Make test data was synthetic. Existing private credentials were used only for authorized reads. No raw evidence, browser run bundles, credentials or private recordings enter the reports. Work remains on the existing dirty main with no commit, push or deployment.
+
+[Next slice and hosted verification plan](next-v1-hosted-verification-prompt.md)

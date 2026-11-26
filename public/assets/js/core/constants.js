@@ -52,6 +52,12 @@
     WaterSport: { icon: "🚣", color: "var(--water)", label: "Water" },
     Rowing: { icon: "🚣", color: "var(--row)", label: "Rowing" },
     Surfing: { icon: "🏄", color: "var(--surf)", label: "Surf" },
+    Swim: { icon: "🏊", color: "var(--muted)", label: "Swim" },
+    Other: { icon: "🧩", color: "var(--muted)", label: "Other" },
+    Breathwork: { icon: "🌬️", color: "var(--muted)", label: "Breathwork" },
+    Mobility: { icon: "🤸", color: "var(--muted)", label: "Mobility" },
+    Soccer: { icon: "⚽", color: "var(--muted)", label: "Soccer" },
+    Skate: { icon: "⛸️", color: "var(--muted)", label: "Skate" },
   };
 
   Mattrics.MUSCLE_REGIONS = [

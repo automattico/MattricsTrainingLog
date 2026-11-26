@@ -34,16 +34,17 @@ function contract_files(string $root): array
 
 $endpointMethods = [
     'session.php' => ['GET'],
-    'data.php' => ['GET'],
+    'data.php' => ['GET', 'POST'],
     'settings.php' => ['GET', 'POST'],
     'connectors.php' => ['GET', 'POST'],
     'exercises.php' => ['GET', 'POST', 'PATCH', 'DELETE'],
+    'workout-review.php' => ['GET', 'POST'],
     'ai.php' => ['POST'],
 ];
 
 $apiFiles = glob($repoRoot . '/api/*.php') ?: [];
 sort($apiFiles);
-contract_assert(count($apiFiles) === count($endpointMethods), 'api/ contains exactly the six product endpoints');
+contract_assert(count($apiFiles) === count($endpointMethods), 'api/ contains exactly the product endpoints');
 
 foreach ($apiFiles as $file) {
     $source = (string) file_get_contents($file);
@@ -61,7 +62,8 @@ foreach ($apiFiles as $file) {
 
 $forbiddenPatterns = [
     '/\$_SESSION/' => 'application session access',
-    '/\bsession_/' => 'application session functions',
+    // FIT archive evidence contains literal field names for multi-session recordings.
+    '/\bsession_(?!(?:number|count)[\x22\x27]\])/' => 'application session functions',
     '/HTTP_HOST/' => 'request Host trust',
     '/X-Forwarded-Proto/i' => 'proxy-derived scheme trust',
     '/\blocalhost\b/i' => 'host-based development behavior',

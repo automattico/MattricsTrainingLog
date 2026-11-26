@@ -46,7 +46,7 @@
       <div class="header-actions">
         <div class="data-sync-stamp" id="dataSyncStamp">Last updated unavailable</div>
         <div class="header-actions-row">
-          <button class="icon-btn refresh-btn" data-action="refresh" title="Refresh from sheet" aria-label="Refresh data">
+          <button class="icon-btn refresh-btn" id="refreshDataButton" data-action="refresh" title="Refresh from sheet" aria-label="Refresh data">
             <span class="refresh-icon" aria-hidden="true">↻</span>
           </button>
           <a class="icon-btn logout-btn" href="/__mattwarden/logout" title="Log out" aria-label="Log out">
@@ -204,6 +204,7 @@
     <div class="sessions-toolbar">
       <div class="filter-row" id="filterRow"></div>
       <div class="feed-display-tools">
+        <button hidden type="button" id="reviewWorkouts" class="tl-sw-btn" aria-controls="workoutReview" aria-expanded="false">Review duplicates</button>
         <div class="feed-mode-switch" aria-label="Session display mode">
           <button class="tl-sw-btn active" id="feedModeListBtn" data-action="feed-mode" data-mode="list">List</button>
           <button class="tl-sw-btn" id="feedModeWeekBtn" data-action="feed-mode" data-mode="week">Week</button>
@@ -211,6 +212,7 @@
         </div>
       </div>
     </div>
+    <section id="workoutReview" class="workout-review" aria-label="Review duplicates" hidden></section>
     <div class="cards" id="cardList"></div>
   </section>
 </div>
@@ -297,7 +299,7 @@
 <script src="assets/js/core/metrics.js"></script>
 <script src="assets/js/body-map-team-buildr.js"></script>
 <script src="assets/js/renderers/loader.js"></script>
-<script src="assets/js/renderers/orchestrator.js"></script>
+<script src="assets/js/renderers/orchestrator.js?v=2"></script>
 <script src="assets/js/renderers/dashboard.js"></script>
 <script src="assets/js/renderers/fatigue-view.js"></script>
 <script src="assets/js/renderers/docs-helpers.js"></script>

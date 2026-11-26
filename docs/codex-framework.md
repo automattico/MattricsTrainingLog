@@ -38,6 +38,10 @@ Before finishing a slice, Codex must:
 5. Create the next slice prompt using `docs/templates/next-slice-prompt.md`.
 6. Report changed files, validation results, git state, commit state, push state, and deploy state.
 
+## Planning report workflow
+
+For slices covered by the [Mattrics implementation plan](mattrics-implementation-plan.md), use the Markdown backlog in `docs/planning/` once the reporting tool is in place. At the start, read the linked requirements, acceptance criteria, and dependencies. At the end, update the relevant story or task, record the verification evidence or blocker, and run the planning validator and report build. Mark work verified when the acceptance checks pass. Keep architectural and operational details in the existing slice report and link to it as evidence when useful.
+
 ## Preferred Implementation Order
 
 1. Framework docs.

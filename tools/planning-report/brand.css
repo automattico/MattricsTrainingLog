@@ -1,0 +1,202 @@
+/**
+ * Brand Hub — CSS Variables · version 2026.09
+ * Copy this into your project and import it before your other styles.
+ *
+ * The version is the brand definition's own. Quote it wherever something is
+ * built against this file — an Office template, a site, a deck — so the next
+ * divergence shows up in a version comparison instead of in an audit.
+ *
+ * THREE LAYERS. The layer is part of the token name, so a wrong reach is
+ * visible at the call site:
+ *
+ *   (no prefix)  shared    — valid everywhere: brand colours, type, logo
+ *   --screen-*   screen    — UI only. Fails or has no meaning on paper.
+ *   --doc-*      document  — print and Office documents. Carries its own
+ *                            contrast and minimum-size rules.
+ *
+ * Never use a --screen-* token as a surface or ink in a document, and never
+ * feed one into an Office theme. That mistake put dark-mode text (#edf2fa,
+ * 1.12:1 against paper) into the Word colour scheme as a fill.
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   SHARED — valid in every medium
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  /* ── Primary ── */
+  --brand: #0082c9; /* Ocean Blue */
+  --brand-medium: #1a97df;
+  --brand-light: #80c4ee;
+  --brand-contrast: #002744;
+  --logo-light: #f2f2f2; /* Logo Light — the mark on Ocean Blue and on dark.
+                            Second colour of the logo, never a surface. */
+  --ground-dark: #0f0f0f; /* Courageous Black — the dark brand ground. Binding
+                             ground of the "flat — blue on black" logo variant,
+                             and the base of dark UI. Always a surface, never
+                             ink. */
+
+  /* ── Ink and surfaces that work on screen and on paper ── */
+  --text: #1a1a1a; /* Primary text */
+  --surface-subtle: #f0f0ee; /* Chips, inline code */
+  --surface-overlay: #dde8f0; /* Overlay and contrast backgrounds */
+  --surface-card: #fff; /* Cards, containers — and paper */
+
+  /* ── Secondary (accents) ── */
+  /* The ramps are shared; which step you pick is medium-specific.
+     --teal for UI/marketing, --teal-medium for data, charts and print
+     (greyscale distance to Yoga Gold). */
+  --teal: #00c9aa; /* Tidal Teal — success/positive states */
+  --teal-medium: #00a88f; /* Data, charts, print */
+  --teal-light: #7de8d6;
+  --teal-contrast: #005a4d;
+  --coral: #ff6540; /* Ember Coral — energy/high-energy CTAs */
+  --coral-medium: #ff8f70;
+  --coral-light: #ffd4c7;
+  --coral-contrast: #8c2a14;
+  --gold: #f1cd72; /* Yoga Gold — secondary accent; also Office accent3 */
+  --gold-medium: #ddaf3c;
+  --gold-light: #faecc6;
+  --gold-contrast: #6c4c13;
+
+  /* ── Activity — Training Mattrics ── */
+  --activity-canoe: #64e0b5;
+  --activity-run: #ff8d70;
+  --activity-lift: #c4a8ff;
+  --activity-yoga: var(--gold); /* = Yoga Gold, the secondary accent above */
+  --activity-ride: #7dd5ff;
+  --activity-walk: #9fe7bc;
+  --activity-hike: #badb7c;
+  --activity-water: #64d8e6;
+  --activity-row: #5dbde0;
+  --activity-surf: #60e4cf;
+  --activity-workout: #ffb07a;
+
+  /* ── Typography ── */
+  --font-display: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+  --font-sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-mono: 'DM Mono', 'Fira Code', 'Courier New', monospace;
+  /* Marker glyph U+2023, logo mark U+E000. No fallback stack on purpose:
+     no substitute font carries either codepoint. Never set text in it.
+     U+E000 is the standalone mark and belongs in documents only — it is a
+     Private Use Area codepoint with no fallback and no alt text. On screen
+     the equivalent is inline SVG, never this font. Minimum 39.4pt (= 10mm). */
+  --font-marks: 'mwieland Marks';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCREEN — UI only. None of these survive on paper.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  /* ── Light UI ── */
+  --screen-text-subtle: #888; /* Secondary text — 3.54:1, fails AA in print */
+  --screen-surface-page: #f7f7f5; /* Page ground — 1.07:1 on paper, invisible */
+  --screen-border: #e8e8e4;
+  --screen-border-subtle: #ddd;
+
+  /* ── Dark UI — has no print equivalent at all ── */
+  --screen-bg: var(--ground-dark); /* = Courageous Black, the shared ground */
+  --screen-bg-subtle: #111519;
+  --screen-bg-raised: #162030;
+  --screen-text-light: #edf2fa; /* Type on dark — NEVER a surface. Deliberately
+                                   unnamed: a dark-mode token, not a brand
+                                   colour. Do not reintroduce it as one. */
+  --screen-text-light-subtle: #8a9ab5;
+
+  /* ── Links ── */
+  --screen-link: var(--brand);
+  --screen-link-visited: var(--brand-contrast);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DOCUMENT — print and Office. Every token carries its own rule.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  /* ── Greyscale ramp — the smaller the type, the darker the grey ── */
+  --doc-text-secondary: #6b6b6b; /* Secondary text, min. 9pt (5.33:1) */
+  --doc-text-micro: #555; /* Microtype, min. 7pt (7.46:1) */
+  --doc-line: #9a9a9a; /* Rules/dividers only (2.81:1 — never text) */
+
+  /* ── Semantic roles of #002744 ──
+     Navy carries four separate roles in the document system. Each has its own
+     token so the value stays changeable without one of the roles moving with
+     it by accident. --doc-table-head and --doc-link below are the other two. */
+  --doc-heading: var(--brand-contrast); /* Title, Heading 1/4, mwSubject */
+  --doc-callout-text: var(--brand-contrast); /* Text inside all callouts */
+
+  /* ── Callout triads — rule, fill and text belong together ── */
+  --doc-note-rule: var(--gold);
+  --doc-note-fill: #fff7e2;
+  --doc-note-text: var(--doc-callout-text);
+  --doc-warning-rule: var(--coral);
+  --doc-warning-fill: #ffece5;
+  --doc-warning-text: var(--doc-callout-text);
+  --doc-positive-rule: var(--teal-medium);
+  --doc-positive-fill: #e4f5f1;
+  --doc-positive-text: var(--doc-callout-text);
+  --doc-quote-rule: var(--brand);
+  --doc-quote-fill: var(--surface-overlay);
+  --doc-quote-text: var(--text);
+
+  /* ── Other document surfaces ── */
+  --doc-code-fill: #e4e4e0; /* not surface-subtle: code has no marker line, so as sole mark it needs ≥1.20:1 against paper */
+  --doc-table-head: var(--brand-contrast);
+
+  /* ── Links — underline required ── */
+  --doc-link: var(--brand-contrast); /* 15.29:1 */
+  --doc-link-visited: #4a6b85; /* 5.63:1 */
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DEPRECATED — old unprefixed names, kept so existing projects keep
+   working. Do not use in new code; these will be removed.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --text-subtle: var(--screen-text-subtle);
+  --surface-page: var(--screen-surface-page);
+  --border: var(--screen-border);
+  --border-subtle: var(--screen-border-subtle);
+  --bg: var(--screen-bg);
+  --bg-subtle: var(--screen-bg-subtle);
+  --bg-raised: var(--screen-bg-raised);
+  --text-light: var(--screen-text-light);
+  --text-light-subtle: var(--screen-text-light-subtle);
+  --link: var(--screen-link);
+  --link-visited: var(--screen-link-visited);
+  --print-text-secondary: var(--doc-text-secondary);
+  --print-text-micro: var(--doc-text-micro);
+  --print-line: var(--doc-line);
+}
+
+/**
+ * USAGE EXAMPLES
+ *
+ * // Shared — anywhere
+ * color: var(--text);
+ * background: var(--surface-card);
+ * background: var(--ground-dark);    // Courageous Black — surface, never ink
+ * color: var(--brand);
+ * font-family: var(--font-sans);
+ * font-family: var(--font-marks);  // U+2023 marker / U+E000 logo mark only
+ *
+ * // Screen only
+ * color: var(--screen-text-subtle);
+ * background: var(--screen-surface-page);
+ * background: var(--screen-bg);
+ * color: var(--screen-text-light);   // type on dark — never a fill
+ * color: var(--screen-link);
+ *
+ * // Document — print and Office
+ * color: var(--doc-text-secondary);  // min. 9pt
+ * color: var(--doc-text-micro);      // min. 7pt
+ * border-color: var(--doc-line);     // rules only, never text
+ * color: var(--doc-link);            // underline required
+ * color: var(--doc-heading);         // document headings
+ * background: var(--doc-table-head); // table header fill, white type on it
+ *
+ * // Callouts: take all three of a triad, not one
+ * --doc-note-rule / --doc-note-fill / --doc-note-text
+ * --doc-warning-rule / --doc-warning-fill / --doc-warning-text
+ * --doc-positive-rule / --doc-positive-fill / --doc-positive-text
+ * --doc-quote-rule / --doc-quote-fill / --doc-quote-text
+ */

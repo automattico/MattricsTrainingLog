@@ -7,6 +7,17 @@ cd "$ROOT"
 say() { printf '%s\n' "$*"; }
 die() { printf 'deploy: %s\n' "$*" >&2; exit 1; }
 
+if [ "${1:-}" = "--stage-only" ]; then
+  [ "$#" -eq 3 ] || die 'usage: deploy.sh --stage-only REVISION NEW_DIRECTORY'
+  exec ./scripts/stage-release.sh "$2" "$3"
+fi
+release_ref=HEAD
+if [ "${1:-}" = "--revision" ] && [ "$#" -eq 2 ]; then
+  release_ref=$2
+elif [ "$#" -ne 0 ]; then
+  die 'usage: deploy.sh [--revision REVISION]'
+fi
+
 env_file=${MATTRICS_ENV_FILE:-.env.local}
 [ -f "$env_file" ] || die "$env_file missing — copy .env.example and fill it in"
 # shellcheck disable=SC1090
@@ -26,37 +37,27 @@ done
 [ -z "${SFTP_PASSWORD:-}" ] || die "password authentication is forbidden; remove SFTP_PASSWORD"
 [ -f "$SFTP_KEY_PATH" ] || die "SSH key not found: $SFTP_KEY_PATH"
 grep -q '^[^#[:space:]]' "$SFTP_KNOWN_HOSTS" 2>/dev/null || die "no host key pinned in $SFTP_KNOWN_HOSTS"
-command -v lftp >/dev/null 2>&1 || die "lftp is required"
 
 case "$MATTRICS_REMOTE_DIR" in
   sites/mattrics) : ;;
   public_html*|*/public_html*|/*|*..*|'') die "MATTRICS_REMOTE_DIR must be exactly sites/mattrics and never public_html" ;;
   *) die "MATTRICS_REMOTE_DIR must be exactly sites/mattrics" ;;
 esac
+command -v lftp >/dev/null 2>&1 || die "lftp is required"
 
-say "Running production gate ..."
-./scripts/prod-gate.sh
-
+revision=$(git rev-parse --verify --end-of-options "$release_ref^{commit}") || die 'expected a release commit'
+[ -z "$(git status --porcelain --untracked-files=no)" ] || die 'commit tracked changes before deploying'
+[ -z "$(git ls-tree "$revision" -- .env.local private/config.php private/postgres-ca.pem)" ] ||
+  die 'private runtime configuration or trust material is tracked by Git'
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/mattrics-deploy.XXXXXX")
 trap 'rm -r "$tmp"' EXIT HUP INT TERM
-mkdir -p "$tmp/stage/public" "$tmp/stage/api" "$tmp/stage/lib" "$tmp/stage/private/data"
+./scripts/stage-release.sh "$revision" "$tmp/stage"
 
-for path in index.html robots.txt site.webmanifest assets icons; do
-  [ -e "public/$path" ] || die "missing required public path: public/$path"
-  cp -R "public/$path" "$tmp/stage/public/"
-done
-for name in session data settings connectors exercises ai; do
-  [ -f "api/$name.php" ] || die "missing API endpoint: api/$name.php"
-  cp "api/$name.php" "$tmp/stage/api/"
-done
-for path in lib/*.php; do
-  [ -f "$path" ] || die "no shared PHP modules found"
-  cp "$path" "$tmp/stage/lib/"
-done
-cp private/config.example.php "$tmp/stage/private/config.example.php"
-for name in activity-type-configs exercise-configs exercise-dataset exercise-unknowns; do
-  cp "private/data/$name.json" "$tmp/stage/private/data/$name.json"
-done
+say "Running production gate for $revision ..."
+mkdir "$tmp/source"
+git archive -o "$tmp/source.tar" "$revision"
+tar -xf "$tmp/source.tar" -C "$tmp/source"
+(cd "$tmp/source" && ./scripts/prod-gate.sh)
 
 CONNECT="ssh -a -x -l $SFTP_USER -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$SFTP_KNOWN_HOSTS -o IdentitiesOnly=yes -i $SFTP_KEY_PATH"
 [ -z "${SFTP_IDENTITY_AGENT:-}" ] || CONNECT="$CONNECT -o IdentityAgent=$SFTP_IDENTITY_AGENT"
@@ -84,7 +85,7 @@ say "Uploading application content to $MATTRICS_REMOTE_DIR ..."
   printf 'mkdir -p "%s/public"\nmkdir -p "%s/api"\nmkdir -p "%s/lib"\nmkdir -p "%s/private/data"\n' \
     "$MATTRICS_REMOTE_DIR" "$MATTRICS_REMOTE_DIR" "$MATTRICS_REMOTE_DIR" "$MATTRICS_REMOTE_DIR"
   printf 'set cmd:fail-exit yes\n'
-  for tree in public api lib; do
+  for tree in lib api public; do
     printf 'mirror --reverse --delete --verbose=1 "%s/stage/%s" "%s/%s"\n' "$tmp" "$tree" "$MATTRICS_REMOTE_DIR" "$tree"
   done
   printf 'mirror --reverse --only-missing --verbose=1 "%s/stage/private" "%s/private"\n' "$tmp" "$MATTRICS_REMOTE_DIR"

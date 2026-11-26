@@ -120,7 +120,7 @@ assert(M.state.exerciseConfigMeta.lastSuccessfulSyncAt === "2026-06-07T08:00:00Z
     canonicalName,
     muscleWeights: { biceps: 1 },
   }));
-  const merged = { id: "merged-exercise", canonicalName: "Cable Pull", aliases: ["Lat Pulldown"], muscleWeights: { upperBack: 1 } };
+  const merged = { id: "merged-exercise", canonicalName: "Cable Pull", aliases: ["Lat Pulldown"], hevyTemplateKeys: ["example:template"], muscleWeights: { upperBack: 1 } };
   const mergedCurl = { canonicalName: "Dumbbell Biceps Curl", aliases: ["DB Curl", "Cable Hammer Curl"], muscleWeights: { biceps: 1 } };
   const excluded = { canonicalName: "Wrist Extension", fatigueImpact: "none", muscleWeights: {} };
   const soccer = { canonicalName: "Soccer", muscleWeights: { calves: 0.45 } };
@@ -131,6 +131,7 @@ assert(M.state.exerciseConfigMeta.lastSuccessfulSyncAt === "2026-06-07T08:00:00Z
   assert(M.resolveExerciseConfig("Wrist Extension").muscleWeights.forearms === 0, "excluded exercises get zero forearm involvement");
   assert(M.resolveExerciseConfig("Lat Pulldown")?.muscleWeights.forearms === 0.45, "merged aliases can inform the forearm default");
   assert(M.resolveExerciseConfig("Cable Hammer Curl")?.muscleWeights.forearms === 0.45, "a merged hammer curl retains its default on a named biceps curl");
+  assert(M.resolveExerciseConfig("Renamed template", "example:template")?.id === merged.id, "prefill preserves the Hevy template mapping");
   assert(!Object.hasOwn(merged.muscleWeights, "forearms"), "prefill leaves the original catalog record intact");
   assert(M.resolveActivityTypeConfig("Soccer").muscleWeights.forearms === undefined, "exercise defaults leave Soccer activity mappings intact");
   assert(!M.renderActivityTypeAdminEditorHtmlForTest(soccer).includes('name="muscle-forearms"'), "activity type editor omits the Forearms field");
@@ -203,6 +204,20 @@ assert(cyclingExercise && cyclingExercise.setTypeHandling === "time_duration", "
 
 const canoeType = M.resolveActivityTypeConfig("Canoe");
 assert(canoeType && canoeType.canonicalName === "Canoeing", "activity type alias resolves to canonical config");
+
+const activityIcons = {
+  Swim: "🏊",
+  Other: "🧩",
+  Breathwork: "🌬️",
+  Mobility: "🤸",
+  Soccer: "⚽",
+  Skate: "⛸️",
+};
+for (const [type, icon] of Object.entries(activityIcons)) {
+  const metadata = M.tc(M.canonicalType(type));
+  assert(metadata.icon === icon && metadata.label === type, `${type} uses its own icon and keeps its label`);
+}
+assert(M.tc("Unlisted activity").icon === "⚡", "unlisted activities still use the fallback icon");
 
 const padelAliases = ["Padel", "Pádel", "Padel Tennis", "Pádel Tennis"];
 padelAliases.forEach((type) => {
@@ -817,7 +832,7 @@ const unknowns = M.collectUnknownExercisesFromActivities([
   {
     Type: "WeightTraining",
     Date: M.toIsoDate(new Date()),
-    Description: "Logged with Hevy\n\nPhantom Apparatus\n20 kg x 8\n\nphantom-apparatus\n18 kg x 10\n\nStretching\n15min 0s\n\nBench Press\n80 kg x 5",
+    Description: "Logged with Hevy\n\nPhantom Apparatus\n20 kg x 8\n\nphantom-apparatus\n18 kg x 10\n\nStretching\n15min 0s\n\nBench Press\n80 kg x 5\n\nTemplate Placeholder",
   },
   {
     Type: "Unknown Activity Type",
@@ -848,6 +863,10 @@ M.setActivityChildren([
           { id: "7", setOrder: 1, parsedKind: "parsed", sourceSetText: "20 kg x 8", reps: 8, weightKg: 20, durationMinutes: null, distanceKm: null, rpe: 8, effortFactor: 1.3, computedLoad: 208, notes: null },
         ],
       },
+      {
+        sourceExerciseName: "Skipped Template Exercise",
+        sets: [],
+      },
     ],
   },
 ]);
@@ -860,8 +879,8 @@ const canonicalUnknowns = M.collectUnknownExercisesFromActivities([
   },
 ]);
 assert(
-  canonicalUnknowns.some((item) => item.id === "exercise:phantom apparatus"),
-  "unknown scan uses canonical child-row exercise names when available"
+  canonicalUnknowns.length === 1 && canonicalUnknowns[0].id === "exercise:phantom apparatus",
+  "unknown scan uses canonical child-row exercises with recorded sets"
 );
 
 const mixedHevyStimulus = M.getActivityMuscleStimulus({
@@ -1320,6 +1339,8 @@ const mergeOptionIds = (html) => {
 assert(
   M.getExerciseAdminListItems("hammer", "exercise").length === 1
     && mergeOptionIds(expandedMergeHtml) === "bench-press,z-press"
+    && expandedMergeHtml.includes('aria-controls="exerciseMergeTargets"')
+    && expandedMergeHtml.includes('id="exerciseMergeTargets" size="5"')
     && expandedMergeHtml.includes('value="" selected>Choose an exercise')
     && expandedMergeHtml.includes("data-exercise-admin-merge disabled>Confirm merge")
     && expandedMergeHtml.includes("data-exercise-admin-merge-cancel")
