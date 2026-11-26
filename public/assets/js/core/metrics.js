@@ -15,7 +15,7 @@
       case "Canoeing":
       case "Canoe":
         if (km) metrics.push({ val: km.toFixed(1), lab: "km", color: "var(--canoe)" });
-        if (min) metrics.push({ val: M.fmt(min), lab: "time", color: "var(--text)" });
+        if (min) metrics.push({ val: M.fmt(min), lab: activity["Duration basis"]?.toLowerCase() || "time", color: "var(--text)" });
         if (elev) metrics.push({ val: `${elev}m`, lab: "elev", color: "var(--muted)" });
         if (hr) metrics.push({ val: hr.toFixed(0), lab: "avg♥", color: "var(--muted)" });
         break;
@@ -26,42 +26,42 @@
         if (elev) metrics.push({ val: `${elev}m`, lab: "elev", color: "var(--muted)" });
         break;
       case "Padel":
-        if (min) metrics.push({ val: M.fmt(min), lab: "time", color: "var(--padel)" });
+        if (min) metrics.push({ val: M.fmt(min), lab: activity["Duration basis"]?.toLowerCase() || "time", color: "var(--padel)" });
         if (hr) metrics.push({ val: hr.toFixed(0), lab: "avg♥", color: "var(--padel)" });
         break;
       case "Hike":
         if (km) metrics.push({ val: km.toFixed(1), lab: "km", color: "var(--hike)" });
         if (elev) metrics.push({ val: `${elev}m`, lab: "gain", color: "var(--hike)" });
-        if (min) metrics.push({ val: M.fmt(min), lab: "time", color: "var(--text)" });
+        if (min) metrics.push({ val: M.fmt(min), lab: activity["Duration basis"]?.toLowerCase() || "time", color: "var(--text)" });
         if (hr) metrics.push({ val: hr.toFixed(0), lab: "avg♥", color: "var(--muted)" });
         break;
       case "Walk":
         if (km) metrics.push({ val: km.toFixed(1), lab: "km", color: "var(--walk)" });
-        if (min) metrics.push({ val: M.fmt(min), lab: "time", color: "var(--text)" });
+        if (min) metrics.push({ val: M.fmt(min), lab: activity["Duration basis"]?.toLowerCase() || "time", color: "var(--text)" });
         if (elev) metrics.push({ val: `${elev}m`, lab: "gain", color: "var(--muted)" });
         break;
       case "Ride":
         if (km) metrics.push({ val: km.toFixed(1), lab: "km", color: "var(--ride)" });
         if (speed) metrics.push({ val: speed.toFixed(1), lab: "km/h", color: "var(--text)" });
-        if (min) metrics.push({ val: M.fmt(min), lab: "time", color: "var(--muted)" });
+        if (min) metrics.push({ val: M.fmt(min), lab: activity["Duration basis"]?.toLowerCase() || "time", color: "var(--muted)" });
         if (hr) metrics.push({ val: hr.toFixed(0), lab: "avg♥", color: "var(--muted)" });
         break;
       case "Rowing":
       case "WaterSport":
         if (km) metrics.push({ val: km.toFixed(2), lab: "km", color: "var(--row)" });
-        if (min) metrics.push({ val: M.fmt(min), lab: "time", color: "var(--text)" });
+        if (min) metrics.push({ val: M.fmt(min), lab: activity["Duration basis"]?.toLowerCase() || "time", color: "var(--text)" });
         if (hr) metrics.push({ val: hr.toFixed(0), lab: "avg♥", color: "var(--muted)" });
         if (cad) metrics.push({ val: cad.toFixed(0), lab: "s/m", color: "var(--muted)" });
         break;
       case "Yoga":
-        if (min) metrics.push({ val: M.fmt(min), lab: "time", color: "var(--yoga)" });
+        if (min) metrics.push({ val: M.fmt(min), lab: activity["Duration basis"]?.toLowerCase() || "time", color: "var(--yoga)" });
         if (hr) metrics.push({ val: hr.toFixed(0), lab: "avg♥", color: "var(--muted)" });
         break;
       case "Surfing":
-        if (min) metrics.push({ val: M.fmt(min), lab: "time", color: "var(--surf)" });
+        if (min) metrics.push({ val: M.fmt(min), lab: activity["Duration basis"]?.toLowerCase() || "time", color: "var(--surf)" });
         break;
       default:
-        if (min) metrics.push({ val: M.fmt(min), lab: "time", color: "var(--lift)" });
+        if (min) metrics.push({ val: M.fmt(min), lab: activity["Duration basis"]?.toLowerCase() || "time", color: "var(--lift)" });
         if (hr) metrics.push({ val: hr.toFixed(0), lab: "avg♥", color: "var(--muted)" });
     }
 
@@ -83,7 +83,12 @@
     const cad = parseFloat(activity["Avg Cadence"]) || 0;
 
     if (km) add(`${km.toFixed(km >= 10 ? 1 : 2)} km`, "Distance");
-    if (min) add(M.fmt(min), "Duration");
+    if (activity["Duration basis"]) {
+      for (const label of ["Moving", "Timer", "Elapsed"]) {
+        const seconds = activity[label + " seconds"];
+        if (seconds != null) add(M.fmt(seconds / 60), label + " time");
+      }
+    } else if (min) add(M.fmt(min), "Duration");
     if (elev) add(`${elev} m`, "Elevation");
     if (hr) add(hr.toFixed(0), "Avg HR");
     if (maxHr) add(maxHr.toFixed(0), "Max HR");

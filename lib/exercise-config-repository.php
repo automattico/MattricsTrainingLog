@@ -89,6 +89,22 @@ function mattrics_exercise_config_data_dir(): string
     return mattrics_private_root() . '/data';
 }
 
+/** Catalog consumers hold this lock across a coherent read or a complete edit. */
+function mattrics_lock_exercise_catalog(int $mode)
+{
+    $dir = mattrics_exercise_config_data_dir();
+    mattrics_ensure_dir($dir);
+    $lock = fopen($dir . '/exercise-config.lock', 'c');
+    if ($lock === false) {
+        throw new RuntimeException('Could not open the exercise catalog lock.');
+    }
+    if (!flock($lock, $mode)) {
+        fclose($lock);
+        throw new RuntimeException('Could not lock the exercise catalog.');
+    }
+    return $lock;
+}
+
 function mattrics_exercise_config_path(): string
 {
     return mattrics_exercise_config_data_dir() . '/exercise-configs.json';
@@ -318,6 +334,27 @@ function mattrics_normalize_fatigue_multiplier(array $record, string $kind): flo
     return $value;
 }
 
+function mattrics_validate_hevy_template_key(mixed $value): string
+{
+    if (!is_string($value) || !preg_match('/\A[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}:.+\z/s', $value)
+        || trim(substr($value, 37)) === '') {
+        throw new RuntimeException('Invalid Hevy template identity.');
+    }
+    return $value;
+}
+
+function mattrics_unknown_exercise_identity(array $record, string $sourceType, string $normalizedName): array
+{
+    if (!isset($record['hevyTemplateKey'])) {
+        return ['id' => $sourceType . ':' . $normalizedName];
+    }
+    if ($sourceType !== 'exercise') {
+        throw new RuntimeException('Only exercise unknowns can have a Hevy template identity.');
+    }
+    $key = mattrics_validate_hevy_template_key($record['hevyTemplateKey']);
+    return ['id' => 'exercise:hevy:' . $key, 'hevyTemplateKey' => $key];
+}
+
 function mattrics_validate_exercise_config_record(array $record): array
 {
     $canonicalName = mattrics_ensure_required_string($record, 'canonicalName', 'Exercise');
@@ -357,6 +394,12 @@ function mattrics_validate_exercise_config_record(array $record): array
     $archetype = mattrics_optional_allowed_string($record, 'fatigueArchetype', 'Exercise', MATTRICS_EXERCISE_CONFIG_ALLOWED_ARCHETYPES);
     if ($archetype !== null) {
         $validated['fatigueArchetype'] = $archetype;
+    }
+    if (!empty($record['hevyTemplateKeys'])) {
+        $validated['hevyTemplateKeys'] = array_values(array_unique(array_map(
+            'mattrics_validate_hevy_template_key',
+            mattrics_ensure_string_array($record, 'hevyTemplateKeys', 'Exercise')
+        )));
     }
 
     return $validated;
@@ -406,10 +449,15 @@ function mattrics_validate_unknown_exercise_record(array $record): array
         'Unknown exercise',
         MATTRICS_EXERCISE_UNKNOWN_ALLOWED_SOURCE_TYPES
     );
-    $normalizedName = mattrics_ensure_required_string($record, 'normalizedName', 'Unknown exercise');
-    $expectedId = $sourceType . ':' . $normalizedName;
+    $normalizedName = isset($record['normalizedName']) && is_string($record['normalizedName'])
+        ? trim($record['normalizedName'])
+        : null;
+    if ($normalizedName === null || ($normalizedName === '' && !isset($record['hevyTemplateKey']))) {
+        throw new RuntimeException('Unknown exercise must include normalizedName.');
+    }
+    $identity = mattrics_unknown_exercise_identity($record, $sourceType, $normalizedName);
     $id = mattrics_ensure_required_string($record, 'id', 'Unknown exercise');
-    if ($id !== $expectedId) {
+    if ($id !== $identity['id']) {
         throw new RuntimeException('Unknown exercise id mismatch for ' . $normalizedName . '.');
     }
 
@@ -428,7 +476,7 @@ function mattrics_validate_unknown_exercise_record(array $record): array
     }
 
     return [
-        'id' => $id,
+        ...$identity,
         'sourceType' => $sourceType,
         'normalizedName' => $normalizedName,
         'rawNames' => $rawNames,
@@ -632,7 +680,7 @@ function mattrics_validate_unknown_sync_input(array $record): array
     }
 
     $normalizedName = mattrics_normalize_config_name((string) ($record['normalizedName'] ?? ''));
-    if ($normalizedName === '') {
+    if ($normalizedName === '' && !isset($record['hevyTemplateKey'])) {
         throw new RuntimeException('Unknown sync record must include normalizedName.');
     }
 
@@ -656,7 +704,7 @@ function mattrics_validate_unknown_sync_input(array $record): array
     }
 
     return [
-        'id' => $sourceType . ':' . $normalizedName,
+        ...mattrics_unknown_exercise_identity($record, $sourceType, $normalizedName),
         'sourceType' => $sourceType,
         'normalizedName' => $normalizedName,
         'rawNames' => $cleanRawNames,
@@ -676,8 +724,9 @@ function mattrics_sync_unknown_exercise_records(array $incoming): array
     $synced = [];
     foreach ($incoming as $record) {
         $existing = $existingById[$record['id']] ?? null;
-        $synced[] = [
+        $synced[$record['id']] = [
             'id' => $record['id'],
+            ...array_intersect_key($record, ['hevyTemplateKey' => true]),
             'sourceType' => $record['sourceType'],
             'normalizedName' => $record['normalizedName'],
             'rawNames' => $record['rawNames'],
@@ -953,7 +1002,30 @@ function mattrics_assert_activity_type_config_name_collisions(
 function mattrics_prune_resolved_unknown_exercise_records(): array
 {
     $records = mattrics_read_unknown_exercise_records();
-    $remaining = array_values(array_filter($records, static function (array $record): bool {
+    $remaining = mattrics_filter_unresolved_legacy_exercises($records);
+
+    if (count($remaining) !== count($records)) {
+        mattrics_write_unknown_exercise_records($remaining);
+    }
+
+    return $remaining;
+}
+
+function mattrics_filter_unresolved_legacy_exercises(array $records): array
+{
+    $mappedTemplates = [];
+    if (array_filter($records, static fn(array $record): bool => isset($record['hevyTemplateKey']))) {
+        foreach (mattrics_read_exercise_config_records() as $exercise) {
+            foreach ($exercise['hevyTemplateKeys'] ?? [] as $key) {
+                $mappedTemplates[$key] = true;
+            }
+        }
+    }
+
+    return array_values(array_filter($records, static function (array $record) use ($mappedTemplates): bool {
+        if (isset($record['hevyTemplateKey'])) {
+            return !isset($mappedTemplates[$record['hevyTemplateKey']]);
+        }
         $sourceType = (string) ($record['sourceType'] ?? '');
         $normalizedName = (string) ($record['normalizedName'] ?? '');
         if ($normalizedName === '') {
@@ -970,12 +1042,6 @@ function mattrics_prune_resolved_unknown_exercise_records(): array
 
         return true;
     }));
-
-    if (count($remaining) !== count($records)) {
-        mattrics_write_unknown_exercise_records($remaining);
-    }
-
-    return $remaining;
 }
 
 function mattrics_normalize_exercise_source(?string $source, string $fallback = 'manual'): string
@@ -1020,6 +1086,7 @@ function mattrics_build_merged_alias_exercise_record(
         'setTypeHandling' => (string) ($target['setTypeHandling'] ?? 'weight_reps'),
         'exerciseFamily' => $target['exerciseFamily'] ?? null,
         'fatigueArchetype' => $target['fatigueArchetype'] ?? null,
+        'hevyTemplateKeys' => $target['hevyTemplateKeys'] ?? [],
         'source' => (string) ($target['source'] ?? 'manual'),
         'lastUpdatedAt' => gmdate('c'),
         'lastUpdatedType' => 'manual',
@@ -1072,7 +1139,7 @@ function mattrics_make_activity_type_config_id(string $canonicalName, array $exi
     return $candidate;
 }
 
-function mattrics_create_exercise_config_record(array $input): array
+function mattrics_create_exercise_config_record(array $input, ?string $hevyTemplateKey = null): array
 {
     $records = mattrics_read_exercise_config_records();
     $canonicalName = trim((string) ($input['canonicalName'] ?? ''));
@@ -1127,6 +1194,7 @@ function mattrics_create_exercise_config_record(array $input): array
         'setTypeHandling' => $setTypeHandling,
         'exerciseFamily' => $input['exerciseFamily'] ?? null,
         'fatigueArchetype' => $input['fatigueArchetype'] ?? null,
+        'hevyTemplateKeys' => $hevyTemplateKey === null ? [] : [$hevyTemplateKey],
         'source' => mattrics_normalize_exercise_source($input['source'] ?? null),
         'lastUpdatedAt' => gmdate('c'),
         'lastUpdatedType' => 'manual',
@@ -1261,6 +1329,7 @@ function mattrics_update_exercise_config_record(string $id, array $input): array
         'setTypeHandling' => $setTypeHandling,
         'exerciseFamily' => $input['exerciseFamily'] ?? ($existing['exerciseFamily'] ?? null),
         'fatigueArchetype' => $input['fatigueArchetype'] ?? ($existing['fatigueArchetype'] ?? null),
+        'hevyTemplateKeys' => $existing['hevyTemplateKeys'] ?? [],
         'source' => mattrics_normalize_exercise_source($input['source'] ?? null, (string) ($existing['source'] ?? 'manual')),
         'lastUpdatedAt' => gmdate('c'),
         'lastUpdatedType' => 'manual',
@@ -1390,6 +1459,9 @@ function mattrics_merge_exercise_config_record_as_alias(string $sourceId, string
             ...($source['matchTerms'] ?? []),
         ])
     );
+    if (!empty($source['hevyTemplateKeys'])) {
+        $updatedTarget['hevyTemplateKeys'] = [...($target['hevyTemplateKeys'] ?? []), ...$source['hevyTemplateKeys']];
+    }
 
     mattrics_assert_exercise_config_name_collisions(
         $remaining,
@@ -1427,6 +1499,18 @@ function mattrics_merge_unknown_exercise_record_as_alias(string $unknownId, stri
     }
     if ($target === null || $targetIndex === null) {
         throw new RuntimeException('Merge target exercise was not found.');
+    }
+
+    if (isset($unknown['hevyTemplateKey'])) {
+        if (mattrics_filter_unresolved_legacy_exercises([$unknown]) === []) {
+            throw new RuntimeException('This Hevy template already has a mapping.');
+        }
+        $target['hevyTemplateKeys'][] = $unknown['hevyTemplateKey'];
+        $target['lastUpdatedAt'] = gmdate('c');
+        $target['lastUpdatedType'] = 'manual';
+        $records[$targetIndex] = $target;
+        mattrics_write_exercise_config_records($records);
+        return $target;
     }
 
     $rawNames = $unknown['rawNames'] ?? [];

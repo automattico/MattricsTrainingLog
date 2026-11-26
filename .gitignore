@@ -1,6 +1,7 @@
 # Secrets — never commit these
 public/config.js
 private/config.php
+private/postgres-ca.pem
 private/cache/
 private/*.json
 private/import-hevy/
@@ -32,3 +33,4 @@ Thumbs.db
 *.log
 *.tmp
 *.bak
+/tools/planning-report/.output/

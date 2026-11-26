@@ -1,8 +1,15 @@
 (function () {
   const M = window.Mattrics;
 
-  function resolveStatusTimestamp() {
-    return M.resolveHeaderTimestamp(M.state.dataMeta || {}) || M.resolveHeaderTimestamp(M.state.exerciseConfigMeta || {});
+  function hasLinkedWorkoutSources(activities, catalog) {
+    return activities.source === "canonical" && catalog.source === "linked-workout-json";
+  }
+
+  function resolveStatusTimestamp(activities, catalog) {
+    if (hasLinkedWorkoutSources(activities, catalog)) {
+      return M.parseTimestamp(activities.lastSuccessfulSyncAt);
+    }
+    return M.resolveHeaderTimestamp(activities) || M.resolveHeaderTimestamp(catalog);
   }
 
   function formatSourceLabel(source) {
@@ -11,6 +18,7 @@
       case "cache": return "Cached snapshot";
       case "live": return "Live sheet";
       case "legacy": return "Legacy JSON";
+      case "linked-workout-json": return "Local JSON catalog";
       default: return source ? String(source) : "Unavailable";
     }
   }
@@ -28,18 +36,26 @@
     const stamp = document.getElementById("dataSyncStamp");
     if (!stamp) return;
 
-    const timestamp = resolveStatusTimestamp();
-    const lines = [
-      `Activities: ${formatSourceLabel(meta.source)}`,
-      `Config: ${formatSourceLabel(exerciseConfigMeta.source)}`,
-    ];
+    const localHistory = hasLinkedWorkoutSources(meta, exerciseConfigMeta);
+    const timestamp = resolveStatusTimestamp(meta, exerciseConfigMeta);
+    const timestampLabel = localHistory ? "Last import" : "Last updated";
+    const lines = localHistory
+      ? ["Workouts: Local Postgres", "Catalog: Local JSON"]
+      : [
+        `Activities: ${formatSourceLabel(meta.source)}`,
+        `Config: ${formatSourceLabel(exerciseConfigMeta.source)}`,
+      ];
+    for (const [provider, health] of Object.entries(meta.directRefresh || {})) {
+      const last = health.last_success ? M.fmtDateTime(health.last_success) : "never";
+      lines.push(`${provider}: ${health.status} · last success ${last}`);
+    }
     if (!timestamp) {
-      lines.push("Last updated unavailable");
+      lines.push(`${timestampLabel} unavailable`);
       stamp.innerHTML = lines.map((line) => `<div>${M.esc(line)}</div>`).join("");
       return;
     }
 
-    lines.push(`Last updated: ${M.fmtRelativeAge(timestamp, Date.now())}`);
+    lines.push(`${timestampLabel}: ${M.fmtRelativeAge(timestamp, Date.now())}`);
     lines.push(`${M.fmtBerlinDate(timestamp)}, ${M.fmtBerlinTime(timestamp)}`);
     stamp.innerHTML = lines.map((line) => `<div>${M.esc(line)}</div>`).join("");
   }
@@ -72,13 +88,20 @@
     const banner = document.getElementById("dataStatusBanner");
 
     updateDataSyncStamp();
+    const expectedLinkedWorkoutSources = hasLinkedWorkoutSources(meta, exerciseConfigMeta);
+    const refresh = document.getElementById("refreshDataButton");
+    if (refresh) {
+      refresh.title = expectedLinkedWorkoutSources ? "Reload imported workouts" : "Refresh from sheet";
+      if (Object.keys(meta.directRefresh || {}).length) refresh.title = "Check direct workout sources";
+      refresh.setAttribute("aria-label", Object.keys(meta.directRefresh || {}).length ? refresh.title : expectedLinkedWorkoutSources ? "Reload imported workouts" : "Refresh data");
+    }
 
     if (M.dataSyncStampTicker) {
       window.clearInterval(M.dataSyncStampTicker);
       M.dataSyncStampTicker = null;
     }
 
-    if (resolveStatusTimestamp()) {
+    if (resolveStatusTimestamp(meta, exerciseConfigMeta)) {
       M.dataSyncStampTicker = window.setInterval(updateDataSyncStamp, 1000);
     }
 
@@ -90,7 +113,8 @@
     ].filter(Boolean);
 
     if (
-      meta.source
+      !expectedLinkedWorkoutSources
+      && meta.source
       && exerciseConfigMeta.source
       && (meta.source === "canonical") !== (exerciseConfigMeta.source === "canonical")
     ) {

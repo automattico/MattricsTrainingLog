@@ -311,3 +311,13 @@
     gap: 4px;
   }
 }
+
+@media (max-width: 560px) {
+  .review-manual { grid-template-columns: minmax(0, 1fr); }
+  .review-search-tools > button { white-space: normal; }
+}
+
+@media (max-width: 480px) {
+  .workout-review th, .workout-review td { padding-inline: .35rem; }
+  .review-recording .review-primary { font-size: .85rem; }
+}

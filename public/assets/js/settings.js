@@ -311,6 +311,14 @@
     </div>
   </section>
 
+  ${typeof M.state.deleteMakeAfterWeek === "boolean" ? `
+  <section class="settings-group">
+    <h2 class="settings-group-title">Make workout storage</h2>
+    <label><input type="checkbox" id="deleteMakeAfterWeek" ${M.state.deleteMakeAfterWeek ? "checked" : ""}>
+      Delete Make workouts after seven days</label>
+    <p class="settings-hint">Turning this on deletes Make records already seven days old. Turning it off keeps remaining records indefinitely.</p>
+    <span role="status" id="makeRetentionStatus"></span>
+  </section>` : ""}
   <div class="settings-actions">
     <button class="settings-save-btn" type="button" data-settings-save>Save settings</button>
     <div class="settings-feedback" id="settingsFeedback" hidden></div>
@@ -340,6 +348,7 @@
       if (res.ok) {
         const json = await res.json();
         M.state.userSettings = json.settings || null;
+        M.state.deleteMakeAfterWeek = json.deleteMakeAfterWeek;
       }
     } catch (_) {
       // graceful degradation — hardcoded defaults remain in effect
@@ -431,6 +440,32 @@
       if (saveBtn) saveBtn.disabled = false;
     }
   };
+
+  document.addEventListener("change", async event => {
+    const box = event.target;
+    if (box.id !== "deleteMakeAfterWeek") return;
+    const status = document.getElementById("makeRetentionStatus");
+    const value = box.checked;
+    if (value && !window.confirm("Delete Make records already seven days old and enable automatic deletion?")) {
+      box.checked = false;
+      return;
+    }
+    box.disabled = true;
+    try {
+      const response = await M.apiFetch("/api/settings", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({action: "makeRetention", deleteMakeAfterWeek: value}),
+      });
+      if (!response.ok || (await response.json()).deleteMakeAfterWeek !== value) throw new Error();
+      M.state.deleteMakeAfterWeek = value;
+      status.textContent = "Saved.";
+    } catch {
+      box.checked = M.state.deleteMakeAfterWeek;
+      status.textContent = "Could not confirm the change. Reload to check.";
+    } finally {
+      box.disabled = false;
+    }
+  });
 
   function settingsRpeSelect(val) {
     document.querySelectorAll(".rpe-btn").forEach((btn) => {

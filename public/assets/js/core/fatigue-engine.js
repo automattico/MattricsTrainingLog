@@ -268,7 +268,7 @@
       if (!Array.isArray(hevy) || !hevy.length) return;
 
       hevy.forEach((exercise) => {
-        const candidateConfig = M.resolveExerciseConfig(exercise && exercise.name);
+        const candidateConfig = M.resolveExerciseConfig(exercise.name, exercise.hevyTemplateKey);
         if (!candidateConfig) return;
         const candidateFamily = getExerciseFamily(candidateConfig);
         const sameExercise = (
@@ -327,7 +327,7 @@
     if (hevy && hevy.length) {
       let matchedExercise = false;
       hevy.forEach((exercise) => {
-        const match = M.getExerciseMuscleMapping(exercise.name);
+        const match = M.getExerciseMuscleMapping(exercise.name, exercise.hevyTemplateKey);
         if (!match) return;
         matchedExercise = true;
         if (match.fatigueImpact === "none") return;

@@ -8,6 +8,8 @@ Matching names use one full-width card with Edit names and Merge side by side. T
 
 Activity types show the matching names editor. For exercises, the picker excludes the current configured exercise and remains independent of the manager list filters.
 
+On 25 November the target list became visible beneath the search field so results update as the user types. The merge panel now shows request errors beside its confirmation controls. The parity preview routes confirmed exercise merges to its isolated catalog for the guarded migration workflow. [Catalog ownership](v1-catalog-ownership-report.md)
+
 ## Validation
 
 - ✅ `./scripts/prod-gate.sh` passed, including 167 JavaScript exercise configuration checks.

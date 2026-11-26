@@ -160,17 +160,42 @@ function mattrics_validate_settings(array $body): array
     return ['errors' => $errors, 'settings' => $out];
 }
 
+function mattrics_make_expiry(?bool $set = null): bool
+{
+    require_once MATTWARDEN_SITE_DIR . '/lib/foundation-read.php';
+    $pdo = mattrics_foundation_read_connect();
+    $owner = mattrics_foundation_read_user_key();
+    if ($set !== null) {
+        $write = $pdo->prepare('SELECT mattrics.set_make_retention(?, ?::boolean)');
+        $write->execute([$owner, $set ? 'true' : 'false']);
+    }
+    $query = $pdo->prepare('SELECT COALESCE((SELECT delete_after_week FROM mattrics.make_retention WHERE user_key = ?), true)');
+    $query->execute([$owner]);
+    return (bool) $query->fetchColumn();
+}
+
+$makeEnabled = (mattrics_load_config()['make_postgres_enabled'] ?? false) === true;
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 if ($method === 'GET') {
     $settings = mattrics_read_settings();
-    mattrics_send_json(['settings' => $settings]);
+    $response = ['settings' => $settings];
+    if ($makeEnabled) {
+        $response['deleteMakeAfterWeek'] = mattrics_make_expiry();
+    }
+    mattrics_send_json($response);
 }
 
 if ($method === 'POST') {
     mattwarden_require_same_origin();
     mattwarden_require_csrf();
     $body = mattrics_read_json_body();
+    if (($body['action'] ?? '') === 'makeRetention') {
+        if (!$makeEnabled || !is_bool($body['deleteMakeAfterWeek'] ?? null)) {
+            mattrics_send_json(['error' => 'Make retention setting unavailable.'], 422);
+        }
+        mattrics_send_json(['deleteMakeAfterWeek' => mattrics_make_expiry($body['deleteMakeAfterWeek'])]);
+    }
     $result = mattrics_validate_settings($body);
 
     if (!empty($result['errors'])) {

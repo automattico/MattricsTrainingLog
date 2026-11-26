@@ -218,9 +218,9 @@
   }
 
   function getUnknownRecentWorkouts(record, limit = 3) {
-    if (!record || !record.normalizedName) return [];
+    if (!record) return [];
     const normalizedName = normalizeQuery(record.normalizedName);
-    if (!normalizedName) return [];
+    if (!normalizedName && !record.hevyTemplateKey) return [];
 
     return toArray(M.state.allData)
       .map((activity) => {
@@ -236,7 +236,9 @@
           ? M.getActivityWorkoutBlocks(activity)
           : M.parseHevyDescription(activity.Description);
         if (!Array.isArray(exercises) || !exercises.length) return null;
-        const matches = exercises.filter((exercise) => normalizeQuery(exercise && exercise.name) === normalizedName);
+        const matches = exercises.filter((exercise) => record.hevyTemplateKey
+          ? exercise.hevyTemplateKey === record.hevyTemplateKey
+          : !exercise.hevyTemplateKey && normalizeQuery(exercise.name) === normalizedName);
         if (!matches.length) return null;
         return { activity, matches };
       })
@@ -610,6 +612,7 @@
           <strong>${esc(title)}</strong>
           <span class="exercise-admin-list-badges">${buildBadge(item.kind === "unknownActivityType" ? "Activity type" : "Exercise")}${buildBadge("Unconfigured", "danger")}</span>
         </div>
+        ${record.hevyTemplateKey ? `<div class="exercise-admin-list-meta">Hevy template ${esc(record.hevyTemplateKey.slice(37))}</div>` : ""}
       </button>`;
     }
 
@@ -947,13 +950,14 @@
     return `<div class="exercise-admin-inline-action" id="exerciseMergePanel">
       ${hasTargets
         ? `<label class="settings-label" for="exerciseMergeSearch">Find a target exercise</label>
-          <input class="settings-input" id="exerciseMergeSearch" type="search" value="${escAttr(state.mergeQuery || "")}" data-exercise-admin-merge-search${isMerging ? " disabled" : ""}>
-          <select class="settings-input settings-select" aria-label="Target exercise" data-exercise-admin-merge-target${isMerging || !options.length ? " disabled" : ""}>
+          <input class="settings-input" id="exerciseMergeSearch" type="search" placeholder="Search by name or alias" aria-controls="exerciseMergeTargets" value="${escAttr(state.mergeQuery || "")}" data-exercise-admin-merge-search${isMerging ? " disabled" : ""}>
+          <select class="settings-input exercise-admin-merge-targets" id="exerciseMergeTargets" size="5" aria-label="Target exercise" data-exercise-admin-merge-target${isMerging || !options.length ? " disabled" : ""}>
             ${renderMergeTargetOptions(options, target?.id)}
           </select>`
         : '<div class="exercise-admin-empty exercise-admin-empty--compact">No configured exercise is available as a merge target.</div>'}
       <div>
         ${hasTargets ? `<div aria-live="polite" class="exercise-admin-merge-warning" data-exercise-admin-merge-warning>${renderMergeWarning(selected, target)}</div>` : ""}
+        ${state.feedback?.kind === "error" ? `<div class="exercise-admin-action-copy" role="alert">${esc(state.feedback.message)}</div>` : ""}
         <div class="exercise-admin-editor-actions exercise-admin-editor-actions--inline">
           ${hasTargets ? `<button type="button" class="settings-save-btn" data-exercise-admin-merge${isMerging || !target ? " disabled" : ""}>${isMerging ? "Merging…" : "Confirm merge"}</button>` : ""}
           <button type="button" class="secondary-btn exercise-admin-secondary-btn" data-exercise-admin-merge-cancel${isMerging ? " disabled" : ""}>Cancel</button>
@@ -1598,6 +1602,7 @@
 
   function closeMergePanel() {
     clearMergePanelState(getAdminState());
+    setFeedback(null, "");
     M.renderExerciseAdminView();
     document.querySelector("[data-exercise-admin-merge-open]")?.focus();
   }
@@ -1857,7 +1862,7 @@
 
       clearSelectionUiState();
       state.selectedKey = json.exercise && json.exercise.id ? `exercise:${json.exercise.id}` : `exercise:${targetExerciseId}`;
-      setFeedback("ok", `Merged into ${targetLabel} and refreshed the live mapping.`);
+      setFeedback("ok", `Merged into ${targetLabel}.`);
       M.renderAll();
     } catch (error) {
       setFeedback("error", String(error && error.message ? error.message : error));

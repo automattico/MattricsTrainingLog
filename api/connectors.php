@@ -130,6 +130,27 @@ $body = mattrics_read_json_body();
 $connector = trim((string) ($body['connector'] ?? ''));
 $action = trim((string) ($body['action'] ?? ''));
 
+if ($action === 'refresh') {
+    require_once MATTWARDEN_SITE_DIR . '/lib/direct-refresh.php';
+    require_once MATTWARDEN_SITE_DIR . '/lib/direct-providers.php';
+    $config = mattrics_load_config();
+    if (!in_array($connector, mattrics_refresh_providers($config), true)) {
+        mattrics_send_json(['error' => 'On-demand refresh is disabled.'], 403);
+    }
+    try {
+        $result = mattrics_refresh_run(mattrics_foundation_read_connect(), mattrics_foundation_read_user_key(), $connector,
+            static function (?string $cursor, string $start, int $nextPage) use ($connector, $config): array {
+                if ($connector === 'garmin') {
+                    return ['records' => mattrics_direct_garmin($config['garmin_personal_api_key'] ?? '', $cursor, $start)];
+                }
+                return mattrics_direct_hevy(mattrics_connectors_require_hevy_record(mattrics_foundation_load_connector_store()), $nextPage);
+            });
+        mattrics_send_json($result);
+    } catch (Throwable $failure) {
+        mattrics_send_json(['status' => 'failed'], 503);
+    }
+}
+
 if ($connector !== 'hevy') {
     mattrics_send_json(['error' => 'Unsupported connector.'], 422);
 }

@@ -22,32 +22,7 @@ require_once __DIR__ . '/foundation-migrations.php';
 require_once __DIR__ . '/garmin-import-parser.php';
 require_once __DIR__ . '/hevy-import-parser.php';
 
-function mattrics_foundation_connect(string $databaseUrl): PDO
-{
-    $parts = parse_url($databaseUrl);
-    if ($parts === false || ($parts['scheme'] ?? '') !== 'postgres') {
-        throw new RuntimeException('DATABASE_URL must use the postgres:// scheme.');
-    }
-
-    $host = (string) ($parts['host'] ?? '');
-    $port = (int) ($parts['port'] ?? 5432);
-    $database = isset($parts['path']) ? ltrim($parts['path'], '/') : '';
-    $user = rawurldecode((string) ($parts['user'] ?? ''));
-    $password = rawurldecode((string) ($parts['pass'] ?? ''));
-
-    if ($host === '' || $database === '' || $user === '') {
-        throw new RuntimeException('DATABASE_URL must include host, database, and username.');
-    }
-
-    $dsn = sprintf('pgsql:host=%s;port=%d;dbname=%s', $host, $port, $database);
-    $pdo = new PDO($dsn, $user, $password, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
-    $pdo->exec("SET TIME ZONE 'UTC'");
-
-    return $pdo;
-}
+require_once __DIR__ . '/postgres-connection.php';
 
 function mattrics_foundation_execute_params(PDOStatement $statement, array $params): void
 {
@@ -368,6 +343,8 @@ function mattrics_foundation_hevy_live_map_set(array $set): array
     $distanceKm = mattrics_foundation_nullable_float(
         $set['distance_km'] ?? $set['distanceKm'] ?? $set['km'] ?? null
     );
+    $distanceMeters = mattrics_foundation_nullable_float($set['distance_meters'] ?? null);
+    $distanceKm ??= $distanceMeters === null ? null : $distanceMeters / 1000;
     $durationSeconds = mattrics_foundation_nullable_float(
         $set['duration_seconds'] ?? $set['durationSeconds'] ?? $set['seconds'] ?? null
     );
@@ -405,6 +382,9 @@ function mattrics_foundation_hevy_live_map_exercise(array $exercise): ?array
 
     return [
         'exerciseTitle' => $sourceExerciseName,
+        'providerTemplateId' => mattrics_foundation_null_if_blank(
+            $exercise['exercise_template_id'] ?? $exercise['exerciseTemplateId'] ?? null
+        ),
         'exerciseNotes' => trim((string) ($exercise['notes'] ?? $exercise['exercise_notes'] ?? '')),
         'supersetId' => trim((string) ($exercise['superset_id'] ?? $exercise['supersetId'] ?? '')),
         'sets' => $sets,
@@ -2724,6 +2704,7 @@ function mattrics_foundation_collect_hevy_csv_child_rows(array $workout, array $
         $exerciseRows[] = [
             'exerciseId' => $resolvedExercise['dbId'] ?? null,
             'exerciseOrder' => $exerciseOffset + 1,
+            'providerTemplateId' => $exercise['providerTemplateId'] ?? null,
             'sourceExerciseName' => $sourceExerciseName,
             'normalizedSourceExerciseName' => mattrics_normalize_config_name($sourceExerciseName),
             'sets' => $setRows,
@@ -2813,6 +2794,14 @@ function mattrics_foundation_map_hevy_csv_set_row(
             'effortFactor' => $parsedKind === 'parsed' ? $effortFactor : null,
             'computedLoad' => $parsedKind === 'parsed' ? $computedLoad : null,
             'notes' => mattrics_foundation_build_hevy_csv_set_notes($context + ['setType' => $setType]),
+            'provided' => [
+                'setType' => $setType !== '' ? $setType : 'normal',
+                'reps' => $reps,
+                'weightKg' => $weightKg,
+                'durationMinutes' => $durationSeconds === null ? null : $durationSeconds / 60,
+                'distanceKm' => $distanceKm,
+                'rpe' => $rpe,
+            ],
         ],
     ];
 }

@@ -84,7 +84,7 @@
   }
 
   M.fetchData = async function fetchData(options = {}) {
-    M.showLoading();
+    if (!options.background) M.showLoading();
     const forceRefresh = Boolean(options.forceRefresh);
     let sourceUrl = M.DATA_URL;
     const configUrl = M.EXERCISE_CONFIG_URL;
@@ -131,12 +131,14 @@
       }
       if (json.error) throw new Error(json.error);
 
+      M.setWorkoutReviewAvailable?.(json.meta?.workoutReview === true);
       M.state.dataMeta = {
         source: json.meta && json.meta.source ? json.meta.source : "live",
         stale: Boolean(json.meta && json.meta.stale),
         warning: json.meta && json.meta.warning ? json.meta.warning : "",
         lastSuccessfulSyncAt: json.meta && json.meta.lastSuccessfulSyncAt ? json.meta.lastSuccessfulSyncAt : "",
         lastLiveAttemptAt: json.meta && json.meta.lastLiveAttemptAt ? json.meta.lastLiveAttemptAt : "",
+        directRefresh: json.meta?.directRefresh || {},
         lastFetchAt: new Date().toISOString(),
       };
       if (typeof M.setActivityChildren === "function") {
@@ -150,15 +152,45 @@
         }))
         .filter((row) => row.Date)
         .sort((a, b) => new Date(b.Date) - new Date(a.Date));
-      M.state.typeFilter = "All";
+      if (!options.background || (M.state.typeFilter !== "All"
+          && !M.state.allData.some(row => M.canonicalType(row.Type) === M.state.typeFilter))) {
+        M.state.typeFilter = "All";
+      }
       await M.scanAndSyncUnknownExercises(M.state.allData);
       M.showApp();
       M.renderDataStatus();
       await M.loadUserSettings();
       M.renderAll();
       const initialView = getInitialView();
-      if (initialView) {
+      if (initialView && !options.background) {
         M.showView(initialView, null, { persist: false });
+      }
+      const providers = Object.keys(M.state.dataMeta.directRefresh);
+      if (!options.background && providers.length && !M.directRefreshPending) {
+        M.directRefreshPending = true;
+        try {
+          await Promise.all(providers.map(async connector => {
+            const state = M.state.dataMeta.directRefresh[connector];
+            state.status = "checking";
+            M.renderDataStatus();
+            try {
+              const result = await M.apiFetch("/api/connectors", {
+                method: "POST", headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({connector, action: "refresh"}),
+              });
+              if (!result.ok) throw new Error();
+              Object.assign(state, await result.json());
+            } catch {
+              state.status = "failed";
+            }
+            M.renderDataStatus();
+          }));
+          if (providers.some(key => M.state.dataMeta.directRefresh[key]?.status === "success")) {
+            await M.fetchData({background: true});
+          }
+        } finally {
+          M.directRefreshPending = false;
+        }
       }
     } catch (error) {
       const msg = String(error && error.message ? error.message : error);
@@ -168,6 +200,11 @@
         msg.includes("CORS") ||
         msg.includes("fetch");
 
+      if (options.background) {
+        M.state.dataMeta.warning = "Could not reload saved workouts after refresh.";
+        M.renderDataStatus();
+        return;
+      }
       M.showError(
         isCors
           ? "The authenticated API request could not be completed."

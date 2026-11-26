@@ -171,12 +171,16 @@
     const index = {
       exercisesByCanonical: new Map(),
       exercisesByAlias: new Map(),
+      exercisesByHevyTemplate: new Map(),
       exerciseMatchTerms: [],
       activityTypesByCanonical: new Map(),
       activityTypesByAlias: new Map(),
     };
 
     exercises.forEach((record) => {
+      ensureArray(record && record.hevyTemplateKeys).forEach((key) => {
+        index.exercisesByHevyTemplate.set(key, record);
+      });
       const normalizedName = normalize(record && record.normalizedName ? record.normalizedName : record && record.canonicalName);
       if (normalizedName && !index.exercisesByCanonical.has(normalizedName)) {
         index.exercisesByCanonical.set(normalizedName, record);
@@ -240,9 +244,13 @@
     return index;
   };
 
-  M.resolveExerciseConfig = function resolveExerciseConfig(inputName) {
+  M.resolveExerciseConfig = function resolveExerciseConfig(inputName, hevyTemplateKey) {
     const index = M.state && M.state.exerciseConfigIndex;
     if (!index) return null;
+
+    if (hevyTemplateKey) {
+      return cloneResolvedConfig(index.exercisesByHevyTemplate.get(hevyTemplateKey));
+    }
 
     const normalized = M.normalizeExerciseConfigName(inputName);
     if (!normalized) return null;
@@ -271,16 +279,17 @@
     return aliasMatch ? cloneResolvedConfig(aliasMatch) : null;
   };
 
-  M.makeUnknownExerciseId = function makeUnknownExerciseId(sourceType, normalizedName) {
+  M.makeUnknownExerciseId = function makeUnknownExerciseId(sourceType, normalizedName, hevyTemplateKey) {
+    if (hevyTemplateKey) return `exercise:hevy:${hevyTemplateKey}`;
     return `${sourceType}:${normalizedName}`;
   };
 
   M.collectUnknownExercisesFromActivities = function collectUnknownExercisesFromActivities(activities) {
     const unknownsById = new Map();
-    const addUnknown = (sourceType, rawName) => {
+    const addUnknown = (sourceType, rawName, hevyTemplateKey) => {
       const normalizedName = M.normalizeExerciseConfigName(rawName);
-      if (!normalizedName) return;
-      const id = M.makeUnknownExerciseId(sourceType, normalizedName);
+      if (!normalizedName && !hevyTemplateKey) return;
+      const id = M.makeUnknownExerciseId(sourceType, normalizedName, hevyTemplateKey);
       const existing = unknownsById.get(id);
       const cleanRawName = String(rawName == null ? "" : rawName).trim();
       if (existing) {
@@ -294,6 +303,7 @@
         id,
         sourceType,
         normalizedName,
+        ...(hevyTemplateKey ? { hevyTemplateKey } : {}),
         rawNames: cleanRawName ? [cleanRawName] : [],
         timesSeen: 1,
       });
@@ -305,8 +315,9 @@
         : M.parseHevyDescription(activity && activity.Description);
       if (Array.isArray(hevyExercises) && hevyExercises.length) {
         hevyExercises.forEach((exercise) => {
-          if (!M.resolveExerciseConfig(exercise && exercise.name)) {
-            addUnknown("exercise", exercise && exercise.name);
+          const hasSets = ensureArray(exercise?.sets).length || ensureArray(exercise?.setDetails).length;
+          if (hasSets && !M.resolveExerciseConfig(exercise.name, exercise.hevyTemplateKey)) {
+            addUnknown("exercise", exercise.name, exercise.hevyTemplateKey);
           }
         });
         return;
@@ -327,7 +338,8 @@
 
   M.syncUnknownExercises = async function syncUnknownExercises(unknowns) {
     const payload = ensureArray(unknowns).map((record) => ({
-      id: M.makeUnknownExerciseId(record.sourceType, record.normalizedName),
+      id: M.makeUnknownExerciseId(record.sourceType, record.normalizedName, record.hevyTemplateKey),
+      hevyTemplateKey: record.hevyTemplateKey,
       sourceType: record.sourceType,
       normalizedName: record.normalizedName,
       rawNames: ensureArray(record.rawNames),

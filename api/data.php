@@ -70,6 +70,13 @@ function mattrics_merge_warning_messages(?string ...$warnings): ?string
 
 function mattrics_build_canonical_data_response(bool $includeChildren = false): array
 {
+    require_once MATTWARDEN_SITE_DIR . '/lib/workout-review.php';
+    $ctx = mattrics_foundation_read_context();
+    $review = workout_review_available($ctx);
+    if ($review) {
+        $ctx['pdo']->beginTransaction();
+        $ctx['pdo']->exec('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
+    }
     $rows = mattrics_foundation_read_activities();
 
     $response = [
@@ -85,10 +92,23 @@ function mattrics_build_canonical_data_response(bool $includeChildren = false): 
         ],
     ];
 
+    $config = mattrics_load_config();
+    if (!empty($config['direct_refresh_providers'])) {
+        require_once MATTWARDEN_SITE_DIR . '/lib/direct-refresh.php';
+        $pdo = mattrics_foundation_read_connect();
+        foreach (mattrics_refresh_providers($config) as $provider) {
+            $response['meta']['directRefresh'][$provider] = mattrics_refresh_state($pdo, mattrics_foundation_read_user_key(), $provider);
+        }
+    }
+
     if ($includeChildren) {
         $response['activityChildren'] = mattrics_foundation_read_activity_children();
     }
 
+    if ($review) {
+        $response = workout_review_project($response, workout_review_state($ctx));
+        $ctx['pdo']->commit();
+    }
     return $response;
 }
 

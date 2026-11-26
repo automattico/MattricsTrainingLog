@@ -10,6 +10,9 @@ Use the current-state documents below for development and operations. Files unde
 | [`../DEPLOY.md`](../DEPLOY.md) | Mattrics validation and SFTP deployment contract |
 | [`architecture.md`](architecture.md) | Deployed Mattwarden request, API, browser, and CSP architecture |
 | [`local-development.md`](local-development.md) | Native Mattwarden-compatible development commands and test inventory |
+| [Database environments](database-environments.md) | Native dev and staging, synthetic recovery, and the hosted TLS probe |
+| [Planning backlog and reports](planning/README.md) | Ticket format, verification evidence, and the private planning workspace |
+| [v1.0 production readiness](planning/milestones/ms-v1-0.md#production-readiness--25-november-2026) | Current blockers, ordered checks, and separate code deploy and data cutover approval points |
 | [`hetzner-private-deploy.md`](hetzner-private-deploy.md) | Current Hetzner layout and parent-webroot normalization procedure |
 | [`mattwarden-migration.md`](mattwarden-migration.md) | Security outcome, API inventory, fixed cut-over order, and runbook status |
 | [`anthropic-api-key.md`](anthropic-api-key.md) | Secret-safe Anthropic key creation, replacement, and verification |
@@ -31,6 +34,8 @@ Use the current-state documents below for development and operations. Files unde
 | Document | Purpose |
 |---|---|
 | [`architecture-next.md`](architecture-next.md) | Approved future architecture direction |
+| [`mattrics-implementation-plan.md`](mattrics-implementation-plan.md) | Postgres migration, historical backfill, connector rollout, and progress reporting |
+| [Reporting tool build prompt](templates/build-planning-report-prompt.md) | Historical prompt for creating the Markdown backlog and report generator |
 | [`codex-framework.md`](codex-framework.md) | Required implementation-slice workflow |
 
 ## Historical records
