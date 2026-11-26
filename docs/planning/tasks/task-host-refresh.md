@@ -16,3 +16,7 @@ Use the approved private Mattwarden path and an isolated configured database. Bo
 ## Local rehearsal · 2026-11-25
 
 The disposable Postgres suite verified that a failed Hevy import rolls back the batch and preserves its page checkpoint. Synthetic pagination reached all 1,001 workouts over successive bounded runs. Hosted timing and behavior with real provider data still need verification. [Review fixes report](../../slices/main-review-fixes-report.md)
+
+## Security regression check · 2026-11-26
+
+Garmin shares a 20-second provider and decoder deadline. The disposable suite verified that timeout stops further downloads, reaps a stuck decoder, and preserves the committed checkpoint. Exercise the deadline on hosted PHP before enabling direct Garmin refresh. [Security fixes](../../slices/predeploy-security-fixes-report.md)

@@ -17,6 +17,52 @@ function test_direct_refresh(PDO $pdo, array $config, array $hevy): void
             ['Authorization: Bearer synthetic.jwt.token', false]], 'Garmin accepts token response and authenticates activity listing');
     }
 
+    $fixture = shell_exec('python3 ' . escapeshellarg(__DIR__ . '/archive-fixtures.py') . ' --fit-download');
+    check(is_string($fixture) && count(mattrics_decode_garmin_download($fixture)['sessions']) === 1,
+        'bounded FIT decoder processes a valid Garmin download');
+
+    $decoderBin = sys_get_temp_dir() . '/mattrics-slow-decoder-' . bin2hex(random_bytes(6));
+    mkdir($decoderBin, 0700);
+    $fakeDecoder = $decoderBin . '/python3';
+    file_put_contents($fakeDecoder, "#!/bin/sh\nexec " . escapeshellarg(PHP_BINARY) . " -r 'usleep(5000000);'\n");
+    chmod($fakeDecoder, 0700);
+    $priorPath = getenv('PATH');
+    try {
+        putenv('PATH=' . $decoderBin . PATH_SEPARATOR . $priorPath);
+        $start = hrtime(true);
+        try {
+            mattrics_decode_garmin_download('synthetic FIT', $start + 150_000_000);
+            throw new LogicException('Expected a stalled decoder to time out.');
+        } catch (RuntimeException $error) {
+            check($error->getMessage() === 'timeout' && hrtime(true) - $start < 2_000_000_000,
+                'stalled FIT decoder is stopped and reaped within the request budget');
+        }
+    } finally {
+        putenv($priorPath === false ? 'PATH' : 'PATH=' . $priorPath);
+        unlink($fakeDecoder);
+        rmdir($decoderBin);
+    }
+
+    $runGarmin = static fn(callable $fetch): array => mattrics_refresh_run($pdo, 'garmin-budget-test', 'garmin',
+        static fn(?string $cursor, string $start): array => ['records' => mattrics_direct_garmin('fixture', $cursor, $start, $fetch, 100)]);
+    $garminState = $runGarmin(static fn(string $url, string $header, bool $post): string => $post ? 'synthetic.jwt.token' : '[]');
+    $timeouts = [];
+    $beforeGarmin = snapshot($pdo, true);
+    $timedOut = $runGarmin(static function (string $url, string $header, bool $post, int $timeoutMs) use (&$timeouts): string {
+        $timeouts[] = $timeoutMs;
+        if ($post) {
+            usleep(20_000);
+            return 'synthetic.jwt.token';
+        }
+        usleep(110_000);
+        return '[{"activityId":1}]';
+    });
+    check($garminState['status'] === 'success' && $timedOut['status'] === 'timeout'
+        && $timedOut['cursor_at'] === $garminState['cursor_at'] && $timedOut['last_success'] === $garminState['last_success']
+        && count($timeouts) === 2 && $timeouts[0] <= 100 && $timeouts[1] < $timeouts[0]
+        && snapshot($pdo, true) === $beforeGarmin,
+        'whole Garmin deadline reduces each call budget, prevents further downloads and retains the committed checkpoint');
+
     $user = 'direct-refresh-test';
     $pdo->exec("INSERT INTO mattrics.mattrics_users (external_key, display_name, timezone_name, is_active)
         VALUES ('direct-refresh-test', 'Existing owner', 'America/Los_Angeles', false)");

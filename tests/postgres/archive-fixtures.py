@@ -157,6 +157,10 @@ def validate(payloads):
         raise AssertionError("XML with entities accepted")
 
 
+if __name__ == "__main__" and sys.argv[1:] == ["--fit-download"]:
+    sys.stdout.buffer.write(zipped([("synthetic.fit", fit((0, 600, 1)))]))
+    raise SystemExit(0)
+
 if __name__ == "__main__":
     payloads = get_manifests()
     validate(payloads)

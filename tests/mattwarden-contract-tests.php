@@ -34,7 +34,7 @@ function contract_files(string $root): array
 
 $endpointMethods = [
     'session.php' => ['GET'],
-    'data.php' => ['GET'],
+    'data.php' => ['GET', 'POST'],
     'settings.php' => ['GET', 'POST'],
     'connectors.php' => ['GET', 'POST'],
     'exercises.php' => ['GET', 'POST', 'PATCH', 'DELETE'],

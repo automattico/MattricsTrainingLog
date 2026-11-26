@@ -1,5 +1,9 @@
 # Implementation progress
 
+## Pre-deploy security fixes · 2026-11-26
+
+The Refresh button now uses a Mattwarden-protected POST. Garmin has a shared provider and decoder deadline that preserves the committed checkpoint on timeout. The production gate and disposable Postgres suite passed. Hosted code deployment and full Garmin refresh remain separate checks. [Security fixes](slices/predeploy-security-fixes-report.md) · [Next slice](slices/next-predeploy-security-fixes-prompt.md)
+
 ## Release and cutover safeguards · 2026-11-25
 
 Commit-based staging, the shared Postgres TLS connection, the hosted migration runner, and checksum-guarded catalog promotion passed local checks. The real hosted rehearsal, approval-gated code deploy, Strava delivery proof, production catalog promotion and final parity are pending. [Release preparation report](slices/cutover-prep-implementation-report.md) · [Next slice](slices/next-cutover-prep-hosted-prompt.md)

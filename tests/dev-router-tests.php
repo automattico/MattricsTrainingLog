@@ -29,13 +29,13 @@ function router_assert(bool $condition, string $message): void
     fwrite(STDERR, "FAIL: {$message}\n");
 }
 
-function router_start(string $repoRoot, string $siteRoot, int $port, bool $authenticated)
+function router_start(string $repoRoot, string $siteRoot, int $port, bool $authenticated, ?string $routerScript = null)
 {
     putenv('MATTWARDEN_TEST_SITE_DIR=' . $siteRoot);
     putenv('MATTWARDEN_TEST_AUTHENTICATED=' . ($authenticated ? '1' : '0'));
     $command = escapeshellarg(PHP_BINARY)
         . ' -S 127.0.0.1:' . $port
-        . ' ' . escapeshellarg($repoRoot . '/scripts/dev-router.php');
+        . ' ' . escapeshellarg($routerScript ?? $repoRoot . '/scripts/dev-router.php');
     $null = fopen('/dev/null', 'w');
     $process = proc_open($command, [0 => ['pipe', 'r'], 1 => $null, 2 => $null], $pipes, $repoRoot);
     if (!is_resource($process)) {
@@ -134,6 +134,43 @@ try {
         fwrite(STDERR, 'Valid mutation response: ' . $validMutation['status'] . ' ' . $validMutation['body'] . "\n");
     }
     router_assert($validMutation['status'] === 200 && (float) ($validMutation['json']['settings']['bodyWeightKg'] ?? 0) === 80.0, 'same-origin mutation with CSRF succeeds');
+
+    $sheetPort = $port + 2;
+    $sheetRouter = $siteRoot . '/sheet.php';
+    file_put_contents($sheetRouter, '<?php echo json_encode(["rows" => [["Type" => "Run", "Name" => "Fresh synthetic row"]]]);');
+    $privateConfig = $siteRoot . '/private/config.php';
+    file_put_contents($privateConfig, '<?php return ' . var_export([
+        'sheet_url' => "http://127.0.0.1:$sheetPort/",
+        'sheet_token' => 'synthetic-sheet-test',
+    ], true) . ';');
+    $snapshotPath = $siteRoot . '/private/cache/training-data.json';
+    mkdir(dirname($snapshotPath), 0700);
+    $oldSnapshot = json_encode(['rows' => [['Type' => 'Run', 'Name' => 'Previous synthetic row']]]);
+    file_put_contents($snapshotPath, $oldSnapshot);
+
+    $legacyRefresh = router_request($port, '/api/data?refresh=1');
+    router_assert($legacyRefresh['status'] === 405, 'old GET refresh request is rejected');
+    $dataRead = router_request($port, '/api/data');
+    router_assert($dataRead['status'] === 200 && $dataRead['json']['meta']['source'] === 'cache', 'ordinary GET reads the cached dashboard');
+    $missingRefreshCsrf = router_request($port, '/api/data', 'POST', ['Origin: ' . $testOrigin]);
+    router_assert($missingRefreshCsrf['status'] === 403, 'Sheets refresh without CSRF is rejected');
+    $foreignRefresh = router_request($port, '/api/data', 'POST', [
+        'Origin: https://foreign.example', 'X-CSRF-Token: ' . $testCsrfToken,
+    ]);
+    router_assert($foreignRefresh['status'] === 403, 'Sheets refresh from another origin is rejected');
+    router_assert(file_get_contents($snapshotPath) === $oldSnapshot, 'read and rejected refreshes leave the snapshot unchanged');
+
+    [$sheetProcess, $sheetNull] = router_start($repoRoot, $siteRoot, $sheetPort, true, $sheetRouter);
+    $servers[] = [$sheetProcess, $sheetNull];
+    $refresh = router_request($port, '/api/data', 'POST', [
+        'Origin: ' . $testOrigin, 'X-CSRF-Token: ' . $testCsrfToken,
+    ]);
+    router_assert($refresh['status'] === 200 && ($refresh['json']['meta']['source'] ?? '') === 'live'
+        && ($refresh['json']['rows'][0]['Name'] ?? '') === 'Fresh synthetic row'
+        && str_contains(file_get_contents($snapshotPath), 'Fresh synthetic row'),
+        'authenticated same-origin POST with CSRF refreshes the private snapshot');
+    router_stop($sheetProcess, $sheetNull);
+    array_pop($servers);
 
     router_assert(router_request($port, '/api/does-not-exist')['status'] === 404, 'unknown API script receives JSON 404');
     router_assert(router_request($port, '/api/session', 'OPTIONS')['status'] === 405, 'unsupported API method receives 405');

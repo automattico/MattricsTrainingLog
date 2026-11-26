@@ -73,20 +73,10 @@
     document.head.appendChild(script);
   }
 
-  function isInternalDataUrl(sourceUrl) {
-    if (!sourceUrl) return false;
-    try {
-      const url = new URL(sourceUrl, window.location.href);
-      return /\/api\/data$/i.test(url.pathname);
-    } catch {
-      return false;
-    }
-  }
-
   M.fetchData = async function fetchData(options = {}) {
     if (!options.background) M.showLoading();
     const forceRefresh = Boolean(options.forceRefresh);
-    let sourceUrl = M.DATA_URL;
+    const sourceUrl = M.DATA_URL;
     const configUrl = M.EXERCISE_CONFIG_URL;
 
     if (!sourceUrl || sourceUrl === "PASTE_YOUR_WEB_APP_URL_HERE" || sourceUrl === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
@@ -103,21 +93,21 @@
     }
 
     try {
-      if (M.DATA_URL) {
-        const url = new URL(sourceUrl, window.location.href);
-        if (isInternalDataUrl(sourceUrl)) {
-          url.searchParams.set("includeChildren", "1");
-        }
-        if (forceRefresh) {
-          url.searchParams.set("refresh", "1");
-        }
-        sourceUrl = url.toString();
+      const pageUrl = new URL(window.location.href);
+      const url = new URL(sourceUrl, pageUrl);
+      const internal = url.origin === pageUrl.origin && /\/api\/data(?:\.php)?$/i.test(url.pathname);
+      const refreshWithPost = internal && forceRefresh;
+      if (internal) {
+        url.searchParams.set("includeChildren", "1");
+        url.searchParams.delete("refresh");
+      } else if (forceRefresh) {
+        url.searchParams.set("refresh", "1");
       }
       const [res] = await Promise.all([
-        M.apiFetch(sourceUrl, {
-          redirect: "follow",
+        M.apiFetch(url.toString(), {
+          method: refreshWithPost ? "POST" : "GET",
+          redirect: refreshWithPost ? "error" : "follow",
           credentials: "same-origin",
-          headers: {},
         }),
         M.loadExerciseConfigs(),
       ]);

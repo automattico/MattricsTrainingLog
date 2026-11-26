@@ -24,7 +24,7 @@ Mattrics API scripts defensively call `require_authenticated()` on entry. Mutati
 | Endpoint | Methods | Mutation protection |
 |---|---|---|
 | `/api/session` | GET | authenticated; returns CSRF token and app version |
-| `/api/data` | GET | authenticated |
+| `/api/data` | GET, POST | GET reads dashboard data. POST refresh requires same-origin and CSRF. |
 | `/api/settings` | GET, POST | POST: same-origin and CSRF |
 | `/api/connectors` | GET, POST | POST: same-origin and CSRF |
 | `/api/exercises[/<path>]` | GET, POST, PATCH, DELETE | every mutation: same-origin and CSRF |

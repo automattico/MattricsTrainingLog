@@ -69,13 +69,15 @@ assert.equal(refresh["aria-label"], "Refresh data");
 async function checkRefreshFilters() {
   let rows = [{ Date: "2026-11-24", Type: "Trail Run" }];
   let finishRequest;
+  let request;
   const app = {
     DATA_URL: "/api/data",
     EXERCISE_CONFIG_URL: "/api/exercises",
     state: { typeFilter: "All" },
     canonicalType: (type) => type === "Trail Run" ? "Run" : type,
     normalizeDateValue: (date) => date,
-    apiFetch: () => new Promise(resolve => {
+    apiFetch: (url, options) => new Promise(resolve => {
+      request = { url: new URL(url), options };
       finishRequest = () => resolve({ ok: true, text: async () => JSON.stringify({ rows }) });
     }),
     loadExerciseConfigs: async () => {},
@@ -97,6 +99,7 @@ async function checkRefreshFilters() {
   app.renderAll = () => {};
 
   const refresh = app.fetchData({ background: true });
+  assert.equal(request.options.method, "GET", "Dashboard reads use GET");
   app.state.typeFilter = "Run";
   finishRequest();
   await refresh;
@@ -113,10 +116,25 @@ async function checkRefreshFilters() {
   finishRequest();
   await foreground;
   assert.equal(app.state.typeFilter, "All", "Foreground refresh retains its existing reset behavior");
+
+  const force = app.fetchData({ forceRefresh: true });
+  assert.equal(request.options.method, "POST", "Explicit same-origin refresh uses the protected POST path");
+  assert.equal(request.options.redirect, "error", "A refresh cannot forward CSRF through redirects");
+  assert.equal(request.url.searchParams.get("includeChildren"), "1");
+  assert.equal(request.url.searchParams.has("refresh"), false);
+  finishRequest();
+  await force;
+
+  app.DATA_URL = "https://sheet.example/api/data";
+  const external = app.fetchData({ forceRefresh: true });
+  assert.equal(request.options.method, "GET", "External source requests keep their existing read method");
+  assert.equal(request.url.searchParams.get("refresh"), "1");
+  finishRequest();
+  await external;
 }
 
 checkRefreshFilters().then(() => {
-  console.log("data-status-tests: 9 passed");
+  console.log("data-status-tests: status, filters and refresh routing passed");
 }).catch(error => {
   console.error(error);
   process.exitCode = 1;
